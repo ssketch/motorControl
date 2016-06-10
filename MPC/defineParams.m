@@ -13,12 +13,12 @@ p.m1 = 0.028*subj.M; % upperarm mass, Winter [kg]
 p.m2 = 0.022*subj.M; % forearm mass, Winter [kg]
 p.l1 = 0.188*subj.H; % upperarm length, Winter [m]
 p.l2 = 0.253*subj.H; % forearm length, Winter [m]
-p.s1 = 0.436*l1;     % shoulder to upperarm COM, Winter [m]
-p.s2 = 0.682*l2;     % elbow to forearm COM, Winter [m]
-r1 = 0.542*l1;       % upperarm radius of gyration (proximal), Winter [m]
-r2 = 0.827*l2;       % forearm radius of gyration (proximal), Winter [m]
-p.I1 = m1*r1^2;      % upperarm moment of inertia, about shoulder [kg-m^2]
-p.I2 = m2*r2^2;      % forearm moment of inertia, about elbow [kg-m^2]
+p.s1 = 0.436*p.l1;     % shoulder to upperarm COM, Winter [m]
+p.s2 = 0.682*p.l2;     % elbow to forearm COM, Winter [m]
+r1 = 0.542*p.l1;       % upperarm radius of gyration (proximal), Winter [m]
+r2 = 0.827*p.l2;       % forearm radius of gyration (proximal), Winter [m]
+p.I1 = p.m1*r1^2;      % upperarm moment of inertia, about shoulder [kg-m^2]
+p.I2 = p.m2*r2^2;      % forearm moment of inertia, about elbow [kg-m^2]
 p.B = [0.05 0.025    % damping matrix [Nms/rad]
        0.025 0.05];
 
@@ -76,7 +76,7 @@ p.numDelSteps_mod = floor(p.Td_model/p.dt + 1); % number of time steps in modele
 % initial conditions
 p.p_i = movt.p_i;                              % position [m]
 v_i = [0;0];                                   % velocity [m/s]
-[th_i,th_dot_i,~] = invKin(p.p_i,v_i,[0;0],p); % position & velocity [rad]
+[~,th_i,th_dot_i,~] = invKin(p.p_i,v_i,[0;0],p); % position & velocity [rad]
 p.x0 = [th_i;th_dot_i];                        % state
 
 % reference to be tracked
@@ -86,7 +86,7 @@ if (movt.type == 0)
     th = movt.th;                                  % angle [deg]
     p.p_f = p.p_i + d*[cosd(th);sind(th)];         % desired end position [m]
     v_f = [0;0];                                   % desired end velocity [m/s]
-    [th_f,th_dot_f,~] = invKin(p.p_f,v_f,[0;0],p);
+    [~,th_f,th_dot_f,~] = invKin(p.p_f,v_f,[0;0],p);
     p.y_des = repmat([th_f;th_dot_f],1,p.n);
     
 elseif (movt.type == 1)
@@ -100,7 +100,7 @@ elseif (movt.type == 1)
     
     p.p_f = p.p_i + d*[cosd(th);sind(th)];
     v_f = [0;0];
-    [th_f,th_dot_f,~] = invKin(p.p_f,v_f,[0;0],p);
+    [~,th_f,th_dot_f,~] = invKin(p.p_f,v_f,[0;0],p);
     p.y_des = repmat([th_f;th_dot_f],1,p.n);
     
 elseif (movt.type == 2)
@@ -113,12 +113,12 @@ elseif (movt.type == 2)
     
     p.p_atTurn = p.p_i + d*[cosd(th);sind(th)];
     v_atTurn = [0;0];
-    [th_atTurn,th_dot_atTurn,~] = invKin(p.p_atTurn,v_atTurn,[0;0],p);
+    [~,th_atTurn,th_dot_atTurn,~] = invKin(p.p_atTurn,v_atTurn,[0;0],p);
     y_atTurn = [th_atTurn;th_dot_atTurn];
     
     p_f = p.p_i;
     v_f = [0;0];
-    [th_f,th_dot_f,~] = invKin(p_f,v_f,[0;0],p);
+    [~,th_f,th_dot_f,~] = invKin(p_f,v_f,[0;0],p);
     
     p.y_des = repmat([th_f;th_dot_f],1,p.n);
     p.y_des(:,1:floor(p.n/2)) = repmat(y_atTurn,1,floor(p.n/2));
@@ -139,7 +139,7 @@ elseif (movt.type == 3)
     th_ell = zeros(2,p.n);
     th_dot_ell = zeros(2,p.n);
     for i = 1:p.n
-        [th_ell(:,i),th_dot_ell(:,i),~] = ...
+        [~,th_ell(:,i),th_dot_ell(:,i),~] = ...
             invKin([p.x_ell(i);p.y_ell(i)],[0;0],[0;0],p);
     end
     p.y_des = [th_ell;th_dot_ell];

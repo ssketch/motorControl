@@ -1,6 +1,6 @@
-clear all
-close all
-clc
+% clear all
+% close all
+% clc
 
 % define params for simulation
 subj.numJoints = 2;
@@ -12,7 +12,7 @@ movt.type = 0;
 movt.p_i = [0;0.4];
 movt.T = 0.8;
 movt.dt = 0.02;
-movt.d = 1.5;
+movt.d = 0.5;
 movt.th = 25;
 movt.Thold = 1.5;
 movt.a = 0.3;

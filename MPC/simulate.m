@@ -3,7 +3,7 @@ function [results, inWS] = simulate(subj, movt, estm, optm)
 % add required directories to path, installing if necessary
 if ~isequal(exist('./tbxmanager','dir'),7)
     install_mpt3
-    clear
+%     clear
     clc
 end
 addpath ./tbxmanager
