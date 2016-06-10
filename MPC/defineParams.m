@@ -8,18 +8,18 @@ p.Nsensed = 2*numJoints;    % number of sensed states (th & th_dot for each join
 
 %% SUBJECT
 
-% anthropometry
-p.m1 = 0.028*subj.M; % upperarm mass, Winter [kg]
-p.m2 = 0.022*subj.M; % forearm mass, Winter [kg]
-p.l1 = 0.188*subj.H; % upperarm length, Winter [m]
-p.l2 = 0.253*subj.H; % forearm length, Winter [m]
-p.s1 = 0.436*p.l1;     % shoulder to upperarm COM, Winter [m]
-p.s2 = 0.682*p.l2;     % elbow to forearm COM, Winter [m]
-r1 = 0.542*p.l1;       % upperarm radius of gyration (proximal), Winter [m]
-r2 = 0.827*p.l2;       % forearm radius of gyration (proximal), Winter [m]
+% anthropometry from Winter, 2009
+p.m1 = 0.028*subj.M;   % upperarm mass [kg]
+p.m2 = 0.022*subj.M;   % forearm mass [kg]
+p.l1 = 0.188*subj.H;   % upperarm length [m]
+p.l2 = 0.253*subj.H;   % forearm length [m]
+p.s1 = 0.436*p.l1;     % shoulder to upperarm COM [m]
+p.s2 = 0.682*p.l2;     % elbow to forearm COM [m]
+r1 = 0.542*p.l1;       % upperarm radius of gyration (proximal) [m]
+r2 = 0.827*p.l2;       % forearm radius of gyration (proximal) [m]
 p.I1 = p.m1*r1^2;      % upperarm moment of inertia, about shoulder [kg-m^2]
 p.I2 = p.m2*r2^2;      % forearm moment of inertia, about elbow [kg-m^2]
-p.B = [0.05 0.025    % damping matrix [Nms/rad]
+p.B = [0.05 0.025      % damping matrix [Nms/rad]
        0.025 0.05];
 
 % joint limits

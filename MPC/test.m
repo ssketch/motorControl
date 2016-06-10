@@ -1,6 +1,6 @@
-% clear all
-% close all
-% clc
+clear all
+close all
+clc
 
 % define params for simulation
 subj.numJoints = 2;
@@ -18,11 +18,13 @@ movt.Thold = 1.5;
 movt.a = 0.3;
 movt.b = 0.75;
 
+% Kalman filter noise values etc.
 estm.q = 0.00001;
 estm.rp1 = 0.01;
 estm.rp2 = 0.01;
 estm.rv = 0.001;
 
+% Optimal control weights
 optm.wP = 1;
 optm.wV = 1e-2;
 optm.wT = 1e-1;
