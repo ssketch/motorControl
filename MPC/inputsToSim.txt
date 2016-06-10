@@ -1,0 +1,30 @@
+Structs for input to ‘simulate.m’
+————————————————————————————————
+subj:
+-joint DOF (numJoints)
+-height (H)
+-weight (W)
+-joint angle limits (th_lim)
+-joint torque limits (torq_lim)
+-proprioceptive data (bias & noise)
+-sensory delay (Td)
+
+movt:
+-type
+-starting point
+-time (T)
+-time step (dt)
+-distance (d)
+-angle (th)
+-hold time (Thold)
+-ellipse parameters (a,b)
+
+estm:
+-covariance of torque-induced uncertainty on model dynamics (q)
+-covariance of sensor-induced uncertainty on measurement (rp1,rp2,rv)
+
+optm:
+-position weight (wP)
+-velocity weight (wV)
+-torque weight (wT)
+-X vs. U weight (alpha)
