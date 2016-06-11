@@ -44,15 +44,4 @@ g = [ 0, 0, -9.81 ]';
 G = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
 
 
-% Apply subject specific parameters
-% th1 = 0; 
-% th2 = 0; 
-% th3 = pi/2;
-% th4 = pi/2;
-% l1 = 0;
-% l2 = 0; 
-% l3 = 0; 
-% l4 = 1; 
-% l5 = 1;
-% srad = 0.5;
-% shum = 0.5;
+% Apply subject specific 
