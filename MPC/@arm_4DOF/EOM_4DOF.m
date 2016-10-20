@@ -2,17 +2,7 @@
 
 %%% 4 DOF EOM
 syms th1 th2 th3 th4 l1 l2 l3 l4 l5 shum srad mhum mrad I1 I2 I3 I4 'real'
-% th1 = 0; 
-% th2 = 0; 
-% th3 = pi/2;
-% th4 = pi/2;
-% l1 = 0;
-% l2 = 0; 
-% l3 = 0; 
-% l4 = 1; 
-% l5 = 1;
-% srad = 0.5;
-% shum = 0.5;
+
 
 %%% Helpful Anonymous functions
 % Rotation matrices (in radians)
@@ -62,7 +52,25 @@ B = 2.* [ chris(1,1,2); chris(2,1,2)
 
 % Gravity effects
 g = [ 0, 0, -9.81 ]';
+<<<<<<< HEAD:MPC/@arm_4DOF/EOM_4DOF.m
 g = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
 
 
 %% Find Operational space equations of motion
+=======
+G = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
+
+
+% Apply subject specific parameters
+% th1 = 0; 
+% th2 = 0; 
+% th3 = pi/2;
+% th4 = pi/2;
+% l1 = 0;
+% l2 = 0; 
+% l3 = 0; 
+% l4 = 1; 
+% l5 = 1;
+% srad = 0.5;
+% shum = 0.5;
+>>>>>>> origin/master:MPC/EOM_4DOF.m
