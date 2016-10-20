@@ -1,9 +1,13 @@
 % This function returns the equation of motion for the arm in its current
 % state, represented in either joint or task space. In joint space, it is
-% of the form q_dot = f(q,u). In task space, it is of the form x_dot =
-% f(x,u). In either case, u is the vector of joint torques (i.e., one
-% actuator per joint).
+% of the form q_dot = f(q,u) where u is the vector of joint torques. In
+% task space, it is of the form x_dot = f(x,u) where u is the vector of
+% hand forces.
 function f = dynamics(arm, u, ctrlSpace)
+
+% Compute mass matrix:
+M11 = arm.I2*arm.l2^2 + arm.I4+arm.L2^2 + arm.L2^2*arm.m1 + ...
+    arm.l2^2*arm.m2 + arm.M2*arm.s1^2
 
 % compute "inertia" parameters
 a1 = arm.I1 + arm.I2 + arm.m2*arm.l1^2;
@@ -36,7 +40,7 @@ else
     Vx = J'\(V - (M/J)*J_dot*arm.q(3:4));
     Gx = J'\G;
     Fricx = J'\Fric;
-    f = [arm.x(3:4) ; Mx\((J'\u)-Vx-Gx-Fricx)];
+    f = [arm.x(3:4) ; Mx\(u-Vx-Gx-Fricx)];
 end
 
 end

@@ -1,18 +1,27 @@
-function [results, inWS] = simulate(subj, movt, estm, optm)
+% This function simulates the arm model of the given subject for the
+% specified movement using the specified optimal control/estimator
+% parameters. The output 'flag' signals success of the simulation: 0 =
+% success, 1 = point along desired trajectory outside workspace, 2 = unable
+% to find optimal control.
+function [results, flag] = simulate(arm, subj, movt, ctrl)
 
-% add required directories to path, installing if necessary
-if ~isequal(exist('./tbxmanager','dir'),7)
-    install_mpt3
-%     clear
-    clc
+prompt = 'Is the Multi-Parametric Toolbox (MPT) installed? Y/N: ';
+MPTinstalled = input(prompt,'s');
+if strcmp(MPTinstalled,'N') || strcmp(MPTinstalled,'n')
+    fprintf('\nRun ''install_mpt3.m'' then try again.\n')
+    return
 end
-addpath ./tbxmanager
-addpath ./export_fig
 
-% define parameters for simulation
-params = defineParams(subj, movt, estm, optm);
+%% PARAMETERS
 
-% check that 
+% dynamical system dimensions
+if strcmp(ctrl.space,'joint')
+    n = length(arm.q); % number of states (at one time step)
+else
+    n = length(arm.x);
+end
+m = arm.jDOF;          % number of inputs (one torque actuator per joint)
+p = n;                 % number of outputs (state at one time step)
 
 % declare variables to save
 inWS = 1;
@@ -61,7 +70,7 @@ for i = 1:params.n
     y = sense(xAnext, params);
     
     % estimate next arm state via internal model & Kalman filter
-    [xPnext, Pnext] = predict(xP, P, y, Tcurr, params);
+    [xPnext, Pnext] = estimate(xP, P, y, Tcurr, params);
     
     % update simulation-level variables
     xA = xAnext;

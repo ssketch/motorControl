@@ -1,32 +1,31 @@
 % This class captures the attributes, kinematics, and dynamics of a human
 % arm modeled as an RR robot restricted to move in the plane of the
 % shoulder.
-classdef arm_2DOF < handle
+classdef arm_4DOF < handle
     
     % properties that, once set in constructor, remain constant
     properties (GetAccess=public, SetAccess=private)
         
-        jDOF = 2;               % joint-space degrees of freedom (shoulder & elbow angle)
-        tDOF = 2;               % task-space degrees of freedom (x & y, not theta)
-        shld = [0;0];           % position of shoulder, in task coordinates [m]
-        B = [0.05 0.025         % damping matrix, Crevecouer 2013 [Nms/rad]
-             0.025 0.05];
-        th_dotLim = [-inf inf;  % joint velocity limits [rad/s]
-                     -inf inf];
+        jDOF = 4;         % joint-space degrees of freedom (shoulder & 
+                          % elbow angle)
+        tDOF = 3;         % task-space degrees of freedom (x & y, not theta)
+        shld = [0;0;0];   % position of shoulder, in task coordinates [m]
+        B = [0.25 .* ones(3,3); % damping matrix, Crevecouer 2013 [Nms/rad]
+        B = B + eye(3).*2.75;
         
-        hand;      % handedness [right or left]
-        m1;        % upperarm mass, Winter [kg]
-        m2;        % forearm mass, Winter [kg]
-        l1;        % upperarm length, Winter [m]
-        l2;        % forearm length, Winter [m]
-        s1;        % shoulder to upperarm COM, Winter [m]
-        s2;        % elbow to forearm COM, Winter [m]
-        r1;        % upperarm radius of gyration (proximal), Winter [m]
-        r2;        % forearm radius of gyration (proximal), Winter [m]
-        I1;        % upperarm moment of inertia about shoulder, Winter [kg-m^2]
-        I2;        % forearm moment of inertia about elbow, Winter [kg-m^2]
-        thLim;     % joint angle limits [rad]
-        torqLim;   % joint torque limits [Nm]
+        hand;    % handedness [right or left]
+        m1;      % upperarm mass, Winter [kg]
+        m2;      % forearm mass, Winter [kg]
+        l1;      % upperarm length, Winter [m]
+        l2;      % forearm length, Winter [m]
+        s1;      % shoulder to upperarm COM, Winter [m]
+        s2;      % elbow to forearm COM, Winter [m]
+        r1;      % upperarm radius of gyration (proximal), Winter [m]
+        r2;      % forearm radius of gyration (proximal), Winter [m]
+        I1;      % upperarm moment of inertia about shoulder, Winter [kg-m^2]
+        I2;      % forearm moment of inertia about elbow, Winter [kg-m^2]
+        thLim;   % joint angle limits [rad]
+        torqLim; % joint torque limits [Nm]
         
     end
     
@@ -45,7 +44,7 @@ classdef arm_2DOF < handle
     methods (Access=public)
         
         % constructor
-        function arm = arm_2DOF(subj, movt)
+        function arm = arm_4DOF(subj, movt)
             if  nargin > 0
                 
                 % set constant properties
@@ -60,8 +59,14 @@ classdef arm_2DOF < handle
                 arm.r2 = 0.827*arm.l2;
                 arm.I1 = arm.m1*arm.r1^2;
                 arm.I2 = arm.m2*arm.r2^2;
-                arm.thLim = [subj.thMin subj.thMax]*(pi/180);
-                arm.torqLim = [subj.torqMin subj.torq1Max];
+                arm.thLim = [subj.th1Min, subj.th1Max;
+                             subj.th2Min, subj.th2Max;
+                             subj.th3Min, subj.th3Max;
+                             subj.th4Min, subj.th4Max ] * (pi/180);
+                arm.torqLim = [subj.torq1Min, subj.torq1Max;
+                               subj.torq2Min, subj.torq2Max;
+                               subj.torq3Min, subj.torq3Max;
+                               subj.torq4Min, subj.torq4Max ];
                 
                 % initialize dynamic properties
                 arm.x = [movt.p_i;movt.v_i];
