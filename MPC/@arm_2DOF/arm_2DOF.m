@@ -45,7 +45,7 @@ classdef arm_2DOF < handle
     methods (Access=public)
         
         % constructor
-        function arm = arm_2DOF(subj, movt)
+        function arm = arm_2DOF(subj)
             if  nargin > 0
                 
                 % set constant properties
@@ -60,7 +60,6 @@ classdef arm_2DOF < handle
                 arm.r2 = 0.827*arm.l2;
                 arm.I1 = arm.m1*arm.r1^2;
                 arm.I2 = arm.m2*arm.r2^2;
-<<<<<<< HEAD
                 
                 % joint limits
                 toRad = pi/180;
@@ -83,19 +82,11 @@ classdef arm_2DOF < handle
                 % initialize dynamic properties
 %                 arm.x = [movt.p_i;movt.v_i];
 %                 [arm.q, arm.elbw, arm.inWS] = arm.invKin();
-=======
-                arm.thLim = [subj.thMin subj.thMax]*(pi/180);
-                arm.torqLim = [subj.torqMin subj.torq1Max];
-                
-                % initialize dynamic properties
-                arm.x = [movt.p_i;movt.v_i];
-                [arm.q, arm.elbw, arm.inWS] = arm.invKin();
->>>>>>> 07d06805ce98e1158a58ae78dff7613f4b3da2b7
+
                 
             end
         end
         
-<<<<<<< HEAD
         
         
         function [inWS, th, th_dot, th_Dot] = invKin(arm, y)
@@ -156,16 +147,11 @@ classdef arm_2DOF < handle
         end
         
         
-        % function prototypes
-        flag = withinLimits(arm, q)
-        [x, elbw, reachable] = fwdKin(arm, q)
-%         [q, elbw, reachable] = invKin(arm, x)
-=======
+        
         % function prototypes
         flag = withinLimits(arm, q)
         [x, elbw, reachable] = fwdKin(arm, q)
         [q, elbw, reachable] = invKin(arm, x)
->>>>>>> 07d06805ce98e1158a58ae78dff7613f4b3da2b7
         f = dynamics(arm, u, ctrlSpace)
         M = draw(arm)
         

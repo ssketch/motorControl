@@ -7,5 +7,5 @@ subj.M = 70;    % kg
 subj.H = 1.80;  % meters
 subj.hand = 'right';
 
-model = arm_2DOF(subj,[]);
+model = arm_2DOF(subj);
 
