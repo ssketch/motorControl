@@ -1,3 +1,5 @@
+% function EOM_4DOF
+
 %%% 4 DOF EOM
 syms th1 th2 th3 th4 l1 l2 l3 l4 l5 shum srad mhum mrad I1 I2 I3 I4 'real'
 
@@ -38,10 +40,37 @@ Jw3 = [ diff(T03(1:3,4),'th1'), diff(T03(1:3,4),'th2'), ...
 Jw4 = [ diff(T04(1:3,4),'th1'), diff(T04(1:3,4),'th2'), ...
     diff(T04(1:3,4),'th3'), diff(T04(1:3,4),'th4') ]; 
 
-M = simplify( mhum*Jvhum'*Jvhum + mrad*Jvrad'*Jvrad + I1*Jw1'*Jw1 + ...
+% Mass matrix, A
+A = simplify( mhum*Jvhum'*Jvhum + mrad*Jvrad'*Jvrad + I1*Jw1'*Jw1 + ...
     I2*Jw2'*Jw2 + I3*Jw3'*Jw3 + I4*Jw4'*Jw4 );
+
+% Centrifugal and Coriolis
+chris = @(i,j,k) simplify( 1/2*( diff(A(i,j),k) + diff(A(i,k),j) - ...
+    diff(A(j,k),i))); % Christoffel symbols
+
+B = 2.* [ chris(1,1,2); chris(2,1,2)
+
+% Gravity effects
 g = [ 0, 0, -9.81 ]';
+<<<<<<< HEAD:MPC/@arm_4DOF/EOM_4DOF.m
+g = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
+
+
+%% Find Operational space equations of motion
+=======
 G = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
 
 
-% Apply subject specific 
+% Apply subject specific parameters
+% th1 = 0; 
+% th2 = 0; 
+% th3 = pi/2;
+% th4 = pi/2;
+% l1 = 0;
+% l2 = 0; 
+% l3 = 0; 
+% l4 = 1; 
+% l5 = 1;
+% srad = 0.5;
+% shum = 0.5;
+>>>>>>> origin/master:MPC/EOM_4DOF.m
