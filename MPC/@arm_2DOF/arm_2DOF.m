@@ -88,8 +88,9 @@ classdef arm_2DOF < handle
         end
         
         
-        
-        function [inWS, th, th_dot, th_Dot] = invKin(arm, y)
+        % This is dependent on Jacobian.  Jacobian must be fixed before
+        % this will work.
+        function [q, inWS] = invKin(arm, y)
             % If the desired point is in the workspace, this function
             % translates Cartesian position, velocity, and acceleration of
             % the arm to joint-space coordinates, accounting for joint
@@ -97,8 +98,6 @@ classdef arm_2DOF < handle
             % space, and that the elbow cannot hyperextend (i.e., have a
             % negative joint angle).
 
-            x = p(1);
-            y = p(2);
 
             c2 = (y(1)^2 + y(2)^2 - arm.l1^2 - arm.l2^2)/(2*arm.l1*arm.l2);
             if c2 > 1
@@ -127,23 +126,26 @@ classdef arm_2DOF < handle
                 th2 = max(arm.thLim(2,:));
             end
 
-%             if inWS 
-%                 % JOINT ANGLES
-%                 th = [th1;th2];
-% 
-%                 % JOINT VELOCITIES
-%                 J = jacobian(th, params);
-%                 th_dot = J\v;
-% 
-%                 % JOINT ACCELERATIONS
-%                 J_dot = jacobianDeriv(th, th_dot, params);
-%                 th_Dot = J\(a - J_dot*th_dot);
-%             else
-%                 th = NaN;
-%                 th_dot = NaN;
-%                 th_Dot = NaN;
-%             end
+            if inWS 
+                % JOINT ANGLES
+                th = [th1;th2];
+
+                % JOINT VELOCITIES
+                J = jacobian(th, params);
+                th_dot = J\v;
+
+                % JOINT ACCELERATIONS
+                J_dot = jacobianDeriv(th, th_dot, params);
+                th_Dot = J\(a - J_dot*th_dot);
+            else
+                th = NaN;
+                th_dot = NaN;
+                th_Dot = NaN;
+            end
             q = [ th1; th2; th_dot ];
+
+
+%             q = [ th1; th2 ];
         end
         
         
@@ -151,7 +153,7 @@ classdef arm_2DOF < handle
         % function prototypes
         flag = withinLimits(arm, q)
         [x, elbw, reachable] = fwdKin(arm, q)
-        [q, elbw, reachable] = invKin(arm, x)
+%         [q, elbw, reachable] = invKin(arm, x)
         f = dynamics(arm, u, ctrlSpace)
         M = draw(arm)
         
