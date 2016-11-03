@@ -21,3 +21,6 @@ Step 2: Initialize git in the terminal
   git init [paste http://gitlocation]
 Step 5: Pull changes from master branch
   git pull origin master
+
+Help:
+https://xkcd.com/1597/
