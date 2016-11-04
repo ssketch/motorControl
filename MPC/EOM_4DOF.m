@@ -1,4 +1,5 @@
 % function EOM_4DOF
+clear; clc; close all;
 
 %%% 4 DOF EOM
 syms th1 th2 th3 th4 l1 l2 l3 l4 l5 shum srad mhum mrad I1 I2 I3 I4 'real'
@@ -48,16 +49,14 @@ A = simplify( mhum*Jvhum'*Jvhum + mrad*Jvrad'*Jvrad + I1*Jw1'*Jw1 + ...
 chris = @(i,j,k) simplify( 1/2*( diff(A(i,j),k) + diff(A(i,k),j) - ...
     diff(A(j,k),i))); % Christoffel symbols
 
-B = 2.* [ chris(1,1,2); chris(2,1,2)
+% B = 2.* [ chris(1,1,2); chris(2,1,2)
 
 % Gravity effects
 g = [ 0, 0, -9.81 ]';
-<<<<<<< HEAD:MPC/@arm_4DOF/EOM_4DOF.m
 g = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
 
 
 %% Find Operational space equations of motion
-=======
 G = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
 
 
@@ -66,11 +65,13 @@ G = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
 % th2 = 0; 
 % th3 = pi/2;
 % th4 = pi/2;
-% l1 = 0;
-% l2 = 0; 
-% l3 = 0; 
+l1 = 0;
+l2 = 0; 
+l3 = 0; 
 % l4 = 1; 
 % l5 = 1;
 % srad = 0.5;
 % shum = 0.5;
->>>>>>> origin/master:MPC/EOM_4DOF.m
+I1 = 0;
+I2 = 0;
+I3 = 0;

@@ -10,8 +10,7 @@ classdef arm_4DOF < handle
                           % elbow angle)
         tDOF = 3;         % task-space degrees of freedom (x & y, not theta)
         shld = [0;0;0];   % position of shoulder, in task coordinates [m]
-        B = [0.25 .* ones(3,3); % damping matrix, Crevecouer 2013 [Nms/rad]
-        B = B + eye(3).*2.75;
+        B = 0.25 .* ones(3,3) + eye(3).*2.75; % damping matrix, Crevecouer 2013 [Nms/rad]
         
         hand;    % handedness [right or left]
         m1;      % upperarm mass, Winter [kg]

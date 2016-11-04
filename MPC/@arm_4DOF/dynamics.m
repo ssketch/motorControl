@@ -5,6 +5,9 @@
 % hand forces.
 function f = dynamics(arm, u, ctrlSpace)
 
+
+M11 = I2*l2^2 + I3*l2^2 + I4*l2^2 + l2^2*mhum + l2^2*mrad + mrad*shum^2 + I3*l3^2*cos(th2)^2 + I4*l3^2*cos(th2)^2 + I4*l4^2*cos(th2)^2 + l3^2*mrad*cos(th2)^2 + l4^2*mrad*cos(th2)^2 + mhum*srad^2*cos(th2)^2 - mrad*shum^2*cos(th4)^2 - mrad*shum^2*cos(th2)^2*cos(th3)^2 + mrad*shum^2*cos(th2)^2*cos(th4)^2 + 2*I3*l2*l3*cos(th2) + 2*I4*l2*l3*cos(th2) + 2*I4*l2*l4*cos(th2) + 2*l2*l3*mrad*cos(th2) + 2*l2*l4*mrad*cos(th2) + 2*l2*mhum*srad*cos(th2) + 2*I4*l3*l4*cos(th2)^2 + 2*l3*l4*mrad*cos(th2)^2 + mrad*shum^2*cos(th2)^2*cos(th3)^2*cos(th4)^2 + 2*l2*mrad*shum*cos(th2)*cos(th4) + 2*l3*mrad*shum*cos(th2)^2*cos(th4) + 2*l4*mrad*shum*cos(th2)^2*cos(th4) - 2*l2*mrad*shum*cos(th3)*sin(th2)*sin(th4) - 2*l3*mrad*shum*cos(th2)*cos(th3)*sin(th2)*sin(th4) - 2*l4*mrad*shum*cos(th2)*cos(th3)*sin(th2)*sin(th4) - 2*mrad*shum^2*cos(th2)*cos(th3)*cos(th4)*sin(th2)*sin(th4)
+
 % Compute mass matrix:
 M11 = arm.I2*arm.l2^2 + arm.I4+arm.L2^2 + arm.L2^2*arm.m1 + ...
     arm.l2^2*arm.m2 + arm.M2*arm.s1^2
