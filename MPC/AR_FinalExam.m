@@ -1,3 +1,6 @@
+%%% This is my code from my final exam for Advanced Robotics.  It's got a
+%%% lot of stuff already written to compute the equations of motion for
+%%% some complicated systems.  I'm using it to get the 4DOF model dynamics.
 tic; clc; clear; close all; format compact;
 set(0,'DefaultFigureWindowStyle','docked');
 
@@ -6,7 +9,6 @@ set(0,'DefaultFigureWindowStyle','docked');
 Rx = @(x) [ 1, 0, 0; 0, cos(x), -sin(x); 0, sin(x), cos(x) ];
 Ry = @(x) [ cos(x), 0, sin(x); 0, 1, 0; -sin(x), 0, cos(x) ];
 Rz = @(x) [ cos(x), -sin(x), 0; sin(x), cos(x), 0; 0, 0, 1 ];
-
 % Convert DH parameters to transformation matrix
 DH2T = @(a, alpha, d, theta) [ Rx(alpha), [a;0;0]; zeros(1,3), 1]*...
     [ Rz(theta), [0;0;d]; zeros(1,3), 1];
