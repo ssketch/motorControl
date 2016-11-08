@@ -47,8 +47,7 @@ Jv3 = [ diff(T03(1:3,4),'th1'), diff(T03(1:3,4),'th2'), ...
     diff(T03(1:3,4),'th3'), diff(T03(1:3,4),'th4') ]; 
 Jv4 = [ diff(T04(1:3,4),'th1'), diff(T04(1:3,4),'th2'), ...
     diff(T04(1:3,4),'th3'), diff(T04(1:3,4),'th4') ]; 
-Jv5 = [ diff(T05(1:3,4),'th1'), diff(T05(1:3,4),'th2'), ...
-    diff(T05(1:3,4),'th3'), diff(T05(1:3,4),'th4') ]; 
+Jv5 = simplify( jacobian( T05(1:3,4), [th1 th2 th3 th4]));
 
 % Jw1 = 
 
@@ -67,21 +66,31 @@ g = [ 0, 0, -9.81 ]';
 % g = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
 
 
+%% Compute the time derivative of the Jacobian
+syms t
+th1 = symfun( sym('th1(t)'), t);
+th2 = symfun( sym('th2(t)'), sym('t'));
+th3 = symfun( sym('th3(t)'), sym('t'));
+th4 = symfun( sym('th4(t)'), sym('t'));
+
+J = eval(Jv5)
+J_dot = diff( J, t )
+
 %% Find Operational space equations of motion
 G = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
 
-
-% Apply subject specific parameters
-th1 = 0; 
-th2 = 0; 
-th3 = 0;
-th4 = 0;
-% l1 = 0;
-% l2 = 0; 
-% l4 = 1; 
-% l5 = 1;
-% srad = 0.5;
-% shum = 0.5;
-I1 = 0;
-I2 = 0;
-I4 = 0;
+% 
+% % Apply subject specific parameters
+% th1 = 0; 
+% th2 = 0; 
+% th3 = 0;
+% th4 = 0;
+% % l1 = 0;
+% % l2 = 0; 
+% % l4 = 1; 
+% % l5 = 1;
+% % srad = 0.5;
+% % shum = 0.5;
+% I1 = 0;
+% I2 = 0;
+% I4 = 0;
