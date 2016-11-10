@@ -36,6 +36,9 @@ Jvhum = [ diff(T0hum(1:3,4),'th1'), diff(T0hum(1:3,4),'th2'), ...
 Jvrad = [ diff(T0rad(1:3,4),'th1'), diff(T0rad(1:3,4),'th2'), ...
     diff(T0rad(1:3,4),'th3'), diff(T0rad(1:3,4),'th4') ]; 
 
+Jvhum = simplify( jacobian( T0hum(1:3,4), [ th1 th2 th3 th4 ] ));
+Jvrad = simplify( jacobian( T0rad(1:3,4), [ th1 th2 th3 th4 ] ));
+
 Jwhum = [ T01(1:3,3), T12(1:3,3), T23(1:3,3), zeros(3,1) ];
 Jwrad = [ T01(1:3,3), T12(1:3,3), T23(1:3,3), T34(1:3,3) ];
 
@@ -52,18 +55,27 @@ Jv5 = simplify( jacobian( T05(1:3,4), [th1 th2 th3 th4]));
 % Jw1 = 
 
 % Mass matrix, A
-A = simplify( mhum*Jvhum'*Jvhum + mrad*Jvrad'*Jvrad + I1*Jv1'*Jv1 + ...
-    I2*Jv2'*Jv2 + I3*Jv3'*Jv3 + I4*Jv4'*Jv4 );
+A = simplify( mhum*Jvhum'*Jvhum + Jwhum'*I3*Jwhum + mrad*Jvrad'*Jvrad + ...
+    Jwrad'*I4*Jwrad);
 
 % Centrifugal and Coriolis
 chris = @(i,j,k) simplify( 1/2*( diff(A(i,j),k) + diff(A(i,k),j) - ...
     diff(A(j,k),i))); % Christoffel symbols
 
-% B = 2.* [ chris(1,1,2); chris(2,1,2)
-
+% Coriolis
+B = 2.* [ chris(1,1,2), chris(1,1,3), chris(1,1,4), chris(1,2,3), chris(1,2,4), chris(1,3,4);
+          chris(2,1,2), chris(2,1,3), chris(2,1,4), chris(2,2,3), chris(2,2,4), chris(2,3,4);
+          chris(3,1,2), chris(3,1,3), chris(3,1,4), chris(3,2,3), chris(3,2,4), chris(3,3,4);
+          chris(4,2,3), chris(4,1,3), chris(4,1,4), chris(4,2,3), chris(4,2,4), chris(4,3,4) ];
+% Centripetal
+C = [ chris(1,1,1), chris(1,2,2), chris(1,3,3), chris(1,4,4);
+      chris(2,1,1), chris(2,2,2), chris(2,3,3), chris(2,4,4);
+      chris(3,1,1), chris(3,2,2), chris(3,3,3), chris(3,4,4);
+      chris(4,1,1), chris(4,2,2), chris(4,3,3), chris(4,4,4) ];
+      
 % Gravity effects
 g = [ 0, 0, -9.81 ]';
-% g = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
+g = -( Jvhum'*mhum*g + Jvrad'*mrad*g );
 
 
 %% Compute the time derivative of the Jacobian
