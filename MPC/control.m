@@ -9,6 +9,13 @@ function u = control(arm, u)
 % The result will be that dq/dt = f(q,u) will take the form dq/dt = Aq + Bu
 % + c, where A = df/dq and B = df/du.
 
+% Taylor series linearization:
+% f(x) ~ f(a) + f'(a)(x - a)
+% f(x) ~ f'(a)*x + [f(a) - f'(a)*a]
+
+% Euler discretization:
+% f'(x) ~ [f(x+dx)-f(x)]/dx
+
 % Define some helpful constants
 nStates = length( arm.q );
 nActuators = length( arm.torqLim );
@@ -73,12 +80,24 @@ cd = c*Ts;
 
 
 %% Linearize the forward kinematics for tracking
-% This way we effectively get operational space control, but without actually
-% having to do any of the math.
+% This way we effectively get operational space control, but without
+% actually having to do any of the math.  This is because the optimal
+% controller minimizes energetic costs while tracking the end-effector in
+% cartesian space.
 
-
-
-
+f = fwdKin( arm, arm.q );
+for i = 1:NStates
+       
+    % Perturb each state (joint angle) by a small amount
+    q = arm.q;
+    q(i) = q(i) + eps;
+    
+    % Compute the dynamics at the slightly modified state
+    feps = fwdKin( arm, q );
+    A(:,i) = (feps-f)/eps;
+    
+end
+y = f - A*arm.q;
 
 
 %% Compute the optimal control for the linearized model
