@@ -51,12 +51,18 @@ end
 
 % Compute the constant term
 c = f - A*arm.q - B*u;
-% 
-% % convert to discrete time
-% Ad = A*params.dt + eye(size(A));
-% Bd = B*params.dt;
-% cd = c*params.dt;
-% 
+
+
+% Step 2) Discretize the linearized model with a zero-order hold
+% approximation.
+
+Ts = 0.01;  % For now I'll define this here.  We can figure out what's best as we go.
+
+Ad = A*Ts + eye(size(A));
+Bd = B*Ts;
+cd = c*Ts;
+
+%  I'll leave this part for Sean....
 % % extend state
 % Aext = diag(ones((params.Nstates)*params.numDelSteps_mod,1),-(params.Nstates));
 % Aext(1:params.Nstates,1:params.Nstates) = Ad;
@@ -66,7 +72,7 @@ c = f - A*arm.q - B*u;
 
 
 
-%% Linearize the forward kinematics for tracking
+%% Linearize the forward kinematics for tracking ? Trust me
 
 
 
