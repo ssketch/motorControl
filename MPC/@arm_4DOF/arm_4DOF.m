@@ -67,14 +67,18 @@ classdef arm_4DOF < handle
                 th4Min = 0*toRad;   th4Max = 170*toRad;        % elbow angle limits [rad]
                 th2dotMin = -50*toRad;  th2dotMax = 90*toRad;  % shoulder velocity limits [rad/s]
                 th4dotMin = -120*toRad; th4dotMax = 120*toRad; % elbow velocity limits [rad/s]
-                torq2Min = -85;     torq2Max = 100;            % shoulder torque limits [Nm]
+                torq1Min = -85;     torq1Max = 100;            % shoulder extension torquelimits [Nm]
+                torq2Min = -60;     torq2Max = 75;             % shoulder abduction torque limits [Nm]               
+                torq3Min = -85;     torq3Max = 100;            % shoulder rotation torque limits [Nm]
                 torq4Min = -60;     torq4Max = 75;             % elbow torque limits [Nm]
                 thLim = [th2Min, th2Max;
                          th4Min, th4Max];
                 thDotLim = [th2dotMin, th2dotMax;
                             th4dotMin, th4dotMax];
-                torqLim = [torq2Min, torq2Max;
-                           torq4Min, torq4Max];
+                torqLim = [ torq1Min, torq1Max;
+                            torq2Min, torq2Max
+                            torq3Min, torq3Max;
+                            torq4Min, torq4Max];
                 
                 arm.thLim = [thLim; thDotLim];
                 arm.torqLim = torqLim;

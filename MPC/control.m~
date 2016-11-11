@@ -51,6 +51,11 @@ end
 
 % Compute the constant term
 c = f - A*arm.q - B*u;
+
+
+%% Linearize the forward kinematics for tracking
+
+
 % 
 % % convert to discrete time
 % Ad = A*params.dt + eye(size(A));
@@ -63,17 +68,10 @@ c = f - A*arm.q - B*u;
 % Bext = [Bd;zeros(params.Nstates*params.numDelSteps_mod,params.Nactuat);...
 %     zeros(1,params.Nactuat)];
 % cext = [c;zeros((params.Nstates)*params.numDelSteps_mod,1)];
-
-
-
-%% Linearize the forward kinematics for tracking
-
-
-
-
-
-
-%% Compute the optimal control for the linearized model
+% 
+% 
+% 
+% %% Compute the optimal control for the linearized model
 % % set constraints
 % model.x.min = params.xMin;
 % model.x.max = params.xMax;

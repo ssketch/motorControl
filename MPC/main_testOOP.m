@@ -9,3 +9,4 @@ subj.hand = 'right';
 
 model = arm_4DOF(subj);
 
+model.q = zeros(8,1);
