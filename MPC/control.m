@@ -62,7 +62,7 @@ Ad = A*Ts + eye(size(A));
 Bd = B*Ts;
 cd = c*Ts;
 
-%  I'll leave this part for Sean....
+%  I'll leave this part for Shaun....
 % % extend state
 % Aext = diag(ones((params.Nstates)*params.numDelSteps_mod,1),-(params.Nstates));
 % Aext(1:params.Nstates,1:params.Nstates) = Ad;
@@ -72,7 +72,9 @@ cd = c*Ts;
 
 
 
-%% Linearize the forward kinematics for tracking ? Trust me
+%% Linearize the forward kinematics for tracking
+% This way we effectively get operational space control, but without actually
+% having to do any of the math.
 
 
 
