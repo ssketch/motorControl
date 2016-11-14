@@ -3,6 +3,21 @@
 % state of the system y.
 function u = control(arm, u)
 
+% ________________________________
+% | Control                      |
+% |   linearize x_dot = F(x,u)   |              _________
+% |   linearize y = G(x)         |              |       |
+% |                              |______________| Plant |
+% |   min y'Qy + u'Ru            |       |      |_______|  
+% |   s.t. x_dot = Ax + Bu       |       |          |
+% |        x_min ? x ? x_max     |       |          |
+% |        u_min ? u ? u_max     |       |          |
+% |______________________________|       |          |
+%                |                _______|______    |
+%                |                |            |    |
+%                |________________|  Estimator |____|
+%                                 |____________|     
+
 %% Linearize the dynamics of the system about the current state:
 % Step 1) Compute a 1st order Taylor series approximation of the dynamics
 % method of the model arm object using the method of finite differences.
@@ -86,7 +101,7 @@ cd = c*Ts;
 % cartesian space.
 
 f = fwdKin( arm, arm.q );
-for i = 1:NStates
+for i = 1:nStates
        
     % Perturb each state (joint angle) by a small amount
     q = arm.q;
@@ -101,22 +116,22 @@ y = f - A*arm.q;
 
 
 %% Compute the optimal control for the linearized model
-% % set constraints
-% model.x.min = params.xMin;
-% model.x.max = params.xMax;
-% model.u.min = params.uMin;
-% model.u.max = params.uMax;
-% 
-% % define cost function
-% model.x.penalty = QuadFunction(params.xCost);
-% model.u.penalty = QuadFunction(params.uCost);
-% 
-% % make model track a reference (can be time-varying)
-% model.x.with('reference');
-% model.x.reference = 'free';
-% 
-% % create MPC controller
-% ctrl = MPCController(model, ctrl.hrzn);
-% 
-% % simulate open-loop system
-% u = ctrl.evaluate(y, 'y.reference', movt.ref);
+% set constraints
+model.x.min = params.xMin;
+model.x.max = params.xMax;
+model.u.min = params.uMin;
+model.u.max = params.uMax;
+
+% define cost function
+model.x.penalty = QuadFunction(params.xCost);
+model.u.penalty = QuadFunction(params.uCost);
+
+% make model track a reference (can be time-varying)
+model.x.with('reference');
+model.x.reference = 'free';
+
+% create MPC controller
+ctrl = MPCController(model, ctrl.hrzn);
+
+% simulate open-loop system
+u = ctrl.evaluate(y, 'y.reference', movt.ref);

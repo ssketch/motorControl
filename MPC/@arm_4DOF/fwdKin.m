@@ -25,9 +25,9 @@ elbow = [  -arm.l3*cos(q(2))*sin(q(1));
             arm.l3*sin(q(2)); 
            -arm.l3*cos(q(1))*cos(q(2))];
 
-x(1) = -arm.l4*(sin(q(4))*(cos(q(1))*cos(q(3)) + sin(q(1))*sin(q(2))*sin(q(3))) + cos(q(2))*cos(q(4))*sin(q(1)));
-x(2) = arm.l4*(cos(q(4))*sin(q(2)) - cos(q(2))*sin(q(3))*sin(q(4)));
-x(3) = arm.l4*(sin(q(4))*(cos(q(3))*sin(q(1)) - cos(q(1))*sin(q(2))*sin(q(3))) - cos(q(1))*cos(q(2))*cos(q(4)));
+x(1,1) = -arm.l4*(sin(q(4))*(cos(q(1))*cos(q(3)) + sin(q(1))*sin(q(2))*sin(q(3))) + cos(q(2))*cos(q(4))*sin(q(1)));
+x(2,1) = arm.l4*(cos(q(4))*sin(q(2)) - cos(q(2))*sin(q(3))*sin(q(4)));
+x(3,1) = arm.l4*(sin(q(4))*(cos(q(3))*sin(q(1)) - cos(q(1))*sin(q(2))*sin(q(3))) - cos(q(1))*cos(q(2))*cos(q(4)));
 
 x = x + elbow;
 
@@ -37,6 +37,6 @@ end
     
 % VELOCITY
 J = arm.jacobian(q);
-x(3:4,:) = J*q(3:4);
+x(4:6) = J*q(5:8);
 
 end

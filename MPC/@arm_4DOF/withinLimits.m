@@ -3,6 +3,6 @@
 function flag = withinLimits(arm, q)
 
 flag = false;
-if all( q >= arm.thLim(:,1)) && all( q <= arm.thLim(:,2))
+if all( q(1:4) >= arm.thLim(:,1)) && all( q(1:4) <= arm.thLim(:,2))
         flag = true;
 end
