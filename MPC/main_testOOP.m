@@ -23,4 +23,4 @@ model = arm_2DOF(subj);
 
 model.q = zeros(4,1);
 
-control( model, zeros(2,1), [
+control( model, zeros(2,1), ones(2,1))
