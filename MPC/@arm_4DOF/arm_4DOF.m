@@ -81,6 +81,8 @@ classdef arm_4DOF < handle
                             torq4Min, torq4Max];
                 
                 arm.thLim = [thLim; thDotLim];
+                arm.thLim = [arm.thLim; -inf*ones(4,1), inf*ones(4,1)];
+                
                 arm.torqLim = torqLim;
                 
 %                 % initialize dynamic properties

@@ -15,4 +15,4 @@ model = arm_4DOF(subj);
 model.q = zeros(8,1);
 
 
-control( model, zeros(4,1))
+control( model, zeros(4,1), [ones(3,1); zeros(3,1)])
