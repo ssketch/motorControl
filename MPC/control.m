@@ -118,7 +118,7 @@ y = f - C*arm.q;
 
 %% Compute the optimal control for the linearized model
 % define linear model
-model = LTISystem( 'A', A, 'B', B, 'f', c, 'C', C, 'g', y );
+model = LTISystem( 'A', A, 'B', B, 'f', c, 'C', C, 'g', y, 'Ts', 0.01 );
 
 % set constraints
 model.x.min = arm.thLim(:,1);
@@ -127,8 +127,8 @@ model.u.min = arm.torqLim(:,1);
 model.u.max = arm.torqLim(:,2);
 
 % define cost function
-model.x.penalty = QuadFunction( diag([1, 1, 1, 1, 0, 0, 0, 0 ]));
-model.u.penalty = QuadFunction( diag([1, 1, 1, 1]));
+model.x.penalty = QuadFunction( diag([ones(arm.jDOF,1); zeros(arm.jDOF,1)]));
+model.u.penalty = QuadFunction( diag(ones(arm.tDOF,1)));
 
 % make model track a reference (can be time-varying)
 model.y.with('reference');
