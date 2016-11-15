@@ -14,6 +14,8 @@ classdef arm_2DOF < handle
         th_dotLim = [-inf inf;  % joint velocity limits [rad/s]
                      -inf inf];
         
+        Ts = 0.01; % Time step in seconds
+                 
         hand;      % handedness [right or left]
         m1;        % upperarm mass, Winter [kg]
         m2;        % forearm mass, Winter [kg]

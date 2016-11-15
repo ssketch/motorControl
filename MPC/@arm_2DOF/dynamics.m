@@ -3,7 +3,7 @@
 % of the form q_dot = f(q,u). In task space, it is of the form x_dot =
 % f(x,u). In either case, u is the vector of joint torques (i.e., one
 % actuator per joint).
-function f = dynamics(arm, u)
+function f = dynamics(arm, q, u)
 % function f = dynamics(arm, u, ctrlSpace)
 
 % compute "inertia" parameters
@@ -12,29 +12,29 @@ a2 = arm.m2 * arm.l1 * arm.s2;
 a3 = arm.I2;
 
 % compute dynamics matrices in joint space
-M11 = a1 + 2*a2*cos(arm.q(2));
-M12 = a3 + a2*cos(arm.q(2));
+M11 = a1 + 2*a2*cos(q(2));
+M12 = a3 + a2*cos(q(2));
 M21 = M12;
 M22 = a3;
 M = [M11 M12;
      M21 M22];
 
-V1 = -arm.q(4)*(2*arm.q(3) + arm.q(4));
-V2 = arm.q(3)^2;
-V = [V1;V2] * a2*sin(arm.q(2));
+V1 = -q(4)*(2*q(3) + q(4));
+V2 = q(3)^2;
+V = [V1;V2] * a2*sin(q(2));
 
 G = [0;0];
 
-Fric = arm.B*arm.q(3:4);
+Fric = arm.B*q(3:4);
 
 % % if necessary convert dynamics matrices to task space
 % if strcmp(ctrlSpace,'joint')
-    f = [arm.q(3:4) ; M\(u-V-G-Fric)];
+    f = [q(3:4) ; M\(u-V-G-Fric)];
 % else
 %     J = arm.jacobian();
 %     J_dot = arm.jacobianDeriv();
 %     Mx = J'\(M/J);
-%     Vx = J'\(V - (M/J)*J_dot*arm.q(3:4));
+%     Vx = J'\(V - (M/J)*J_dot*q(3:4));
 %     Gx = J'\G;
 %     Fricx = J'\Fric;
 %     f = [arm.x(3:4) ; Mx\((J'\u)-Vx-Gx-Fricx)];

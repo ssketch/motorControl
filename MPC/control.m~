@@ -48,7 +48,7 @@ for i = 1:nStates
     q_eps = arm.q;
     
     % Perturb each state (joint angle) by a small amount
-    q_eps(i) = q_eps(i) + eps;
+    q_eps = q_eps(i) + eps;
     
     % Compute the dynamics at the slightly modified state
     feps = dynamics( arm, q_eps, u );
@@ -78,9 +78,11 @@ c = f - A*arm.q - B*u;
 % Step 2) Discretize the linearized model with a zero-order hold
 % approximation.
 
-Ad = A*arm.Ts + eye(size(A));
-Bd = B*arm.Ts;
-cd = c*arm.Ts;
+Ts = 0.01;  % For now I'll define this here.  We can figure out what's best as we go.
+
+Ad = A*Ts + eye(size(A));
+Bd = B*Ts;
+cd = c*Ts;
 
 %  I'll leave this part for Shaun....
 % % extend state
@@ -118,8 +120,7 @@ y = f - C*arm.q;
 %   x_dot = Ax + Bu + f
 %   y = Cx + g
 % with a time step, Ts.
-model = LTISystem( 'A', Ad, 'B', Bd, 'f', cd, 'C', C, 'g', y, 'Ts', ...
-    arm.Ts );
+model = LTISystem( 'A', Ad, 'B', Bd, 'f', cd, 'C', C, 'g', y, 'Ts', Ts );
 
 % set constraints
 model.x.min = arm.thLim(:,1);
@@ -128,9 +129,8 @@ model.u.min = arm.torqLim(:,1);
 model.u.max = arm.torqLim(:,2);
 
 % define cost function
-model.x.penalty = QuadFunction( diag([ones(arm.jDOF,1); ...
-    zeros(arm.jDOF,1)]));
-model.u.penalty = QuadFunction( diag(ones(arm.jDOF,1)));
+model.x.penalty = QuadFunction( diag([ones(arm.jDOF,1); zeros(arm.jDOF,1)]));
+model.u.penalty = QuadFunction( diag(ones(arm.tDOF,1)));
 
 % make model track a reference (can be time-varying)
 model.y.with('reference');

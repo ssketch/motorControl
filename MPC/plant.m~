@@ -1,0 +1,12 @@
+function arm = plant( arm, u )
+
+% ____________                    __________
+% |          |                    | 
+% | Control  |____________________| Plant: solve the differential
+% |__________|                    |    equation of motion for the 
+%                                 |    model given by
+%                                 |     x_dot = f(x,u)
+%                                 |________________________________
+
+
+[ t, y ] = ode45(@(t,q) dynamics(arm,q, u), [0 0.01], arm.q );
