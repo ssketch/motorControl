@@ -13,9 +13,7 @@ classdef arm_2DOF < handle
              0.025 0.05];
         th_dotLim = [-inf inf;  % joint velocity limits [rad/s]
                      -inf inf];
-        
-        Ts = 0.01; % Time step in seconds
-                 
+                         
         hand;      % handedness [right or left]
         m1;        % upperarm mass, Winter [kg]
         m2;        % forearm mass, Winter [kg]
@@ -40,6 +38,8 @@ classdef arm_2DOF < handle
         x;    % state, in task coordinates [m,m/s]
         elbw; % position of elbow, in task coordinates [m]
         inWS; % 1 = in workspace, 0 = outside workspace
+    
+        Ts = 0.01; % Time step in seconds
     
     end
     

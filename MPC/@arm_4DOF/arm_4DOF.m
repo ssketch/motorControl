@@ -12,9 +12,6 @@ classdef arm_4DOF < handle
         shld = [0;0;0];   % position of shoulder, in task coordinates [m]
         B = 0.25 .* ones(4,4) + eye(4).*2.75; % damping matrix, Crevecouer 
                                               % 2013 [Nms/rad]
-        
-        Ts = 0.01; % Time step in seconds
-
                                               
         hand;    % handedness [right or left]
         m3;      % upperarm mass, Winter [kg]
@@ -43,6 +40,8 @@ classdef arm_4DOF < handle
         elbw; % position of elbow, in task coordinates [m]
         inWS; % 1 = in workspace, 0 = outside workspace
     
+        Ts = 0.01; % Time step in seconds
+
     end
     
     % methods that can be called from outside of the class

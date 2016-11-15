@@ -20,10 +20,10 @@ function u = control(arm, u, ref)
 % 
 
 %% Linearize the dynamics of the system about the current state:
-% Compute a 1st order Taylor series approximation of the dynamics method of
-% the model arm object using the method of finite differences. The result
-% will be that dq/dt = f(q,u) will take the form dq/dt = Aq + Bu + c, where
-% A = df/dq and B = df/du.
+% Step 1) Compute a 1st order Taylor series approximation of the dynamics
+% method of the model arm object using the method of finite differences.
+% The result will be that dq/dt = f(q,u) will take the form dq/dt = Aq + Bu
+% + c, where A = df/dq and B = df/du.
 
 % Taylor series linearization:
 % f(x) ~ f(a) + f'(a)(x - a)
