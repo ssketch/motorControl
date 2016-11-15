@@ -18,8 +18,13 @@ model = arm_2DOF(subj);
 model.q = [ 45; 45; 0 ; 0] * pi/180;
 draw(model);
 
+histories.u = [];
+histories.q = [];
+histories.x = [];
 
 q_history = [];
+x_history = [];
+
 ref = [ 30; 30; 0; 0 ] * pi/180;
 ref = [ 0.3; 0.3; 0; 0 ];
 % Perform a reach:
@@ -36,10 +41,18 @@ for i = 1:500
     draw( model);
     display(num2str(i))
     
-    q_history = [ q_history, model.q ];
+    histories.u = [ histories.u, u_star ];
+    histories.q = [ histories.q, model.q ];
+    histories.x = [ histories.x, model.x ];
 end
 
 figure
-plot( q_history' .* 180/pi )
-hold on
-plot( ref )
+subplot(3,1,1)
+    plot( histories.u' )
+    ylabel 'Optimal joint torques, N-m'
+subplot(3,1,2)
+    plot( histories.q'*180/pi )
+    ylabel 'Joint angle trajecotires, degrees'
+subplot(3,1,3)
+    plot( histories.x' )
+    ylabel 'Hand trajectory, m'

@@ -29,7 +29,7 @@ function u = control(arm, u, ref)
 % f(x) ~ f(a) + f'(a)(x - a)
 % f(x) ~ f'(a)*x + [f(a) - f'(a)*a]
 
-% Euler discretization:
+% Euler (1st order Runge-Kutta) discretization:
 % f'(x) ~ [f(x+dx)-f(x)]/dx
 
 % Define some helpful constants
@@ -129,9 +129,9 @@ model.u.min = arm.torqLim(:,1);
 model.u.max = arm.torqLim(:,2);
 
 % define cost function
-model.y.penalty = QuadFunction( diag([1*ones(arm.jDOF,1); ...
+model.y.penalty = QuadFunction( diag(1000*[ones(arm.jDOF,1); ...
     0.1*ones(arm.jDOF,1)]));
-model.u.penalty = QuadFunction( 0.1*diag(ones(arm.jDOF,1)));
+model.u.penalty = QuadFunction( diag(ones(arm.jDOF,1)));
 
 % make model track a reference (can be time-varying)
 model.y.with('reference');
