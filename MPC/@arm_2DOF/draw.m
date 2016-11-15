@@ -3,14 +3,17 @@
 % 'arm' object.
 function M = draw(arm)
 
+% Run forwad kinematics just to be sure
+[ arm.x, arm.elbow ] = fwdKin( arm, arm.q );
+
 % plot limbs
-plot([arm.shld(1),arm.elbw(1)],[arm.shld(2),arm.elbw(2)],'b',...
-     [arm.elbw(1),arm.x(1)],[arm.elbw(2),arm.x(2)],'c','LineWidth',6);
+plot([arm.shld(1),arm.elbow(1)],[arm.shld(2),arm.elbow(2)],'b',...
+     [arm.elbow(1),arm.x(1)],[arm.elbow(2),arm.x(2)],'c','LineWidth',6);
 hold on
 
 % plot joints
 plot(arm.shld(1),arm.shld(2),'ko','MarkerSize',20,'MarkerFaceColor','k');
-plot(arm.elbw(1),arm.elbw(2),'ko','MarkerSize',20,'MarkerFaceColor','k');
+plot(arm.elbow(1),arm.elbow(2),'ko','MarkerSize',20,'MarkerFaceColor','k');
 plot(arm.x(1),arm.x(2),'ko','MarkerSize',20,'MarkerFaceColor','k');
 
 % set axes to cover workspace (depends on handedness)

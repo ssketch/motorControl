@@ -120,6 +120,7 @@ y = f - C*arm.q;
 % with a time step, Ts.
 model = LTISystem( 'A', Ad, 'B', Bd, 'f', cd, 'C', C, 'g', y, 'Ts', ...
     arm.Ts );
+% model = LTISystem( 'A', Ad, 'B', Bd, 'f', cd, 'Ts', arm.Ts );
 
 % set constraints
 model.x.min = arm.thLim(:,1);
@@ -128,9 +129,9 @@ model.u.min = arm.torqLim(:,1);
 model.u.max = arm.torqLim(:,2);
 
 % define cost function
-model.x.penalty = QuadFunction( diag([ones(arm.jDOF,1); ...
-    zeros(arm.jDOF,1)]));
-model.u.penalty = QuadFunction( diag(ones(arm.jDOF,1)));
+model.y.penalty = QuadFunction( diag([1*ones(arm.jDOF,1); ...
+    0.1*ones(arm.jDOF,1)]));
+model.u.penalty = QuadFunction( 0.1*diag(ones(arm.jDOF,1)));
 
 % make model track a reference (can be time-varying)
 model.y.with('reference');

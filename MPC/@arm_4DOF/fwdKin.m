@@ -4,14 +4,14 @@
 % default for any 'arm' object. It also outputs elbow position for
 % plotting. If no state is specified as input, the function performs
 % forward kinematics on the current state of the 'arm' object.
-function [x, elbw, reachable] = fwdKin(arm, q)
+function [x, elbow, reachable] = fwdKin(arm, q)
 
 % check that given state is within joint limits
 if nargin == 2
     reachable = arm.withinLimits(q);
     if ~reachable
         x = NaN;
-        elbw = NaN;
+        elbow = NaN;
         return
     end
 % if no state specified, use current arm state, assuming reachable
