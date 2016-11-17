@@ -22,11 +22,15 @@ end
 
 % POSITION
 if strcmp(arm.hand,'right')
-    elbow = arm.shld + [arm.l1*cos(q(1));arm.l1*sin(q(1))];
-    x(1:2,:) = elbow + [arm.l2*cos(q(1)+q(2));arm.l2*sin(q(1)+q(2))];
+    elbow = arm.shld + [arm.l1.*cos(q(1));
+                        arm.l1.*sin(q(1))];
+    x(1:2,:) = elbow + [arm.l2.*cos(q(1)+q(2));
+                        arm.l2.*sin(q(1)+q(2))];
 else
-    elbow = arm.shld + [arm.l1*cos(pi-q(1));arm.l1*sin(pi-q(1))];
-    x(1:2,:) = elbow + [arm.l2*cos(pi-q(1)-q(2));arm.l2*sin(pi-q(1)-q(2))];
+    elbow = arm.shld + [arm.l1.*cos(pi-q(1));
+                        arm.l1.*sin(pi-q(1))];
+    x(1:2,:) = elbow + [arm.l2.*cos(pi-q(1)-q(2));
+                        arm.l2.*sin(pi-q(1)-q(2))];
 end
 
 % VELOCITY

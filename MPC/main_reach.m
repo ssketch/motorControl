@@ -21,7 +21,8 @@ model.q = zeros(4,1);
 for i = 1:10
     
     % Compute the optimal control value
-    u_star = control( model, zeros(2,1), [ones(2,1); zeros(2,1)])
+    u_star = control( model, zeros(2,1), [ones(2,1); zeros(2,1)], ...
+        'cartesian');
     
     % Implement the optimal torques on the model.
     model = plant( model, u_star );
