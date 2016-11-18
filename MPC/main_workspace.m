@@ -15,17 +15,17 @@ model = arm_2DOF(subj);
 
 % Initially, the model will be resting at 0 degrees of shoulder horizontal
 % rotation and 0 degrees of elbow flexion.
-model.q = [ 45; 45; 0; 0 ];
+model.q = model.thLim(:,2);
 draw(model);
 
 histories.u = [];
 histories.q = model.q;
 histories.x = fwdKin( model, model.q );
 
-ref = [ 30; 30; 0; 0 ] * pi/180;
-% ref = [ 0.3; 0.3; 0; 0 ];
+% ref = [ 30; 30; 0; 0 ] * pi/180;
+ref = model.thLim(:,2);
 % Perform a reach:
-for i = 1:500
+for i = 1:200
     
     % Compute the optimal control value
     u_star = control( model, zeros(2,1), ref, 'joint' );
@@ -46,11 +46,21 @@ end
 
 figure
 subplot(3,1,1)
-    plot( histories.u' )
+    plot( model.Ts*(1:length(histories.u(1,:))), histories.u(1,:), ...
+          model.Ts*(1:length(histories.u(1,:))), histories.u(2,:))
     ylabel 'Optimal joint torques, N-m'
+    box off
+    
 subplot(3,1,2)
-    plot( histories.q'*180/pi )
+    plot( model.Ts*(0:length(histories.u(1,:))), histories.q(1,:)*180/pi,...
+          model.Ts*(0:length(histories.u(1,:))), histories.q(2,:)*180/pi )
     ylabel 'Joint angle trajecotires, degrees'
+    box off
 subplot(3,1,3)
-    plot( histories.x' )
+    plot( model.Ts*(0:length(histories.u(1,:))), histories.x(1,:),...
+          model.Ts*(0:length(histories.u(1,:))), histories.x(2,:),...
+          model.Ts*(0:length(histories.u(1,:))), histories.x(3,:),...
+          model.Ts*(0:length(histories.u(1,:))), histories.x(4,:) )
     ylabel 'Hand trajectory, m'
+    xlabel 'Time (sec)'
+    box off

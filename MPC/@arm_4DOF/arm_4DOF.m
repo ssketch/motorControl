@@ -8,7 +8,7 @@ classdef arm_4DOF < handle
         
         jDOF = 4;         % joint-space degrees of freedom (shoulder & 
                           % elbow angle)
-        tDOF = 6;         % task-space degrees of freedom (x & y, not theta)
+        tDOF = 3;         % task-space degrees of freedom (x & y, not theta)
         shld = [0;0;0];   % position of shoulder, in task coordinates [m]
         B = 0.25 .* ones(4,4) + eye(4).*2.75; % damping matrix, Crevecouer 
                                               % 2013 [Nms/rad]

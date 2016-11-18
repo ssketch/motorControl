@@ -15,17 +15,17 @@ model = arm_2DOF(subj);
 
 % Initially, the model will be resting at 0 degrees of shoulder horizontal
 % rotation and 0 degrees of elbow flexion.
-model.q = [ 45; 45; 0 ; 0] * pi/180;
+model.q = [ 45; 45; 0; 0 ] *pi/180;
 draw(model);
 
 histories.u = [];
 histories.q = model.q;
 histories.x = fwdKin( model, model.q );
 
-ref = [ 30; 30; 0; 0 ] * pi/180;
-% ref = [ 0.3; 0.3; 0; 0 ];
+% ref = [ 30; 30; 0; 0 ] * pi/180;
+ref = model.thLim(:,1);
 % Perform a reach:
-for i = 1:500
+for i = 1:200
     
     % Compute the optimal control value
     u_star = control( model, zeros(2,1), ref, 'joint' );
@@ -36,7 +36,8 @@ for i = 1:500
     % Sense the resulting sensory outputs and estimate the next state.
 
     draw( model);
-    display(['Time step: ' num2str(i)) ', State: ' num2str(model.q)* ])
+    display(['Time = ' num2str(i*model.Ts) 'sec'])
+    model.q - histories.q(:,end)
     
     histories.u = [ histories.u, u_star ];
     histories.q = [ histories.q, model.q ];
@@ -45,8 +46,12 @@ end
 
 figure
 subplot(3,1,1)
-    plot( histories.u' )
+    plot( model.Ts*(1:length(histories.u(1,:))), histories.u(1,:), ...
+          model.Ts*(1:length(histories.u(1,:))), histories.u(2,:))
     ylabel 'Optimal joint torques, N-m'
+    xlabel 'Time (
+    box off
+    
 subplot(3,1,2)
     plot( histories.q'*180/pi )
     ylabel 'Joint angle trajecotires, degrees'

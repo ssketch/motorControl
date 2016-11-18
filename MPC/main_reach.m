@@ -28,6 +28,10 @@ for i = 1:10
     model = plant( model, u_star );
     
     % Sense the resulting sensory outputs and estimate the next state.
+   
+    
+    
+    draw( model);
 
 end
 
@@ -43,7 +47,8 @@ model.q = zeros(8,1);
 for i = 1:10
     
     % Compute the optimal control value
-    u_star = control( model, zeros(4,1), [ones(3,1); zeros(3,1)])
+    u_star = control( model, zeros(4,1), [ones(3,1); zeros(3,1)], ...
+        'cartesian')
     
     % Implement the optimal torques on the model.
     model = plant( model, u_star );
