@@ -1,6 +1,7 @@
-function arm = plant( arm, u )
-% This function solves the nonlinear equations of motion of a system using
-% a variable step size numerical integrator, ode45.m.
+function arm = plant(arm, u)
+% This function solves the nonlinear equations of motion of an arm model
+% (over a single time step) using the variable-step-size numerical
+% integrator 'ode45'.
 
 % ____________                    __________________________________
 % |          |                    |                                |
@@ -14,8 +15,8 @@ function arm = plant( arm, u )
 %       |___________|  Estimator |____|
 %                   |____________|     
 
-% Solve the differential equation using ode45
-[ ~, y ] = ode45(@(t,q) dynamics(arm, q, u), [0, arm.Ts], arm.q ); 
+% solve the equations of motion using ode45
+[ ~, y ] = ode45(@(t,q) dynamics(arm,q,u), [0,arm.Ts], arm.q); 
 
-% Save the integrated result as the new state of the arm.
+% save the integrated result as the new state of the arm
 arm.q = y(end,:)';

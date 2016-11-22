@@ -1,8 +1,10 @@
-% This function computes the MPC control output u for an MPT model of
-% the human arm tracking a reference state provided by ref and the current
-% state of the system y.
 function u = control(arm, u, ref, space)
+% This function computes the MPC control output u for a model of the arm
+% (linearized about the current state estimate) tracking a reference state provided by ref and the current
+% state of the system y.
+
 % ________________________________
+% |                              |
 % | Control                      |
 % |   linearize x_dot = F(x,u)   |              _________
 % |   linearize y = G(x)         |              |       |
