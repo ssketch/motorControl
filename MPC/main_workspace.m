@@ -22,8 +22,8 @@ histories.u = [];
 histories.q = model.q;
 histories.x = fwdKin( model, model.q );
 
-ref = [ 30; 30; 0; 0 ] * pi/180;
-% ref = model.thLim(:,2);
+% ref = [ 30; 30; 0; 0 ] * pi/180;
+ref = [model.thLim(1:2,1) ;0;0];
 % Perform a reach:
 for i = 1:200
     
