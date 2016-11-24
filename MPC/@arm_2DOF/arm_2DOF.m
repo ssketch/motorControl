@@ -11,8 +11,10 @@ classdef arm_2DOF < handle
         shld = [0;0];           % position of shoulder, in task coordinates [m]
         B = [0.05 0.025         % damping matrix, Crevecouer 2013 [Nms/rad]
              0.025 0.05];
-        th_dotLim = [-inf inf;  % joint velocity limits [rad/s]
-                     -inf inf];
+
+        %%%%%%%%  Why are th_dotLims defined twice? %%%%%%%%%%%%%%%%%%%%%%% 
+        thdotLim = [-inf inf;  % joint velocity limits [rad/s]
+                    -inf inf];
                          
         hand;      % handedness [right or left]
         m1;        % upperarm mass, Winter [kg]
@@ -73,8 +75,15 @@ classdef arm_2DOF < handle
                 torq2Min = -60;     torq2Max = 75;             % elbow torque limits [Nm]
                 thLim = [th1Min, th1Max;
                          th2Min, th2Max];
+                     
                 thDotLim = [th1dotMin, th1dotMax;
                             th2dotMin, th2dotMax];
+%%% NOTE: I had to unlimit the joint angular velocities to prevent errors
+%%% in the simulations.  The ones defined here appear to be quite
+%%% restrictive.
+                thDotLim = [ -inf, inf; -inf, inf ];
+                
+                
                 torqLim = [torq1Min, torq1Max;
                            torq2Min, torq2Max];
                 

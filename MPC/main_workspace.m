@@ -15,15 +15,15 @@ model = arm_2DOF(subj);
 
 % Initially, the model will be resting at 0 degrees of shoulder horizontal
 % rotation and 0 degrees of elbow flexion.
-model.q = model.thLim(:,2);
-draw(model);
+model.q = [mean( model.thLim(1:2,:), 2 ); 0; 0 ];
+model.draw;
 
 histories.u = [];
 histories.q = model.q;
 histories.x = fwdKin( model, model.q );
 
-% ref = [ 30; 30; 0; 0 ] * pi/180;
-ref = model.thLim(:,2);
+ref = [ 30; 30; 0; 0 ] * pi/180;
+% ref = model.thLim(:,2);
 % Perform a reach:
 for i = 1:200
     
@@ -35,7 +35,7 @@ for i = 1:200
     
     % Sense the resulting sensory outputs and estimate the next state.
 
-    draw( model);
+    model.draw;
     display(['Time = ' num2str(i*model.Ts) 'sec'])
     model.q - histories.q(:,end)
     
