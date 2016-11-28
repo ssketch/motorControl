@@ -1,16 +1,18 @@
 function u = control(arm, u, ref, space)
 % This function computes the MPC control output u for a model of the arm
-% (linearized about the current state estimate) tracking a reference state provided by ref and the current
-% state of the system y.
+% tracking a reference state ref in either joint or Cartesian space. It
+% employs the Multi-Parametric Toolbox MPT3. The MPT model is created by
+% first linearizing the arm model (both dynamics and output) about the 
+% current state estimate.
 
 % ________________________________
 % |                              |
 % | Control                      |
-% |   linearize x_dot = F(x,u)   |              _________
-% |   linearize y = G(x)         |              |       |
+% |   linearize dx/dt = f(x,u)   |              _________
+% |   linearize y = g(x)         |              |       |
 % |                              |______________| Plant |
-% |   min y'Qy + u'Ru            |       |      |_______|  
-% |   s.t. x_dot = Ax + Bu       |       |          |
+% |   min  y'Qy + u'Ru           |       |      |_______|  
+% |   s.t. dx/dt = Ax + Bu       |       |          |
 % |        x_min <= x <= x_max   |       |          |
 % |        u_min <= u <= u_max   |       |          |
 % |______________________________|       |          |
@@ -20,22 +22,24 @@ function u = control(arm, u, ref, space)
 %                                 |____________|     
 % 
 
-%% Linearize the dynamics of the system about the current state:
-% Step 1) Compute a 1st order Taylor series approximation of the dynamics
-% method of the model arm object using the method of finite differences.
-% The result will be that dq/dt = f(q,u) will take the form dq/dt = Aq + Bu
-% + c, where A = df/dq and B = df/du.
+%% LINEARIZE DYNAMICS
 
-% Taylor series linearization:
-% f(x) ~ f(a) + f'(a)(x - a)
-% f(x) ~ f'(a)*x + [f(a) - f'(a)*a]
-
-% Euler (1st order Runge-Kutta) discretization:
-% f'(x) ~ [f(x+dx)-f(x)]/dx
+% To linearize, compute the 1st-order Taylor series approximation of the
+% dynamics dx/dt = f(x,u) about the current state x_k and control u_k. The
+% result will take the (affine) form dx/dt = f(x,u) = Ax + Bu + c, where
+% A = df/dx and B = df/du:
+%
+%   f(x,u) ~ f(x_k,u_k) + df/dx*(x - x_k) + df/du*(u - u_k) + H.O.T.
+%   f(x,u) ~ (df/dx)*x + (df/du)*u + [f(x_k,u_k) - (df/dx)*x_k - (df/du)*u)k]
+%   f(x,u) ~ Ax + Bu + c
+%
+%   where derivatives are approximated via Euler's method:
+%     df/dx @ x_k ~ [f(x_k+dx)-f(x_k)]/dx
+%     df/du @ u_k ~ [f(u_k+du)-f(u_k)]/du
 
 % Define some helpful constants
-nStates = length( arm.q );
-nActuators = length( arm.torqLim );
+nStates = length(arm.q);
+nActuators = length(arm.torqLim);
 
 % Allocate memory for the matrices to be used.
 A = zeros(nStates);
@@ -178,8 +182,3 @@ switch space
         warning('Control space not found.')
         
 end
-    
-
-
-
-
