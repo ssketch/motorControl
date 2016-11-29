@@ -22,8 +22,7 @@ function u = control(arm, u, ref, space)
 %                                 |____________|     
 % 
 
-%% LINEARIZE DYNAMICS
-
+%% LINEARIZATION
 % To linearize, compute the 1st-order Taylor series approximation of the
 % dynamics dx/dt = f(x,u) about the current state x_k and control u_k. The
 % result will take the (affine) form dx/dt = f(x,u) = Ax + Bu + c, where

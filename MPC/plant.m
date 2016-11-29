@@ -17,7 +17,7 @@ function arm = plant(arm, u)
 %                   |____________|     
 
 % solve the equations of motion using ode45
-[~, y] = ode45(@(t,q) arm.dynamics(q,u), [0,arm.Ts], arm.q); 
+[~, y] = ode45(@(t,q) dynamics(arm,q,u), [0,arm.Ts], arm.q);
 
 % save the integrated result as new state of the arm
 arm.q = y(end,:)';

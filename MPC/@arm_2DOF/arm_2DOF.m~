@@ -63,18 +63,27 @@ classdef arm_2DOF < handle
                 
                 % define joint limits
                 toRad = pi/180;
-                th1Min = -70*toRad; th1Max = 120*toRad; % shoulder angle limits [rad]
-                th2Min = 0*toRad;   th2Max = 170*toRad; % elbow angle limits [rad]
-                th1dotMin = -inf;   th1dotMax = inf;    % shoulder velocity limits [rad/s]
-                th2dotMin = -inf;   th2dotMax = inf;    % elbow velocity limits [rad/s]
-                torq1Min = -85;     torq1Max = 100;     % shoulder torque limits [Nm]
-                torq2Min = -60;     torq2Max = 75;      % elbow torque limits [Nm]
+                th1Min = -70*toRad;     th1Max = 120*toRad; % shoulder angle limits [rad]
+                th2Min = 0*toRad;       th2Max = 170*toRad; % elbow angle limits [rad]
+                th1dotMin = -inf;       th1dotMax = inf;    % shoulder velocity limits [rad/s]
+                th2dotMin = -inf;       th2dotMax = inf;    % elbow velocity limits [rad/s]
+                torq1Min = -85;         torq1Max = 100;     % shoulder torque limits [Nm]
+                torq2Min = -60;         torq2Max = 75;      % elbow torque limits [Nm]
                 arm.thLim = [th1Min th1Max;
                              th2Min th2Max];
-                arm.thDotLim = [th1dotMin th1dotMax;
-                                th2dotMin th2dotMax];
-                arm.torqLim = [torq1Min torq1Max;
-                               torq2Min torq2Max];
+                     
+                thDotLim = [th1dotMin, th1dotMax;
+                            th2dotMin, th2dotMax];
+                torqLim = [torq1Min, torq1Max;
+                           torq2Min, torq2Max];
+                
+                arm.thLim = [thLim; thDotLim];
+                arm.torqLim = torqLim;
+                
+                % initialize dynamic properties
+%                 arm.x = [movt.p_i;movt.v_i];
+%                 [arm.q, arm.elbow, arm.inWS] = arm.invKin();
+
                 
             end
         end
