@@ -112,6 +112,12 @@ switch space
         model.u.min = arm.torqLim(:,1);
         model.u.max = arm.torqLim(:,2);
         
+        % use soft constraints for feasibility
+%         model.x.with('softMax');
+%         model.x.with('softMin');
+        model.u.with('softMax');
+        model.u.with('softMin');
+        
         % define cost function
         model.x.penalty = QuadFunction( diag(1e3*[ones(arm.jDOF,1); ...
             1e-2*ones(arm.jDOF,1)]));
@@ -160,6 +166,12 @@ switch space
         model.u.min = arm.torqLim(:,1);
         model.u.max = arm.torqLim(:,2);
         
+        % use soft constraints for feasibility
+        model.x.with('softMax');
+        model.x.with('softMin');
+        model.u.with('softMax');
+        model.u.with('softMin');
+        
         % define cost function
         model.y.penalty = QuadFunction( diag(1e3*[ones(arm.tDOF,1); ...
             1e-2*ones(arm.tDOF,1)]));
@@ -178,5 +190,4 @@ switch space
         
     otherwise
         warning('Control space not found.')
-        
-end
+end        

@@ -73,6 +73,8 @@ classdef arm_2DOF < handle
                              th2Min th2Max];
                 arm.thDotLim = [th1dotMin th1dotMax;
                                 th2dotMin th2dotMax];
+                            
+                arm.thLim = [arm.thLim; arm.thDotLim];
                 arm.torqLim = [torq1Min torq1Max;
                                torq2Min torq2Max];
                 

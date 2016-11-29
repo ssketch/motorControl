@@ -13,7 +13,6 @@ if nargin == 2
         x = NaN;
         elbow = NaN;
         warning('Posture exceeds joint limitations.')
-        return
     end
 % if no state specified, use current arm state, assuming reachable
 else
