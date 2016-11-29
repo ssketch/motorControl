@@ -96,28 +96,6 @@ cd = c*arm.Ts;
 % cext = [c;zeros((params.Nstates)*params.numDelSteps_mod,1)];
 
 
-
-%% Linearize the forward kinematics for tracking
-% This way we effectively get operational space control, but without
-% actually having to do any of the math.  This is because the optimal
-% controller minimizes energetic costs while tracking the end-effector in
-% cartesian space.
-
-f = fwdKin( arm, arm.q );
-for i = 1:nStates
-       
-    % Perturb each state (joint angle) by a small amount
-    qeps = arm.q;
-    qeps(i) = qeps(i) + eps;
-    
-    % Compute the dynamics at the slightly modified state
-    feps = fwdKin( arm, qeps );
-    C(:,i) = (feps - f) ./ eps;
-    
-end
-y = f - C*arm.q;
-
-
 %% Compute the optimal control for the linearized model
 % Define the digital linear model, which looks like this:
 %   x_dot = Ax + Bu + f
@@ -152,6 +130,27 @@ switch space
         u = ctrl.evaluate( arm.q, 'x.reference', ref);
         
     case 'cartesian'
+
+        %%% Linearize the forward kinematics for tracking
+        % This way we effectively get operational space control, but without
+        % actually having to do any of the math.  This is because the optimal
+        % controller minimizes energetic costs while tracking the end-effector in
+        % cartesian space.
+
+        f = fwdKin( arm, arm.q );
+        for i = 1:nStates
+
+                % Perturb each state (joint angle) by a small amount
+                qeps = arm.q;
+                qeps(i) = qeps(i) + eps;
+
+                % Compute the dynamics at the slightly modified state
+                feps = fwdKin( arm, qeps );
+                C(:,i) = (feps - f) ./ eps;
+
+        end
+        y = f - C*arm.q;
+
         % Define the model
         model = LTISystem( 'A', Ad, 'B', Bd, 'f', cd, 'C', C, 'g', y, 'Ts', ...
             arm.Ts );
