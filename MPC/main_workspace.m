@@ -27,11 +27,16 @@ ref = [model.thLim(1:2,1) ;0;0];
 % Perform a reach:
 for i = 1:200
     
-    % Compute the optimal control value
-    u_star = control( model, zeros(2,1), ref, 'joint' );
+    if withinLimits( model, model.q)
+        % Compute the optimal control value
+        u_star = control( model, zeros(2,1), ref, 'joint' );
+
+        % Implement the optimal torques on the model.
+        model = plant( model, u_star ); 
+    else
+        warning('Current state is beyond the valid workspace')
+    end
     
-    % Implement the optimal torques on the model.
-    model = plant( model, u_star );
     
     % Sense the resulting sensory outputs and estimate the next state.
 
