@@ -135,11 +135,19 @@ switch space
         model.u.min = arm.torqLim(:,1);
         model.u.max = arm.torqLim(:,2);
         
-        % use soft constraints for feasibility
+        % Add soft constraints.  These soft constraints will allow for
+        % small violations of constraints (<= 10% of maximum here) to
+        % ensure feasibility.
 %         model.x.with('softMax');
+%         model.x.softMax.maximalViolation = model.x.max * 1.1;
 %         model.x.with('softMin');
+%         model.x.softMax.maximalViolation = model.x.max * 1.1;
+
         model.u.with('softMax');
+        model.u.softMax.maximalViolation = model.u.max * 1.1;
         model.u.with('softMin');
+        model.u.softMin.maximalViolation = model.u.min * 1.1;
+        
         
         % define cost function
         model.x.penalty = QuadFunction( diag(1e3*[ones(arm.jDOF,1); ...
@@ -164,8 +172,20 @@ switch space
         % actually having to do any of the math.  This is because the optimal
         % controller minimizes energetic costs while tracking the end-effector in
         % cartesian space.
-
         
+        f = fwdKin( arm );
+        for i = 1:nStates
+
+                % Perturb each state (joint angle) by a small amount
+                qeps = arm.q;
+                qeps(i) = qeps(i) + eps;
+
+                % Compute the dynamics at the slightly modified state
+                feps = fwdKin( arm, qeps );
+                C(:,i) = (feps - f) ./ eps;
+
+        end
+        y = f - C*arm.q;
 
         % Define the model
         model = LTISystem( 'A', Ad, 'B', Bd, 'f', cd, 'C', C, 'g', y, 'Ts', ...
@@ -177,15 +197,22 @@ switch space
         model.u.min = arm.torqLim(:,1);
         model.u.max = arm.torqLim(:,2);
         
-        % use soft constraints for feasibility
-        model.x.with('softMax');
-        model.x.with('softMin');
-        model.u.with('softMax');
-        model.u.with('softMin');
+        % Add soft constraints.  These soft constraints will allow for
+        % small violations of constraints (<= 10% of maximum here) to
+        % ensure feasibility.
+%         model.x.with('softMax');
+%         model.x.softMax.maximalViolation = model.x.max * 1.1;
+%         model.x.with('softMin');
+%         model.x.softMax.maximalViolation = model.x.max * 1.1;
+
+%         model.u.with('softMax');
+%         model.u.softMax.maximalViolation = model.u.max * 1.1;
+%         model.u.with('softMin');
+%         model.u.softMin.maximalViolation = model.u.min * 1.1;
         
         % define cost function
         model.y.penalty = QuadFunction( diag(1e3*[ones(arm.tDOF,1); ...
-            1e-2*ones(arm.tDOF,1)]));
+            1e-1*ones(arm.tDOF,1)]));
         model.u.penalty = QuadFunction( diag(ones(arm.jDOF,1)));
 
         % make model track a reference (can be time-varying)
@@ -193,7 +220,7 @@ switch space
         model.y.reference = 'free';
 
         % create MPC controller
-        h = 15;     % temporary horizon
+        h = 20;     % temporary horizon
         ctrl = MPCController(model, h);
 
         % simulate open-loop system
