@@ -55,7 +55,7 @@ B = zeros(nStates,nInputs);
 C = zeros(nOutputs,nStates);
 
 % compute dynamics matrix, A
-f = dynamics(arm, arm.q, u);
+f = dynamics(arm, u);
 for i = 1:nStates
     
     q_eps = arm.q;
