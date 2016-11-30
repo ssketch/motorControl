@@ -52,37 +52,51 @@ eps = 1e-3;
 % allocate memory for matrices
 A = zeros(nStates);
 B = zeros(nStates,nInputs);
-C = zeros(nOutputs,nStates);
 
 % compute dynamics matrix, A
 f = dynamics(arm, arm.q, u);
 for i = 1:nStates
-    
     q_eps = arm.q;
-    
-    % Perturb each state (joint angle) by a small amount
-    q_eps(i) = q_eps(i) + eps;
-    
-    % Compute the dynamics at the slightly modified state
-    feps = dynamics( arm, q_eps, u );
+    q_eps(i) = q_eps(i) + eps;      % 1 state perturbed
+    feps = dynamics(arm, q_eps, u); % state-perturbed dynamics
     A(:,i) = (feps-f)/eps;
-    
 end
 
 % compute input-to-state matrix, B
 for i = 1:nInputs
-    
-    % Make a copy of the control inputs (joint torques)
     u_copy = u;
+    u_copy(i) = u_copy(i) + eps;         % 1 input perturbed
+    feps = dynamics(arm, arm.q, u_copy); % input-perturbed dynamics
+    B(:,i) = (feps-f)/eps;
+end
 
-    % Perturb each control input (joint torque) by a small amount
-    u_copy(i) = u_copy(i) + eps;
+% compute measurement matrix, C
+switch space
+    
+    % output joint-space state
+    case 'joint'
+        C = eye(nOutputs,nStates);
+    
+    % output task-space coordinates by linearizing forward kinematics
+    case 'cartesian'
+        
+    % joint space by default
+    otherwise
+        C = eye(nOutputs,nStates);
+end
+k = fwdKin(arm, arm.q );
+for i = 1:nStates
+    
+    % Perturb each state (joint angle) by a small amount
+    qeps = arm.q;
+    qeps(i) = qeps(i) + eps;
     
     % Compute the dynamics at the slightly modified state
-    feps = dynamics( arm, arm.q, u_copy );
-    B(:,i) = (feps-f)/eps;
+    feps = fwdKin( arm, qeps );
+    C(:,i) = (feps - f) ./ eps;
     
 end
+y = f - C*arm.q;
 
 % Compute the constant term
 c = f - A*arm.q - B*u;
@@ -151,19 +165,7 @@ switch space
         % controller minimizes energetic costs while tracking the end-effector in
         % cartesian space.
 
-        f = fwdKin( arm, arm.q );
-        for i = 1:nStates
-
-                % Perturb each state (joint angle) by a small amount
-                qeps = arm.q;
-                qeps(i) = qeps(i) + eps;
-
-                % Compute the dynamics at the slightly modified state
-                feps = fwdKin( arm, qeps );
-                C(:,i) = (feps - f) ./ eps;
-
-        end
-        y = f - C*arm.q;
+        
 
         % Define the model
         model = LTISystem( 'A', Ad, 'B', Bd, 'f', cd, 'C', C, 'g', y, 'Ts', ...

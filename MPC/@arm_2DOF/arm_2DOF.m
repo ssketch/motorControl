@@ -37,7 +37,7 @@ classdef arm_2DOF < handle
         Ts = 0.01; % time step [sec]
         q;         % state, in joint coordinates [rad,rad/s]
         x;         % state, in task coordinates [m,m/s]
-        elbow;     % position of elbow, in task coordinates [m]
+        elbw;      % position of elbow, in task coordinates [m]
         inWS;      % 1 = in workspace, 0 = outside workspace
     
     end
@@ -83,8 +83,8 @@ classdef arm_2DOF < handle
  
         % function prototypes
         flag = withinLimits(arm, q)
-        [x, elbow, reachable] = fwdKin(arm, q)
-        [q, elbow, reachable] = invKin(arm, x)
+        [x, elbw, reachable] = fwdKin(arm, q)
+        [q, elbw, reachable] = invKin(arm, x)
         f = dynamics(arm, q, u)
         M = draw(arm)
         

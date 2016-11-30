@@ -3,7 +3,7 @@
 % computes the Jacobian for the current state of the 'arm' object.
 function J = jacobian(arm, q)
 
-% if no state specified, use current state of arm
+% if no state specified, use current arm state
 if nargin < 2
     q = arm.q;
 end
