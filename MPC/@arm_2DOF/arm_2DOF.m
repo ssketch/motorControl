@@ -25,6 +25,7 @@ classdef arm_2DOF < handle
         I2;       % forearm moment of inertia about elbow, Winter [kg-m^2]
         thLim;    % joint angle limits [rad]
         thDotLim; % joint velocity limits [rad/s]
+        jntLim;   % concatenation of joint angle and velocity limits
         torqLim;  % joint torque limits [Nm]
         
     end
@@ -73,8 +74,7 @@ classdef arm_2DOF < handle
                              th2Min th2Max];
                 arm.thDotLim = [th1dotMin th1dotMax;
                                 th2dotMin th2dotMax];
-                            
-                arm.thLim = [arm.thLim; arm.thDotLim];
+                arm.jntLim = [arm.thLim; arm.thDotLim];
                 arm.torqLim = [torq1Min torq1Max;
                                torq2Min torq2Max];
                 
@@ -85,7 +85,7 @@ classdef arm_2DOF < handle
         flag = withinLimits(arm, q)
         [x, elbow, reachable] = fwdKin(arm, q)
         [q, elbow, reachable] = invKin(arm, x)
-        f = dynamics(arm, u, ctrlSpace)
+        f = dynamics(arm, q, u)
         M = draw(arm)
         
     end

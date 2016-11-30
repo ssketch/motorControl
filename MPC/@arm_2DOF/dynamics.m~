@@ -1,7 +1,6 @@
-% This function returns the (joint-space) equation of motion for the arm in
-% its current state q, given input u. NOTE: Although the arm's current
-% state is an attribute of the arm object, it must be passed as an input
-% for use with the MATLAB solver 'ode45'.
+% This function returns the (joint space) equation of motion for the arm in
+% its current state q, given input u.
+% NOTE: Although the arm's current state is an attribute of the arm object,
 function f = dynamics(arm, q, u)
 
 % compute "inertia" parameters
