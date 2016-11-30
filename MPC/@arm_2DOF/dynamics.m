@@ -1,8 +1,15 @@
 % This function returns the (joint-space) equation of motion for the arm in
-% its current state q, given input u. NOTE: Although the arm's current
-% state is an attribute of the arm object, it must be passed as an input
-% for use with the MATLAB solver 'ode45'.
+% state q, given input u. If no state is specified as input, the function
+% computes the equation for the current state of the 'arm' object.
+% NOTE: Although the arm's current state is an attribute of the arm object,
+% ----  it must be passed as an input for use with the MATLAB solver
+%       'ode45'.
 function f = dynamics(arm, q, u)
+
+% if no state specified, use current arm state
+if nargin == 2
+    q = arm.q;
+end
 
 % compute "inertia" parameters
 a1 = arm.I1 + arm.I2 + arm.m2*arm.l1^2;

@@ -5,7 +5,7 @@
 function J_dot = jacobianDeriv(arm, q)
 
 % if no state specified, use current arm state
-if nargin < 2
+if nargin == 1
     q = arm.q;
 end
 

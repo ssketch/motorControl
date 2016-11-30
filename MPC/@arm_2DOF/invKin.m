@@ -3,7 +3,7 @@
 % reached?) and handedness into account. It assumes that the elbow cannot
 % hyperextend (i.e., have a negative joint angle). It also outputs elbow
 % position for plotting. If no state is specified as input, the function
-% performs forward kinematics on the current state of the 'arm' object.
+% performs inverse kinematics on the current state of the 'arm' object.
 function [q, elbw, reachable] = invKin(arm, x)
 
 % check that given state is within arm workspace, ignoring joint limits

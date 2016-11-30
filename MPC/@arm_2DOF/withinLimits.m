@@ -1,9 +1,10 @@
 % This function checks that a given arm state, in joint space, does not
-% violate joint limits.
+% violate joint limits. If no state is specified as input, the function
+% checks the current state of the 'arm' object.
 function flag = withinLimits(arm, q)
 
 % if no state specified, use current arm state
-if nargin < 2
+if nargin == 1
     q = arm.q;
 end
 
