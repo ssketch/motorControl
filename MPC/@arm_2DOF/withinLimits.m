@@ -12,6 +12,9 @@ function flag = withinLimits(arm, q)
 %     flag = 0;
 % end
 
+if nargin == 1
+    q = arm.q;
+end
 
 flag = false;
 if all( q >= arm.thLim(:,1)) && all( q <= arm.thLim(:,2))
