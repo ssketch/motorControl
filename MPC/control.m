@@ -1,4 +1,4 @@
-function u = control(arm, u, ref, space)
+function u = control(arm, x_est, u, ref, space)
 % This function computes the MPC control output u for a model of the arm
 % tracking a reference state ref in either joint or Cartesian space. It
 % employs the Multi-Parametric Toolbox MPT3. The MPT model is created by
@@ -112,16 +112,6 @@ end
 Ad = A*arm.Ts + eye(size(A));
 Bd = B*arm.Ts;
 cd = c*arm.Ts;
-
-%% STATE AUGMENTATION
-% To account for time delays in the system, 
-%  I'll leave this part for Shaun....
-% % extend state
-% Aext = diag(ones((params.Nstates)*params.numDelSteps_mod,1),-(params.Nstates));
-% Aext(1:params.Nstates,1:params.Nstates) = Ad;
-% Bext = [Bd;zeros(params.Nstates*params.numDelSteps_mod,params.Nactuat);...
-%     zeros(1,params.Nactuat)];
-% cext = [c;zeros((params.Nstates)*params.numDelSteps_mod,1)];
 
 
 %% OPTIMIZATION
