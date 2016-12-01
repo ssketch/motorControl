@@ -1,5 +1,4 @@
-% This function displays the results of simulation (i.e., the output from
-% 'simulate.m'). It creates a movie of the arm movement, plots position/
+% This function displays the results of simulation. It creates a movie of the arm movement, plots position/
 % velocity in Cartesian space, and plots joint torques/hand forces over
 % time. All figures are saved in EPS format.
 function plotResults(results, movemnt, params)
