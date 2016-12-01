@@ -1,4 +1,4 @@
-function u = control(arm, x_est, u, ref, space)
+function u = control(arm, x_est, u, ref, params)
 % This function computes the MPC control output u for a model of the arm
 % tracking a reference state ref in either joint or Cartesian space. It
 % employs the Multi-Parametric Toolbox MPT3. The MPT model is created by
@@ -16,11 +16,11 @@ function u = control(arm, x_est, u, ref, space)
 % |        x_min <= x <= x_max   |       |          |
 % |        u_min <= u <= u_max   |       |          |
 % |______________________________|       |          |
-%                |                _______|______    |
-%                |                |            |    |
-%                |________________|  Estimator |____|
-%                                 |____________|     
-% 
+%                |                _______|_____     |
+%                |                |           |     |
+%                |________________| Estimator |_____|
+%                                 |___________|     
+%
 
 %% LINEARIZATION
 % To linearize the model, we compute the 1st-order Taylor series
@@ -155,7 +155,6 @@ switch space
         model.x.reference = 'free';
 
         % create MPC controller
-        h = 15;     % temporary horizon
         ctrl = MPCController(model, h);
 
         % simulate open-loop system

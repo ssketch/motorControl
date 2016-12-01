@@ -5,13 +5,6 @@
 % to find optimal control.
 function [results, flag] = simulate(arm, subj, movt, ctrl)
 
-prompt = 'Is the Multi-Parametric Toolbox (MPT) installed? Y/N: ';
-MPTinstalled = input(prompt,'s');
-if strcmp(MPTinstalled,'N') || strcmp(MPTinstalled,'n')
-    fprintf('\nRun ''install_mpt3.m'' then try again.\n')
-    return
-end
-
 %% PARAMETERS
 
 % dynamical system dimensions
