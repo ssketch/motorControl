@@ -1,6 +1,8 @@
 % This class captures the attributes, kinematics, and dynamics of a human
 % arm modeled as an RR robot restricted to move in the plane of the
-% shoulder.
+% shoulder. As a handle class, objects of this type are passed by reference
+% into functions. That is, the handle is copied but the copy references the
+% same underlying data as the original handle.
 classdef arm_2DOF < handle
     
     % properties that, once set in constructor, remain constant
