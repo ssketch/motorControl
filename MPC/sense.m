@@ -22,3 +22,8 @@ if ~model
 end
 
 end
+
+if ~model
+    xNext(1:params.Nstates) = xNext(1:params.Nstates) + ...
+        sqrt(diag(params.Q)).*randn(params.Nstates,1);
+end

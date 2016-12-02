@@ -43,10 +43,7 @@ function u = control(arm, x_est, u, ref, params)
 %     df/dx @ x_k ~ [f(x_k+dx)-f(x_k)]/dx
 %     df/du @ u_k ~ [f(u_k+du)-f(u_k)]/du
 
-% define constants
-nStates = 2*arm.jDOF;
-nInputs = arm.jDOF;
-nOutputs = numStates;
+% define small delta for Euler differentiation
 eps = 1e-3;
 
 % allocate memory for matrices
@@ -112,6 +109,12 @@ end
 Ad = A*arm.Ts + eye(size(A));
 Bd = B*arm.Ts;
 cd = c*arm.Ts;
+
+%% STATE AUGMENTATION
+% To account for time delays in the system, we augment the state with all
+% previous states 
+
+nDelSteps = floor(arm.Td/arm.Ts + 1);
 
 
 %% OPTIMIZATION
@@ -195,8 +198,7 @@ switch space
         model.y.reference = 'free';
 
         % create MPC controller
-        h = 20;     % temporary horizon
-        ctrl = MPCController(model, h);
+        ctrl = MPCController(model, params.H);
 
         % simulate open-loop system
         u = ctrl.evaluate( arm.q, 'y.reference', ref);

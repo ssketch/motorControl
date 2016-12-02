@@ -6,10 +6,13 @@ classdef arm_2DOF < handle
     % properties that, once set in constructor, remain constant
     properties (GetAccess=public, SetAccess=private)
         
-        jDOF = 2;         % joint-space degrees of freedom (shoulder & elbow angle)
-        tDOF = 2;         % task-space degrees of freedom (x & y, not theta)
-        shld = [0;0];     % position of shoulder, in task coordinates [m]
-        B = [0.05  0.025  % damping matrix, Crevecouer 2013 [Nms/rad]
+        jDOF = 2;          % joint-space degrees of freedom (shoulder & elbow angle)
+        tDOF = 2;          % task-space degrees of freedom (x & y, not theta)
+        nStates = 2*jDOF;  % number of states, pos & vel for each joint
+        nInputs = 1*jDOF;  % number of control inputs, torque at each joint
+        nOutputs = 2*jDOF; % number of sensed outputs, pos & vel for each joint
+        shld = [0;0];      % position of shoulder, in task coordinates [m]
+        B = [0.05  0.025   % damping matrix, Crevecouer 2013 [Nms/rad]
              0.025 0.05];
          
         hand;     % handedness [right or left]
@@ -23,6 +26,9 @@ classdef arm_2DOF < handle
         r2;       % forearm radius of gyration (proximal), Winter [m]
         I1;       % upperarm moment of inertia about shoulder, Winter [kg-m^2]
         I2;       % forearm moment of inertia about elbow, Winter [kg-m^2]
+        Td;       % delay between control and sensing [sec]
+        coupling; % coupling matrix for joint torques
+        
         thLim;    % joint angle limits [rad]
         thDotLim; % joint velocity limits [rad/s]
         jntLim;   % concatenation of joint angle and velocity limits
@@ -61,6 +67,12 @@ classdef arm_2DOF < handle
                 arm.r2 = 0.827*arm.l2;
                 arm.I1 = arm.m1*arm.r1^2;
                 arm.I2 = arm.m2*arm.r2^2;
+                arm.Td = subj.Td;
+                if subj.coupled
+                    arm.coupling = subj.C;
+                else
+                    arm.coupling = eye(arm.nInputs);
+                end
                 
                 % define joint limits
                 toRad = pi/180;
@@ -78,6 +90,9 @@ classdef arm_2DOF < handle
                 arm.torqLim = [torq1Min torq1Max;
                                torq2Min torq2Max];
                 
+            else
+                warning('Must specify subject parameters.')
+            
             end
         end
  

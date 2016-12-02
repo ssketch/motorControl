@@ -11,6 +11,9 @@ if nargin == 2
     q = arm.q;
 end
 
+% couple joint torques
+uCouple = arm.coupling*u;
+
 % compute "inertia" parameters
 a1 = arm.I1 + arm.I2 + arm.m2*arm.l1^2;
 a2 = arm.m2 * arm.l1 * arm.s2;
@@ -32,6 +35,6 @@ V = [V1;V2] * a2*sin(q(2));
 G = [0;0];
 Fric = arm.B*q(3:4);
 
-f = [q(3:4) ; M\(u-V-G-Fric)];
+f = [q(3:4) ; M\(uCouple-V-G-Fric)];
 
 end
