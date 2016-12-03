@@ -1,4 +1,4 @@
-function [arm, xNext] = plant(arm, x, u)
+function xNext = plant(arm, x, u)
 % This function solves the nonlinear equations of motion of an arm model
 % (over a single time step) using MATLAB's variable-step-size numerical
 % integrator 'ode45'. It updates both the state attribute of the arm, as
@@ -31,4 +31,9 @@ xNext(1:arm.nStates) = arm.q;
 nDelSteps = floor(arm.Td/arm.Ts + 1);
 Mprop = diag(ones((arm.nStates)*nDelSteps,1),-(arm.nStates)); % time-shift matrix
 xNext = xNext + Mprop*xNext;
+
+if ~model
+    xNext(1:params.Nstates) = xNext(1:params.Nstates) + ...
+        sqrt(diag(params.Q)).*randn(params.Nstates,1);
+end
 

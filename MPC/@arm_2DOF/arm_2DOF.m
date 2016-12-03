@@ -42,7 +42,6 @@ classdef arm_2DOF < handle
     % course of simulation
     properties (GetAccess=public, SetAccess=public)
         
-        Ts = 0.01; % time step [sec]
         q;         % state, in joint coordinates [rad,rad/s]
         x;         % state, in task coordinates [m,m/s]
         elbw;      % position of elbow, in task coordinates [m]
