@@ -1,29 +1,17 @@
-% This function defines the references trajectory to be tracked by the arm
+% This function defines the reference trajectory to be tracked by the arm.
 function [ref, inWS] = defineRef(arm, movt)
 
 switch movt.type
     
+    % straight reach to target
     case 'reach'
-        
-    case 'hold'
-        
-    case 'outBack'
-        
-    case 'ellipse'
-        
-    otherwise
-        
-end
-
-    if (movemnt == 0)
-        
-        p.p_f = p.p_i + d*[cosd(th);sind(th)];     % desired end position [m]
+        p.p_f = p.p_i + d*[cosd(th);sind(th)];         % desired end position [m]
         v_f = [0;0];                                   % desired end velocity [m/s]
         [th_f,th_dot_f,~] = invKin(p.p_f,v_f,[0;0],p);
         p.y_des = repmat([th_f;th_dot_f],1,p.n);
-        
-    elseif (movemnt == 1)
-        
+     
+    % reach and hold at target
+    case 'hold'
         T = T + Thold;
         p.t = 0:p.dt:T;
         p.n = length(p.t);
@@ -33,8 +21,8 @@ end
         [th_f,th_dot_f,~] = invKin(p.p_f,v_f,[0;0],p);
         p.y_des = repmat([th_f;th_dot_f],1,p.n);
         
-    elseif (movemnt == 2)
-        
+    % reach out to target then return to home
+    case 'outBack'
         T = 2*T;
         p.t = 0:p.dt:T;
         p.n = length(p.t);
@@ -51,8 +39,8 @@ end
         p.y_des = repmat([th_f;th_dot_f],1,p.n);
         p.y_des(:,1:floor(p.n/2)) = repmat(y_atTurn,1,floor(p.n/2));
         
-    elseif (movemnt == 3)
-        
+    % trace an ellipse
+    case 'ellipse'
         T = 2*T;
         p.t = 0:p.dt:T;
         p.n = length(p.t);
@@ -69,7 +57,13 @@ end
         end
         p.y_des = [th_ell;th_dot_ell];
         
-    end
+    % straight reach by default
+    otherwise
+        p.p_f = p.p_i + d*[cosd(th);sind(th)];
+        v_f = [0;0];
+        [th_f,th_dot_f,~] = invKin(p.p_f,v_f,[0;0],p);
+        p.y_des = repmat([th_f;th_dot_f],1,p.n);
+        
 end
 
 end
