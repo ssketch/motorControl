@@ -3,7 +3,8 @@ function [xPnext, Pnext] = estimate(xP, P, y, T, params)
 % copy of the command sent to the arm and sensory feedback from the
 % proprioceptive system, to update an estimate of the arm's state, as well
 % as this estimate's uncertainty. The estimation is performed with an
-% unscented Kalman filter, using the fully nonlinear dynamics.
+% unscented Kalman filter, using the fully nonlinear dynamics with state
+% augmented to account for time delay. 
 
 % ___________                                      _________
 % |         |                                      |       |

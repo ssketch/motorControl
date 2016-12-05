@@ -1,7 +1,7 @@
-function u = control(arm, x_est, u, ref, params)
+function [u, flag] = control(arm, x_est, u, movt, params)
 % This function computes the MPC control output u for a model of the arm
-% tracking a reference state ref in either joint or Cartesian space. It
-% employs the Multi-Parametric Toolbox MPT3. The MPT model is created by
+% tracking a reference state ref in either joint or task (Cartesian) space.
+% It employs the Multi-Parametric Toolbox MPT3. The MPT model is created by
 % first linearizing the arm model (both dynamics and output) about the 
 % current state estimate.
 
@@ -46,9 +46,10 @@ function u = control(arm, x_est, u, ref, params)
 % define small delta for Euler differentiation
 eps = 1e-3;
 
-% allocate memory for matrices
+% allocate memory for matrices/vectors
 A = zeros(nStates);
 B = zeros(nStates,nInputs);
+C = eye(nOutputs,nStates);
 
 % compute dynamics matrix, A
 f = dynamics(arm, arm.q, u);
@@ -105,104 +106,54 @@ end
 %   (x+ - x)/Ts = Ax + Bu + c
 %   x+ = (Ax + Bu + c)*Ts + x
 %   x+ = (A*Ts+I)x + (B*Ts)u + (c*Ts)
+%   x+ = Ad*x + Bd*u + cd
 
 Ad = A*arm.Ts + eye(size(A));
 Bd = B*arm.Ts;
 cd = c*arm.Ts;
 
-%% STATE AUGMENTATION
-% To account for time delays in the system, we augment the state with all
-% previous states 
-
-nDelSteps = floor(arm.Td/arm.Ts + 1);
-
-
 %% OPTIMIZATION
-% Define the digital linear model, which looks like this:
-%   x_dot = Ax + Bu + f
-%   y = Cx + g
-% with a time step, Ts.
+% Optimization is done via quadratic programming, using the Multi-
+% Parametric Toolbox MPT3.
 
-switch space
+% define model
+model = LTISystem('A',Ad,'B',Bd,'f',cd,'C',C,'g',d,'Ts',movt.Ts);
+
+% make model track a reference (can be time-varying)
+model.y.with('reference');
+model.y.reference = 'free';
+
+% set (hard) constraints
+model.x.min = arm.jntLim(:,1);
+model.x.max = arm.jntLim(:,2);
+model.u.min = arm.torqLim(:,1);
+model.u.max = arm.torqLim(:,2);
+
+% define cost function
+switch movt.space
     case 'joint'
-        % Define the model
-        model = LTISystem( 'A', Ad, 'B', Bd, 'f', cd, 'Ts', arm.Ts );
-        
-        % set constraints
-        model.x.min = arm.thLim(:,1);
-        model.x.max = arm.thLim(:,2);
-        model.u.min = arm.torqLim(:,1);
-        model.u.max = arm.torqLim(:,2);
-        
-        % Add soft constraints.  These soft constraints will allow for
-        % small violations of constraints (<= 10% of maximum here) to
-        % ensure feasibility.
-%         model.x.with('softMax');
-%         model.x.softMax.maximalViolation = model.x.max * 1.1;
-%         model.x.with('softMin');
-%         model.x.softMax.maximalViolation = model.x.max * 1.1;
-
-        model.u.with('softMax');
-        model.u.softMax.maximalViolation = model.u.max * 1.1;
-        model.u.with('softMin');
-        model.u.softMin.maximalViolation = model.u.min * 1.1;
-        
-        
-        % define cost function
-        model.x.penalty = QuadFunction( diag(1e3*[ones(arm.jDOF,1); ...
-            1e-2*ones(arm.jDOF,1)]));
-        model.u.penalty = QuadFunction( diag(ones(arm.jDOF,1)));
-
-        % make model track a reference (can be time-varying)
-        model.x.with('reference');
-        model.x.reference = 'free';
-
-        % create MPC controller
-        ctrl = MPCController(model, h);
-
-        % simulate open-loop system
-        u = ctrl.evaluate( arm.q, 'x.reference', ref);
-        
-    case 'cartesian'
-
-        % Define the model
-        model = LTISystem( 'A', Ad, 'B', Bd, 'f', cd, 'C', C, 'g', y, 'Ts', ...
-            arm.Ts );
-        
-        % set constraints
-        model.x.min = arm.thLim(:,1);
-        model.x.max = arm.thLim(:,2);
-        model.u.min = arm.torqLim(:,1);
-        model.u.max = arm.torqLim(:,2);
-        
-        % Add soft constraints.  These soft constraints will allow for
-        % small violations of constraints (<= 10% of maximum here) to
-        % ensure feasibility.
-%         model.x.with('softMax');
-%         model.x.softMax.maximalViolation = model.x.max * 1.1;
-%         model.x.with('softMin');
-%         model.x.softMax.maximalViolation = model.x.max * 1.1;
-
-%         model.u.with('softMax');
-%         model.u.softMax.maximalViolation = model.u.max * 1.1;
-%         model.u.with('softMin');
-%         model.u.softMin.maximalViolation = model.u.min * 1.1;
-        
-        % define cost function
-        model.y.penalty = QuadFunction( diag(1e3*[ones(arm.tDOF,1); ...
-            1e-1*ones(arm.tDOF,1)]));
-        model.u.penalty = QuadFunction( diag(ones(arm.jDOF,1)));
-
-        % make model track a reference (can be time-varying)
-        model.y.with('reference');
-        model.y.reference = 'free';
-
-        % create MPC controller
-        ctrl = MPCController(model, params.H);
-
-        % simulate open-loop system
-        u = ctrl.evaluate( arm.q, 'y.reference', ref);
-        
+    model.y.penalty = QuadFunction(diag(ctrl.wP*[ones(arm.tDOF,1); ...
+        1e-1*ones(arm.tDOF,1)]));
+    case 'task'
+    model.y.penalty = QuadFunction( diag(1e3*[ones(arm.tDOF,1); ...
+        1e-1*ones(arm.tDOF,1)]));
     otherwise
-        warning('Control space not found.')
+        
+end
+model.u.penalty = QuadFunction( diag(ones(arm.jDOF,1)));
+
+
+
+% create MPC controller
+ctrl = MPCController(model, arm.H);
+
+% simulate open-loop system
+u = ctrl.evaluate(arm.q, 'y.reference', movt.ref);
+
+% check that optimal control is within bounds
+if (Tcurr(1) < params.torq_lim(1,1) || Tcurr(1) > params.torq_lim(1,2)) ...
+        || (Tcurr(2) < params.torq_lim(2,1) || Tcurr(2) > params.torq_lim(2,2))
+    flag = 1;
+    return
+end
 end        

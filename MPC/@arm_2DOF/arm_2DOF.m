@@ -17,17 +17,18 @@ classdef arm_2DOF < handle
         B = [0.05  0.025   % damping matrix, Crevecouer 2013 [Nms/rad]
              0.025 0.05];
          
-        hand;     % handedness [right or left]
-        m1;       % upperarm mass, Winter [kg]
-        m2;       % forearm mass, Winter [kg]
-        l1;       % upperarm length, Winter [m]
-        l2;       % forearm length, Winter [m]
-        s1;       % shoulder to upperarm COM, Winter [m]
-        s2;       % elbow to forearm COM, Winter [m]
-        r1;       % upperarm radius of gyration (proximal), Winter [m]
-        r2;       % forearm radius of gyration (proximal), Winter [m]
-        I1;       % upperarm moment of inertia about shoulder, Winter [kg-m^2]
-        I2;       % forearm moment of inertia about elbow, Winter [kg-m^2]
+        hand; % handedness [right or left]
+        m1;   % upperarm mass, Winter [kg]
+        m2;   % forearm mass, Winter [kg]
+        l1;   % upperarm length, Winter [m]
+        l2;   % forearm length, Winter [m]
+        s1;   % shoulder to upperarm COM, Winter [m]
+        s2;   % elbow to forearm COM, Winter [m]
+        r1;   % upperarm radius of gyration (proximal), Winter [m]
+        r2;   % forearm radius of gyration (proximal), Winter [m]
+        I1;   % upperarm moment of inertia about shoulder, Winter [kg-m^2]
+        I2;   % forearm moment of inertia about elbow, Winter [kg-m^2]
+        
         Td;       % delay between control and sensing [sec]
         coupling; % coupling matrix for joint torques
         
@@ -56,7 +57,7 @@ classdef arm_2DOF < handle
         function arm = arm_2DOF(subj)
             if  nargin > 0
                 
-                % set constant properties
+                % set physical properties
                 arm.hand = subj.hand;
                 arm.m1 = 0.028*subj.M;
                 arm.m2 = 0.022*subj.M;
@@ -68,28 +69,20 @@ classdef arm_2DOF < handle
                 arm.r2 = 0.827*arm.l2;
                 arm.I1 = arm.m1*arm.r1^2;
                 arm.I2 = arm.m2*arm.r2^2;
+                
+                % set neurological properties
                 arm.Td = subj.Td;
                 if subj.coupled
                     arm.coupling = subj.C;
                 else
-                    arm.coupling = eye(arm.nInputs);
+                    arm.coupling = eye(arm.nInputs); % independent control
                 end
                 
                 % define joint limits
-                toRad = pi/180;
-                th1Min = -70*toRad; th1Max = 120*toRad; % shoulder angle limits [rad]
-                th2Min = 0*toRad;   th2Max = 170*toRad; % elbow angle limits [rad]
-                th1dotMin = -inf;   th1dotMax = inf;    % shoulder velocity limits [rad/s]
-                th2dotMin = -inf;   th2dotMax = inf;    % elbow velocity limits [rad/s]
-                torq1Min = -85;     torq1Max = 100;     % shoulder torque limits [Nm]
-                torq2Min = -60;     torq2Max = 75;      % elbow torque limits [Nm]
-                arm.thLim = [th1Min th1Max;
-                             th2Min th2Max];
-                arm.thDotLim = [th1dotMin th1dotMax;
-                                th2dotMin th2dotMax];
-                arm.jntLim = [arm.thLim; arm.thDotLim];
-                arm.torqLim = [torq1Min torq1Max;
-                               torq2Min torq2Max];
+                arm.thLim = [subj.thMin subj.thMax];
+                arm.thDotLim = [subj.thdotMin subj.thdotMax];
+                arm.jntLim = [arm.thLim ; arm.thDotLim];
+                arm.torqLim = [subj.torqMin subj.torqMax];
                 
             else
                 warning('Must specify subject parameters.')

@@ -1,19 +1,17 @@
-% This function senses the current arm state via a biased and noisy
-% proprioceptive system. The state is extended to account for time delay in
-% sensory feedback.
+% This function senses arm state via a biased and noisy proprioceptive
+% system, accounting for time delay via state augmentation.
 function y = sense(arm, x)
 
 % extract most delayed state from augmented state vector 
-if model
-    y = params.Cext_mod*x;
-else
-    y = params.Cext_act*x;
-end
+% p.C = zeros(p.Nsensed,p.Nstates);
+% p.C(:,1:p.Nsensed) = eye(p.Nsensed);
+% 
+% % extended state to account for time delay
+% p.Cext_mod = [zeros(p.Nsensed,p.Nstates*p.numDelSteps_mod) p.C zeros(p.Nsensed,1)]; % modeled time delay
+% p.Cext_act = [zeros(p.Nsensed,p.Nstates*p.numDelSteps) p.C zeros(p.Nsensed,1)];     % actual time delay
 
 % add bias & noise
-    [bias, noise] = computeError(arm);
-    noise = [params.noise.*randn(2,1);0;0];
-    y = y + [bias;0;0] + noise;
-end
+sensBias = computeBias(arm);
+y = y + sensBias + arm.sensNoise;
 
 end
