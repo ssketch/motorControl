@@ -14,10 +14,6 @@ classdef arm_2DOF < handle
 %         nInputs = 1*jDOF;  % number of control inputs, torque at each joint
 %         nOutputs = 2*jDOF; % number of sensed outputs, pos & vel for each joint
         
-        % Sean:  I think we can just hardcode these in since we don't
-        % change them and they're permanent characteristics of the model.
-        % These also might not be super necessary and can just be computed
-        % once in the relevant functions.
         nStates = 4;  % number of states, pos & vel for each joint
         nInputs =  2;  % number of control inputs, torque at each joint
         nOutputs = 4; % number of sensed outputs, pos & vel for each joint
@@ -38,7 +34,8 @@ classdef arm_2DOF < handle
         I1;   % upperarm moment of inertia about shoulder, Winter [kg-m^2]
         I2;   % forearm moment of inertia about elbow, Winter [kg-m^2]
         
-        Ts = 0.01;
+%         Td;       % delay between control and sensing [sec]
+        coupling; % coupling matrix for joint torques
         
         thLim;    % joint angle limits [rad]
         thDotLim; % joint velocity limits [rad/s]
@@ -51,8 +48,8 @@ classdef arm_2DOF < handle
     % course of simulation
     properties (GetAccess=public, SetAccess=public)
         
-        coupling;  % coupling matrix for joint torques
-        Td;        % delay between control and sensing [sec]
+        coupling;
+        Td;
         q;         % state, in joint coordinates [rad,rad/s]
         x;         % state, in task coordinates [m,m/s]
         elbw;      % position of elbow, in task coordinates [m]
@@ -89,25 +86,10 @@ classdef arm_2DOF < handle
                 end
                 
                 % define joint limits
-                toRad = pi/180;
-                th1Min = -70*toRad; th1Max = 120*toRad;        % shoulder angle limits [rad]
-                th2Min = 0*toRad;   th2Max = 170*toRad;        % elbow angle limits [rad]
-                th1dotMin = -50*toRad;  th1dotMax = 90*toRad;  % shoulder velocity limits [rad/s]
-                th2dotMin = -120*toRad; th2dotMax = 120*toRad; % elbow velocity limits [rad/s]
-                torq1Min = -85;     torq1Max = 100;            % shoulder extension torquelimits [Nm]
-                torq2Min = -60;     torq2Max = 75;             % elbow torque limits [Nm]
-                
-                thLim = [th1Min, th1Max;
-                         th2Min, th2Max];
-                thDotLim = [th1dotMin, th1dotMax;
-                            th2dotMin, th2dotMax ];
-                torqLim = [ torq1Min, torq1Max;
-                            torq2Min, torq2Max ];
-                
-                arm.thLim = [thLim; thDotLim];
-                arm.jntLim = [thLim; thDotLim ];
-                
-                arm.torqLim = torqLim;
+                arm.thLim = [subj.thMin subj.thMax];
+                arm.thDotLim = [subj.thdotMin subj.thdotMax];
+                arm.jntLim = [arm.thLim ; arm.thDotLim];
+                arm.torqLim = [subj.torqMin subj.torqMax];
                 
             else
                 warning('Must specify subject parameters.')
