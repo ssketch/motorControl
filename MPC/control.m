@@ -132,23 +132,23 @@ model.u.max = arm.torqLim(:,2);
 % define cost function
 switch movt.space
     case 'joint'
-    model.y.penalty = QuadFunction(diag(ctrl.wP*[ones(arm.tDOF,1); ...
-        1e-1*ones(arm.tDOF,1)]));
+        model.y.penalty = QuadFunction(diag(ctrl.wP*[ones(arm.tDOF,1); ...
+            1e-1*ones(arm.tDOF,1)]));
     case 'task'
-    model.y.penalty = QuadFunction( diag(1e3*[ones(arm.tDOF,1); ...
-        1e-1*ones(arm.tDOF,1)]));
+        model.y.penalty = QuadFunction( diag(1e3*[ones(arm.tDOF,1); ...
+            1e-1*ones(arm.tDOF,1)]));
     otherwise
         
 end
-model.u.penalty = QuadFunction( diag(ones(arm.jDOF,1)));
+model.u.penalty = QuadFunction(ctrl.wU*diag(ones(arm.jDOF,1)));
 
 
 
 % create MPC controller
-ctrl = MPCController(model, arm.H);
+MPC_ctrl = MPCController(model, ctrl.H);
 
 % simulate open-loop system
-u = ctrl.evaluate(arm.q, 'y.reference', movt.ref);
+u = MPC_ctrl.evaluate(arm.q, 'y.reference', movt.ref);
 
 % check that optimal control is within bounds
 if (Tcurr(1) < params.torq_lim(1,1) || Tcurr(1) > params.torq_lim(1,2)) ...
