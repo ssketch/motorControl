@@ -47,9 +47,9 @@ function [u, flag] = control(arm, x_est, u, movt, params)
 eps = 1e-3;
 
 % allocate memory for matrices/vectors
-A = zeros(nStates);
-B = zeros(nStates,nInputs);
-C = eye(nOutputs,nStates);
+A = zeros(arm.nStates);
+B = zeros(arm.nStates,arm.nInputs);
+C = eye(arm.nOutputs,arm.nStates);
 
 % compute dynamics matrix, A
 f = dynamics(arm, arm.q, u);

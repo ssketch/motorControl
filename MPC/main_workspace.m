@@ -9,6 +9,8 @@ addpath( genpath([pwd '/tbxmanager']));
 subj.M = 70;    % kg
 subj.H = 1.80;  % meters
 subj.hand = 'right';
+subj.Td = 0;
+subj.coupled = false;
 
 % Define a model.  We'll start with the 2 degree of freedom planar model
 model = arm_2DOF(subj);
@@ -24,7 +26,7 @@ histories.q = model.q;
 histories.y = fwdKin( model, model.q );
 
 for th = ( 0:30:360 )*pi/180
-    display(['Reach direction, theta = ' num2str(th)])
+    display(['Reach direction: theta = ' num2str(th)*180/pi 'Deg'])
     display('_________________________________')
     
     r = 10;
