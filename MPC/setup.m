@@ -56,7 +56,6 @@ movt.t = 0:movt.Ts:movt.T; % time vector [sec]
 movt.n = length(movt.t);   % number of time steps
 movt.d = 0.35;             % reach distance [m]
 movt.th = 10;              % reach angle [deg]
-movt.Thold = 2;            % time to hold at endpoint [sec]
 movt.a = 0.25;             % ellipse semi-major axis [m]
 movt.b = 0.1;              % ellipse semi-minor axis [m]
 movt.p_i = [-0.15;0.3];    % initial position [m]

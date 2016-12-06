@@ -92,6 +92,7 @@ classdef arm_2DOF < handle
  
         % function prototypes
         flag = withinLimits(arm, q)
+        [ref, inWS] = defineRef(arm, movt)
         [x, elbw, reachable] = fwdKin(arm, q)
         [q, elbw, reachable] = invKin(arm, x)
         f = dynamics(arm, q, u)
