@@ -8,22 +8,14 @@ classdef arm_2DOF < handle
     % properties that, once set in constructor, remain constant
     properties (GetAccess=public, SetAccess=private)
         
-        jDOF = 2;          % joint-space degrees of freedom (shoulder & elbow angle)
-        tDOF = 2;          % task-space degrees of freedom (x & y, not theta)
-%         nStates = 2*jDOF;  % number of states, pos & vel for each joint
-%         nInputs = 1*jDOF;  % number of control inputs, torque at each joint
-%         nOutputs = 2*jDOF; % number of sensed outputs, pos & vel for each joint
-        
-        % Sean:  I think we can just hardcode these in since we don't
-        % change them and they're permanent characteristics of the model.
-        % These also might not be super necessary and can just be computed
-        % once in the relevant functions.
+        jDOF = 2;     % joint-space degrees of freedom (shoulder & elbow angle)
+        tDOF = 2;     % task-space degrees of freedom (x & y, not theta)
         nStates = 4;  % number of states, pos & vel for each joint
-        nInputs =  2;  % number of control inputs, torque at each joint
+        nInputs =  2; % number of control inputs, torque at each joint
         nOutputs = 4; % number of sensed outputs, pos & vel for each joint
         
-        shld = [0;0];      % position of shoulder, in task coordinates [m]
-        B = [0.05  0.025   % damping matrix, Crevecouer 2013 [Nms/rad]
+        shld = [0;0];     % position of shoulder, in task coordinates [m]
+        B = [0.05  0.025  % damping matrix, Crevecouer 2013 [Nms/rad]
              0.025 0.05];
          
         hand; % handedness [right or left]
@@ -53,8 +45,10 @@ classdef arm_2DOF < handle
         
         coupling;  % coupling matrix for joint torques
         Td;        % delay between control and sensing [sec]
-        q;         % state, in joint coordinates [rad,rad/s]
-        x;         % state, in task coordinates [m,m/s]
+        q;         % joint angles [rad]
+        x;         % state, in joint coordinates [rad,rad/s]
+        y;         % state, in task coordinates [m,m/s]
+        z;         % state, in joint coordinates, augmented for time delay [rad,rad/s]
         elbw;      % position of elbow, in task coordinates [m]
         inWS;      % 1 = in workspace, 0 = outside workspace
     
