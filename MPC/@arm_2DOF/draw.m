@@ -4,7 +4,7 @@ function M = draw(arm)
 
 % run forwad kinematics to guarantee correspondence between spaces
 % [arm.x, arm.elbw, ~] = fwdKin(arm, arm.q);
-[arm.y.val, arm.elbw, ~] = fwdKin(arm);
+[arm.y.val, arm.elbw, ~] = arm.fwdKin;
 
 % plot limbs
 plot([ arm.shld(1), arm.elbw(1) ], [ arm.shld(2), arm.elbw(2) ],'b',...

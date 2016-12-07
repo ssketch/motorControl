@@ -136,7 +136,7 @@ classdef arm_2DOF < handle
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 arm.q.val = mean([ arm.q.min, arm.q.max ], 2);
                 arm.x.val = [ arm.q.val; 0; 0 ];
-                [ arm.y.val, arm.elbw, arm.inWS ] = fwdKin( arm );
+                [ arm.y.val, arm.elbw, arm.inWS ] = arm.fwdKin;
                 
             else
                 warning('Must specify subject parameters.')

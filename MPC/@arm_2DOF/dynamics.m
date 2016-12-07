@@ -4,11 +4,18 @@
 % NOTE: Although the arm's current state is an attribute of the arm object,
 % ----  it must be passed as an input for use with the MATLAB solver
 %       'ode45'.
-function f = dynamics(arm, q, u)
+function f = dynamics( arm, x, u )
 
-% if no state specified, use current arm state
-if nargin == 2
-    q = arm.q;
+% If no state is specified, use current arm state saved in the model
+% object.
+if nargin < 3
+    x = arm.x.val;
+    
+    % If no input control is specified and there is one stored in the model
+    % object, use that one.
+    if nargin == 1 && ~isempty( arm.u.val )
+        u = arm.u.val;
+    end
 end
 
 % couple joint torques
@@ -20,21 +27,29 @@ a2 = arm.m2 * arm.l1 * arm.s2;
 a3 = arm.I2;
 
 % compute dynamics matrices in joint space
-M11 = a1 + 2*a2*cos(q(2));
-M12 = a3 + a2*cos(q(2));
+M11 = a1 + 2*a2*cos(x(2));
+M12 = a3 + a2*cos(x(2));
 M21 = M12;
 M22 = a3;
 M = [M11 M12;
      M21 M22];
 
-V1 = -q(4)*(2*q(3) + q(4));
-V2 = q(3)^2;
-V = [V1;V2] * a2*sin(q(2));
+V1 = -x(4)*(2*x(3) + x(4));
+V2 = x(3)^2;
+V = [V1;V2] * a2*sin(x(2));
 
 % add in gravity and friction
 G = [0;0];
-Fric = arm.B*q(3:4);
+Fric = arm.B*x(3:4); % Is this friction or damping?  Looks like damping to me
 
-f = [q(3:4) ; M\(uCouple-V-G-Fric)];
+f = [x(3:4) ; M\(uCouple-V-G-Fric)];
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Note: I'm suspicious of this.  When I run
+%   model = arm_2DOF(subj)
+%   dynamics( arm, [0.4363, 1.4835, 0, 0]', [0, 0]' )
+% The result is [0;0;0;0], which means that the arm moved with zero
+% velocity and zero applied torque.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 end

@@ -1,9 +1,10 @@
 clear; clc; close all;
+set(0,'DefaultFigureWindowStyle','docked')
 %%% This script computes the workspace for the simulated arm
 
 %% Step 1: Setup arm and MPC toolbox
-% Initialize MPT3 toolbox
-addpath( genpath([pwd '/tbxmanager']));
+% Add all include folders to the working directory
+addpath( genpath([pwd '/include']));
 
 % Subject characteristics
 subj.M = 70;    % kg
@@ -40,10 +41,10 @@ histories.y = fwdKin( model );
 
 for th = ( 0:30:360 )*pi/180
     % Give us a message so we know what's going on
-    display(['Reach direction: theta = ' num2str(th)*180/pi 'Deg'])
+    display(['Reach direction: theta = ' num2str(th*180/pi) 'Deg'])
     display('_________________________________')
     i = 0;
-    q_diff = diff( histories.q' );
+    x_diff = diff( histories.x' );
     
     % Update the position of the reference
     ref = [ r*cos(th); r*sin(th); 0; 0 ];
@@ -59,13 +60,13 @@ for th = ( 0:30:360 )*pi/180
     % radians/second) as long as the resulting state is within the joint
     % limits.  This loop also assumes that the movement will take at least 0.1
     % seconds.
-    while model.withinLimits && ( max(abs( q_diff(end,:))) > 1e-2  ...
+    while model.withinLimits && ( max(abs( x_diff(end,:))) > 1e-2  ...
             || i*model.Ts < 0.1 )
     % while model.withinLimits && any( ref - model.fwdKin > 1e-1 )
 
         % Compute the optimal control value
         try
-            u_star = control( model, histories.u(:,end), ref, 'cartesian' );
+            u_star = control( model, model.x.val, histories.u(:,end), ref, 'cartesian' );
             % Note: The finite differences method used to linearize the
             % dynamics may cause joint limitation violation warnings even when
             % the actual posture satisfies the constraints.
@@ -100,7 +101,7 @@ for th = ( 0:30:360 )*pi/180
         
         % Update simulation time and 
         i = i +1;
-        q_diff = diff( histories.q');
+        x_diff = diff( histories.q');
     end
 end
 
@@ -112,16 +113,16 @@ subplot(3,1,1)
     plot( time, histories.u(1,:), 'b', ...
           time, histories.u(2,:), 'r')
       hold on
-      plot( time, ones(size(time))*model.torqLim(1,1), 'b:', ...
-            time, ones(size(time))*model.torqLim(1,2), 'b:', ...
-            time, ones(size(time))*model.torqLim(2,1), 'r:', ...
-            time, ones(size(time))*model.torqLim(2,2), 'r:')
+      plot( time, ones(size(time))*model.u.min(1), 'b:', ...
+            time, ones(size(time))*model.u.min(2), 'b:', ...
+            time, ones(size(time))*model.u.max(1), 'r:', ...
+            time, ones(size(time))*model.u.max(2), 'r:')
     ylabel 'Optimal joint torques, N-m'
     box off
     
 subplot(3,1,2)
-    plot( time, histories.q(1,:)*180/pi, 'b', ...
-          time, histories.q(2,:)*180/pi, 'r' )
+    plot( time, histories.x(1,:)*180/pi, 'b', ...
+          time, histories.x(2,:)*180/pi, 'r' )
    hold on
   plot( time, ones(size(time))*model.thLim(1,1)*180/pi, 'b:', ...
         time, ones(size(time))*model.thLim(1,2)*180/pi, 'b:', ...
