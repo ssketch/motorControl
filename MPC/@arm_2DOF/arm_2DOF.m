@@ -8,7 +8,7 @@ classdef arm_2DOF < handle
     % properties that, once set in constructor, remain constant
     properties (GetAccess=public, SetAccess=private)
         
-        Ts;   % sampling time [sec]
+        hand; % handedness [right or left]
         m1;   % upperarm mass [kg]
         m2;   % forearm mass [kg]
         l1;   % upperarm length [m]
@@ -20,26 +20,28 @@ classdef arm_2DOF < handle
         I1;   % upperarm moment of inertia about shoulder [kg-m^2]
         I2;   % forearm moment of inertia about elbow [kg-m^2]
         B;    % damping matrix [Nms/rad]
-        hand; % handedness [right or left]
-        xLim; % state (joint angle/velocity) limits [rad,rad/s]
-        uLim; % joint torque limits [Nm]
         
     end
     
-    % properties that are initialized in constructor but change over the
-    % course of simulation
+    % properties that are initialized in constructor but (can) change over
+    % the course of simulation
     properties (GetAccess=public, SetAccess=public)
         
-        coupling; % coupling matrix for joint torques
-        Td;       % delay between control and sensing [sec]
-        q;        % joint angles [rad]
-        u;        % joint torques [Nm]
-        x;        % state, in joint coordinates [rad,rad/s]
-        y;        % sensed output, in joint or task coordinates [rad,rad/s or m,m/s]
-        z;        % state, in joint coordinates, augmented for time delay [rad,rad/s]
-        shld;     % position of shoulder, in task coordinates [m]
-        elbw;     % position of elbow, in task coordinates [m]
-        inWS;     % 1 = in workspace, 0 = outside workspace
+        Ts;        % sampling time [sec]
+        Td;        % delay between control and sensing [sec]
+        coupling;  % coupling matrix for joint torques
+        motrNoise; % standard deviation of motor noise [Nm]
+        sensNoise; % standard deviation of sensory noise [rad]
+        sensBias;  % slope & intercept vectors defining sensory bias [rad]
+        
+        q;    % joint angles [rad]
+        x;    % state, in joint coordinates [rad,rad/s]
+        z;    % state, in joint coordinates, augmented for time delay [rad,rad/s]
+        u;    % joint torques [Nm]
+        y;    % state, in task coordinates [m,m/s]
+        shld; % position of shoulder, in task coordinates [m]
+        elbw; % position of elbow, in task coordinates [m]
+        inWS; % 1 = in workspace, 0 = outside workspace
     
     end
     
@@ -50,8 +52,11 @@ classdef arm_2DOF < handle
         function arm = arm_2DOF(subj)
             if  nargin > 0
                 
-                % set physical properties
-                arm.Ts = 0.001;
+                % constants to use below
+                toRad = pi/180;
+                
+                % set immutable properties
+                arm.hand = subj.hand;
                 arm.m1 = 0.028*subj.M; % (Winter, 2009)
                 arm.m2 = 0.022*subj.M;
                 arm.l1 = 0.188*subj.H;
@@ -63,39 +68,55 @@ classdef arm_2DOF < handle
                 arm.I1 = arm.m1*arm.r1^2;
                 arm.I2 = arm.m2*arm.r2^2;
                 arm.B = [0.05 0.025;0.025 0.05]; % (Crevecoeur, 2013)
-                arm.hand = subj.hand;
-                arm.xLim = [subj.thMin    subj.thMax;
-                            subj.thdotMin subj.thdotMax];
-                arm.uLim = [subj.torqMin  subj.torqMax];
                 
-                % set neurological properties
-                if (subj.coupled) arm.coupling = subj.C;
-                else              arm.coupling = eye(2); % independent control
-                end
-                arm.Td = subj.Td;
+                % initialize mutable properties to default values
+                arm.Ts = 0.001;
+                arm.Td = 0.1;
+                arm.coupling = eye(2);
+                arm.motrNoise = 0.0001;
+                posNoise = 0.0001;  % noise on position feedback [deg]
+                velNoise = 0.00001; % noise on velocity feedback [deg/s]
+                arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad;
+                biasData(:,:,1) = [20 0;40 0;65 0]*toRad;
+                biasData(:,:,2) = [30 0;60 0;80 0]*toRad;
+                arm.sensBias = fitBiasFunc(biasData);
                 
-                % size state vectors
-                arm.q = zeros(2,1);
-                arm.u = zeros(2,1);
-                arm.x = zeros(4,1);
-                arm.y = zeros(4,1);
-                arm.z = zeros(length(arm.x)*(floor(arm.Td/arm.Ts)+1),1);
+                % set joint limits to default values
+                toRad = pi/180;
+                th1Min = -70; % shoulder angle min [deg]
+                th1Max = 120; % shoulder angle max [deg]
+                th2Min = 0;   % elbow angle min [deg]
+                th2Max = 170; % elbow angle max [deg]
+                arm.q.min = [th1Min; th2Min]*toRad;
+                arm.q.max = [th1Max; th2Max]*toRad;
+                arm.x.min = [arm.q.min; -inf; -inf]; % no explicit velocity limits
+                arm.x.max = [arm.q.max;  inf;  inf];
                 
+                torq1Min = -85; % min shoulder torque [Nm]
+                torq1Max = 100; % max shoulder torque [Nm]
+                torq2Min = -60; % min elbow torque [Nm]
+                torq2Max = 75;  % max elbow torque [Nm]
+                arm.u.min = [torq1Min; torq2Min];
+                arm.u.max = [torq1Max; torq2Max];
+
+                % initialize state vectors
                 arm.shld = [0;0];
-                arm.elbw = [0;0];
-                arm.inWS = 1;
+                arm.q.val = mean([arm.q.min, arm.q.max], 2);
+                arm.x.val = [arm.q.val; 0; 0];
+                arm.z.val = repmat(arm.x.val, floor(arm.Td/arm.Ts)+1, 1);
+                arm.u.val = [0;0];
+                [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
                 
             else
                 warning('Must specify subject parameters.')
-            
             end
         end
  
         % function prototypes
         flag = withinLimits(arm, x)
         [ref, inWS] = defineRef(arm, movt)
-        [xTsk, elbw, reachable] = fwdKin(arm, xJnt)
-        [xJnt, elbw, reachable] = invKin(arm, xTsk)
+        [y, elbw, reachable] = fwdKin(arm, x)
+        [x, elbw, reachable] = invKin(arm, y)
         f = dynamics(arm, x, u)
         M = draw(arm)
         

@@ -1,9 +1,10 @@
 clear; clc; close all;
+set(0,'DefaultFigureWindowStyle','docked')
 %%% This script computes the workspace for the simulated arm
 
 %% Step 1: Setup arm and MPC toolbox
-% Initialize MPT3 toolbox
-addpath( genpath([pwd '/tbxmanager']));
+% Add all include folders to the working directory
+addpath( genpath([pwd '/include']));
 
 % Subject characteristics
 subj.M = 70;    % kg
@@ -17,24 +18,40 @@ model = arm_2DOF(subj);
 
 % Initially, the model will be resting at 0 degrees of shoulder horizontal
 % rotation and 0 degrees of elbow flexion.
-model.q = [mean( model.thLim(1:2,:), 2 ); 0; 0 ];
+% model.q = [mean( model.thLim(1:2,:), 2 ); 0; 0 ];
 % model.q = [ model.thLim(1:2,1); 0; 0 ];
 model.draw;
 
-histories.u = zeros(model.tDOF, 1);
-histories.q = model.q;
-histories.y = fwdKin( model, model.q );
+
+
+%% Compute workspace:
+% This function computes the workspace of the arm by driving the model arm
+% to reach as far as it can in several directions.  We chose to reach
+% towards several points located on a circle of radius, r = 10 m, centered
+% at the shoulder.
+
+% Specify the radius of the circle designating target locations
+r = 10;
+
+% Save the locations of the arm and hand throughout the simulation and the
+% computed control values.
+histories.u = zeros(length(model.u.min), 1);
+histories.x = model.x.val;
+histories.y = fwdKin( model );
 
 for th = ( 0:30:360 )*pi/180
-    display(['Reach direction: theta = ' num2str(th)*180/pi 'Deg'])
+    % Give us a message so we know what's going on
+    display(['Reach direction: theta = ' num2str(th*180/pi) 'Deg'])
     display('_________________________________')
-    
-    r = 10;
-    ref = [ r*cos(th); r*sin(th); 0; 0 ];
-    % Perform a reach:
     i = 0;
-    q_diff = diff( histories.q' );
-    model.q = [mean( model.thLim(1:2,:), 2 ); 0; 0 ];
+    x_diff = diff( histories.x' );
+    
+    % Update the position of the reference
+    ref = [ r*cos(th); r*sin(th); 0; 0 ];
+
+    % Reset the model so we start from the same initial posture at the
+    % beginning of each reach.
+    model = arm_2DOF(subj);
 
 
     %% Simulate reach.
@@ -43,13 +60,13 @@ for th = ( 0:30:360 )*pi/180
     % radians/second) as long as the resulting state is within the joint
     % limits.  This loop also assumes that the movement will take at least 0.1
     % seconds.
-    while model.withinLimits && ( max(abs( q_diff(end,:))) > 1e-2  ...
+    while model.withinLimits && ( max(abs( x_diff(end,:))) > 1e-2  ...
             || i*model.Ts < 0.1 )
     % while model.withinLimits && any( ref - model.fwdKin > 1e-1 )
 
         % Compute the optimal control value
         try
-            u_star = control( model, histories.u(:,end), ref, 'cartesian' );
+            u_star = control( model, model.x.val, histories.u(:,end), ref, 'cartesian' );
             % Note: The finite differences method used to linearize the
             % dynamics may cause joint limitation violation warnings even when
             % the actual posture satisfies the constraints.
@@ -70,15 +87,21 @@ for th = ( 0:30:360 )*pi/180
 
         % Sense the resulting sensory outputs and estimate the next state.
 
-        display(['Time = ' num2str(i*model.Ts) 'sec'])
-        display(['Delta q = [' num2str( model.q' - histories.q(:,end)') ...
-            ' ]''' ])
 
+        % Save new control, arm configuration, and hand location values
         histories.u = [ histories.u, u_star ];
-        histories.q = [ histories.q, model.q ];
+        histories.x = [ histories.x, model.x.val ];
         histories.y = [ histories.y, fwdKin( model )];
+        
+        % Let us know how long the simulation is taking and how much things
+        % are changing at each step
+        display(['Time = ' num2str(i*model.Ts) 'sec'])
+        display(['Delta q = [' num2str( diff( histories.q')') ...
+            ' ]''' ])
+        
+        % Update simulation time and 
         i = i +1;
-        q_diff = diff( histories.q');
+        x_diff = diff( histories.q');
     end
 end
 
@@ -90,16 +113,16 @@ subplot(3,1,1)
     plot( time, histories.u(1,:), 'b', ...
           time, histories.u(2,:), 'r')
       hold on
-      plot( time, ones(size(time))*model.torqLim(1,1), 'b:', ...
-            time, ones(size(time))*model.torqLim(1,2), 'b:', ...
-            time, ones(size(time))*model.torqLim(2,1), 'r:', ...
-            time, ones(size(time))*model.torqLim(2,2), 'r:')
+      plot( time, ones(size(time))*model.u.min(1), 'b:', ...
+            time, ones(size(time))*model.u.min(2), 'b:', ...
+            time, ones(size(time))*model.u.max(1), 'r:', ...
+            time, ones(size(time))*model.u.max(2), 'r:')
     ylabel 'Optimal joint torques, N-m'
     box off
     
 subplot(3,1,2)
-    plot( time, histories.q(1,:)*180/pi, 'b', ...
-          time, histories.q(2,:)*180/pi, 'r' )
+    plot( time, histories.x(1,:)*180/pi, 'b', ...
+          time, histories.x(2,:)*180/pi, 'r' )
    hold on
   plot( time, ones(size(time))*model.thLim(1,1)*180/pi, 'b:', ...
         time, ones(size(time))*model.thLim(1,2)*180/pi, 'b:', ...

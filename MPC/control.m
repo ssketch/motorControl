@@ -1,4 +1,4 @@
-function [u, flag] = control(arm, x_est, u, movt, params)
+function [u, flag] = control( arm, x, u, ref, space )
 % This function computes the MPC control output u for a model of the arm
 % tracking a reference state ref in either joint or task (Cartesian) space.
 % It employs the Multi-Parametric Toolbox MPT3. The MPT model is created by
@@ -9,28 +9,30 @@ function [u, flag] = control(arm, x_est, u, movt, params)
 % |                              |
 % | Control                      |
 % |   linearize dx/dt = f(x,u)   |              _________
-% |   linearize y = g(x)         |              |       |
-% |                              |______________| Plant |
+% |   linearize y = g(x)         |       u*     |       |   x
+% |                              |______________| Plant |____
 % |   min  y'Qy + u'Ru           |       |      |_______|  
-% |   s.t. dx/dt = Ax + Bu       |       |          |
+% |   s.t. dx/dt = Ax + Bu + f   |       |          |
+% |        y = Cx + g            |       |          |  
 % |        x_min <= x <= x_max   |       |          |
 % |        u_min <= u <= u_max   |       |          |
-% |______________________________|       |          |
+% |______________________________|       |          | y
 %                |                _______|_____     |
 %                |                |           |     |
 %                |________________| Estimator |_____|
-%                                 |___________|     
+%                  x_est          |___________|     
 %
 
 %% LINEARIZATION
 % To linearize the model, we compute the 1st-order Taylor series
-% approximation of (1) dynamics dx/dt = f(x,u) and (2) output y = g(x),
-% about current state x_k and control u_k. The dynamics will take the
-% (affine) form dx/dt = f(x,u) = Ax + Bu + c, where A = df/dx and B =
-% df/du. The output equation will take the (affine) form y = g(x) = Cx + d,
-% where C = dg/dx. Both linear approximations are only reasonable for x
-% "close" to x_k, which we assume to hold over MPC's finite horizon. For
-% example, the linearization of the dynamics proceeds as follows:
+% approximation of (1) dynamics dx/dt = f(x,u) and (2) output (forward
+% kinematics) y = g(x), about the current state x_k and most recent control
+% u_(k-1). The dynamics will take the (affine) form dx/dt = f(x,u) = Ax +
+% Bu + c, where A = df/dx and B = df/du. The output equation will take the
+% (affine) form y = g(x) = Cx + d, where C = dg/dx. Both linear
+% approximations are only reasonable for x "close" to x_k, which we assume
+% to hold over MPC's finite horizon. For example, the linearization of the
+% dynamics proceeds as follows:
 %
 %   f(x,u) = f(x_k,u_k) + df/dx*(x - x_k) + df/du*(u - u_k) + H.O.T.
 %   f(x,u) ~ (df/dx)*x + (df/du)*u + [f(x_k,u_k) - (df/dx)*x_k - (df/du)*u)k]
@@ -47,29 +49,33 @@ function [u, flag] = control(arm, x_est, u, movt, params)
 eps = 1e-3;
 
 % allocate memory for matrices/vectors
-A = zeros(arm.nStates);
-B = zeros(arm.nStates,arm.nInputs);
-C = eye(arm.nOutputs,arm.nStates);
+A = zeros( length( arm.x.min ), length( arm.x.min ));
+B = zeros( length( arm.x.min ), length( arm.u.min ));
+if isempty( arm.y )
+    warning('Output value, y, not initialized.')
+else
+    C = eye( length( arm.y.val ), length( arm.x.min ));
+end
 
 % compute dynamics matrix, A
-f = dynamics(arm, arm.q, u);
-for i = 1:nStates
-    q_eps = arm.q;
-    q_eps(i) = q_eps(i) + eps;       % 1 state perturbed
-    f_eps = dynamics(arm, q_eps, u); % state-perturbed dynamics
+f = dynamics(arm, x, u);
+for i = 1:length( arm.x.min )
+    x_eps = x;
+    x_eps(i) = x_eps(i) + eps;       % 1 state perturbed
+    f_eps = dynamics(arm, x_eps, u); % state-perturbed dynamics
     A(:,i) = (f_eps-f)/eps;
 end
 
 % compute input-to-state matrix, B
-for i = 1:nInputs
+for i = 1:length( arm.u.min )
     u_eps = u;
     u_eps(i) = u_eps(i) + eps;           % 1 input perturbed
-    f_eps = dynamics(arm, arm.q, u_eps); % input-perturbed dynamics
+    f_eps = dynamics(arm, x, u_eps); % input-perturbed dynamics
     B(:,i) = (f_eps-f)/eps;
 end
 
 % compute constant vector, c
-c = f - A*arm.q - B*u;
+c = f - A*arm.x.val - B*u;
 
 % compute measurement matrix, C, and constant vector, d
 switch space
@@ -81,15 +87,21 @@ switch space
     
     % output task-space coordinates by linearizing forward kinematics
     case 'cartesian'
-        C = zeros(nOutputs,nStates);
-        g = fwdKin(arm);
-        for i = 1:nStates
-            q_eps = arm.q;
-            q_eps(i) = q_eps(i) + eps;  % 1 state perturbed
-            g_eps = fwdKin(arm, q_eps); % state-perturbed forward kinematics
+        g = arm.fwdKin;
+        C = zeros( length(g), length( x ));
+
+        for i = 1:length(x)
+            x_eps = x;
+            x_eps(i) = x_eps(i) + eps;  % 1 state perturbed
+            g_eps = fwdKin(arm, x_eps); % state-perturbed forward kinematics
             C(:,i) = (g_eps-g)/eps;
         end
-        d = g - C*arm.q;
+        d = g - C*x;
+    
+    % We can also use torque (generalized force) control
+    % tau = J'*
+    case 'force'
+        
         
     % joint space by default
     otherwise
@@ -117,43 +129,39 @@ cd = c*arm.Ts;
 % Parametric Toolbox MPT3.
 
 % define model
-model = LTISystem('A',Ad,'B',Bd,'f',cd,'C',C,'g',d,'Ts',movt.Ts);
+model = LTISystem('A',Ad,'B',Bd,'f',cd,'C',C,'g',d,'Ts',arm.Ts);
 
 % make model track a reference (can be time-varying)
 model.y.with('reference');
 model.y.reference = 'free';
 
 % set (hard) constraints
-model.x.min = arm.jntLim(:,1);
-model.x.max = arm.jntLim(:,2);
-model.u.min = arm.torqLim(:,1);
-model.u.max = arm.torqLim(:,2);
+model.x.min = arm.x.min;
+model.x.max = arm.x.max;
+model.u.min = arm.u.min;
+model.u.max = arm.u.max;
 
 % define cost function
-switch movt.space
-    case 'joint'
-        model.y.penalty = QuadFunction(diag(ctrl.wP*[ones(arm.tDOF,1); ...
-            1e-1*ones(arm.tDOF,1)]));
-    case 'task'
-        model.y.penalty = QuadFunction( diag(1e3*[ones(arm.tDOF,1); ...
-            1e-1*ones(arm.tDOF,1)]));
-    otherwise
-        
-end
-model.u.penalty = QuadFunction(ctrl.wU*diag(ones(arm.jDOF,1)));
+model.y.penalty = QuadFunction( diag(1e3*[ones(length(arm.q.min),1); ...
+            1e-1*ones(length(arm.q.min),1)]));
+
+model.u.penalty = QuadFunction( diag(ones(length(u),1)));
 
 
 
 % create MPC controller
-MPC_ctrl = MPCController(model, ctrl.H);
+H = 20;  % optimize over a time horizon of 20*Ts seconds 
+MPC_ctrl = MPCController(model, H);
 
 % simulate open-loop system
-u = MPC_ctrl.evaluate(arm.q, 'y.reference', movt.ref);
+u = MPC_ctrl.evaluate(x, 'y.reference', ref);
 
 % check that optimal control is within bounds
-if (Tcurr(1) < params.torq_lim(1,1) || Tcurr(1) > params.torq_lim(1,2)) ...
-        || (Tcurr(2) < params.torq_lim(2,1) || Tcurr(2) > params.torq_lim(2,2))
-    flag = 1;
-    return
-end
+% if (Tcurr(1) < params.torq_lim(1,1) || Tcurr(1) > params.torq_lim(1,2)) ...
+%         || (Tcurr(2) < params.torq_lim(2,1) || Tcurr(2) > params.torq_lim(2,2))
+%     flag = 1;
+%     return
+% end
+
+
 end        
