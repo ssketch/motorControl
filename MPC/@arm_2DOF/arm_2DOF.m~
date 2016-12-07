@@ -29,15 +29,15 @@ classdef arm_2DOF < handle
     % course of simulation
     properties (GetAccess=public, SetAccess=public)
         
-        coupling; % coupling matrix for joint torques
-        Td;       % delay between control and sensing [sec]
         q;        % joint angles [rad]
         x;        % state, in joint coordinates [rad,rad/s]
-        y;        % sensed output, in joint or task coordinates [rad,rad/s or m,m/s]
+        y;        % sensed output, in oj task coordinates [m,m/s]
         z;        % state, in joint coordinates, augmented for time delay [rad,rad/s]
-        shld;     % position of shoulder, in task coordinates [m]
-        elbw;     % position of elbow, in task coordinates [m]
-        inWS;     % 1 = in workspace, 0 = outside workspace
+        shld;      % position of shoulder, in task coordinates [m]
+        elbw;      % position of elbow, in task coordinates [m]
+        coupling;  % coupling matrix for joint torques
+        Td;        % delay between control and sensing [sec]
+        inWS;      % 1 = in workspace, 0 = outside workspace
     
     end
     
@@ -48,8 +48,8 @@ classdef arm_2DOF < handle
         function arm = arm_2DOF(subj)
             if  nargin > 0
                 
-                % set physical properties
-                arm.m1 = 0.028*subj.M; % (Winter, 2009)
+                % set physical properties (Winter, unless otherwise noted)
+                arm.m1 = 0.028*subj.M;
                 arm.m2 = 0.022*subj.M;
                 arm.l1 = 0.188*subj.H;
                 arm.l2 = 0.253*subj.H;
@@ -59,11 +59,8 @@ classdef arm_2DOF < handle
                 arm.r2 = 0.827*arm.l2;
                 arm.I1 = arm.m1*arm.r1^2;
                 arm.I2 = arm.m2*arm.r2^2;
-                arm.B = [0.05 0.025;0.025 0.05]; % (Crevecoeur, 2013)
+                arm.B = [0.05 0.025;0.025 0.05]; %
                 arm.hand = subj.hand;
-                arm.thLim = [subj.thMin    subj.thMax;
-                             subj.thdotMin subj.thdotMax];
-                arm.torqLim = [subj.torqMin subj.torqMax];
                 
                 % set neurological properties
                 if (subj.coupled) arm.coupling = subj.C;
@@ -71,8 +68,15 @@ classdef arm_2DOF < handle
                 end
                 arm.Td = subj.Td;
                 
-                % initialize state vectors
+                thLim = [th1Min, th1Max;
+                         th2Min, th2Max];
+                thDotLim = [th1dotMin, th1dotMax;
+                            th2dotMin, th2dotMax ];
+                torqLim = [ torq1Min, torq1Max;
+                            torq2Min, torq2Max ];
                 
+                arm.thLim = [thLim; thDotLim];
+                arm.torqLim = torqLim;
                 
             else
                 warning('Must specify subject parameters.')
