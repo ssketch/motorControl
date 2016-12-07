@@ -38,9 +38,9 @@ classdef arm_2DOF < handle
         x;    % state, in joint coordinates [rad,rad/s]
         z;    % state, in joint coordinates, augmented for time delay [rad,rad/s]
         u;    % joint torques [Nm]
-        y;    % state, in task coordinates [m,m/s]
-        shld; % position of shoulder, in task coordinates [m]
-        elbw; % position of elbow, in task coordinates [m]
+        y;    % state, in Cartesian coordinates [m,m/s]
+        shld; % position of shoulder, in Cartesian coordinates [m]
+        elbw; % position of elbow, in Cartesian coordinates [m]
         inWS; % 1 = in workspace, 0 = outside workspace
     
     end
@@ -114,9 +114,9 @@ classdef arm_2DOF < handle
  
         % function prototypes
         flag = withinLimits(arm, x)
-        [ref, inWS] = defineRef(arm, movt)
         [y, elbw, reachable] = fwdKin(arm, x)
         [x, elbw, reachable] = invKin(arm, y)
+        J = jacobian(arm, x)
         f = dynamics(arm, x, u)
         M = draw(arm)
         
@@ -125,7 +125,6 @@ classdef arm_2DOF < handle
     % methods that are only available to other class/subclass methods
     methods (Access=protected)
         
-        J = jacobian(arm, x)
         J_dot = jacobianDeriv(arm, x)
         
     end

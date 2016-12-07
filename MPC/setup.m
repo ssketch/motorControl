@@ -21,7 +21,6 @@ intModel = arm_2DOF(modSubj);
 movt.space = 'task';       % movement space ('joint' / 'task')
 movt.type = 'reach';       % movement type ('reach' / 'hold' / 'outback' / 'ellipse')
 movt.T = 1;                % movement time [sec]
-movt.Ts = 0.01;            % time step [sec]
 movt.t = 0:movt.Ts:movt.T; % time vector [sec]
 movt.n = length(movt.t);   % number of time steps
 movt.d = 0.35;             % reach distance [m]

@@ -1,19 +1,18 @@
 % This function returns the (joint-space) equation of motion for the arm in
-% state q, given input u. If no state is specified as input, the function
+% state x, given input u. If no state is specified as input, the function
 % computes the equation for the current state of the 'arm' object.
 % NOTE: Although the arm's current state is an attribute of the arm object,
 % ----  it must be passed as an input for use with the MATLAB solver
 %       'ode45'.
-function f = dynamics( arm, x, u )
+function f = dynamics(arm, x, u)
 
-% If no state is specified, use current arm state saved in the model
-% object.
+% if no state is specified, use current arm state
 if nargin < 3
     x = arm.x.val;
     
-    % If no input control is specified and there is one stored in the model
-    % object, use that one.
-    if nargin == 1 && ~isempty( arm.u.val )
+    % if no input is specified (and there is one stored in the model), use
+    % current arm state
+    if nargin == 1 && ~isempty(arm.u.val)
         u = arm.u.val;
     end
 end
@@ -38,18 +37,10 @@ V1 = -x(4)*(2*x(3) + x(4));
 V2 = x(3)^2;
 V = [V1;V2] * a2*sin(x(2));
 
-% add in gravity and friction
+% add in gravity and viscous damping
 G = [0;0];
-Fric = arm.B*x(3:4); % Is this friction or damping?  Looks like damping to me
+Damp = arm.B*x(3:4);
 
-f = [x(3:4) ; M\(uCouple-V-G-Fric)];
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Note: I'm suspicious of this.  When I run
-%   model = arm_2DOF(subj)
-%   dynamics( arm, [0.4363, 1.4835, 0, 0]', [0, 0]' )
-% The result is [0;0;0;0], which means that the arm moved with zero
-% velocity and zero applied torque.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+f = [x(3:4) ; M\(uCouple-V-G-Damp)];
 
 end
