@@ -101,8 +101,13 @@ switch space
     % We can also use torque (generalized force) control
     % tau = J'*
     case 'force'
-        
-        
+        C = eye(nOutputs,nStates);
+        d = zeros(nOutputs,nInputs);
+
+        A = arm.jacobian * A;
+        B = arm.jacobian * B;
+        c = arm.jacobian * c;
+
     % joint space by default
     otherwise
         C = eye(nOutputs,nStates);
