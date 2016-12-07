@@ -9,7 +9,7 @@ if nargin == 1
 end
 
 flag = false;
-if all(x >= arm.xLim(:,1)) && all(x <= arm.xLim(:,2))
+if all(x >= arm.jntLim(:,1)) && all(x <= arm.jntLim(:,2))
     flag = true;
 end
 
