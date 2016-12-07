@@ -1,4 +1,4 @@
-function [u, flag] = control(arm, x_est, u, movt, params)
+function [u, flag] = control(arm, x_est, u, ref, params)
 % This function computes the MPC control output u for a model of the arm
 % tracking a reference state ref in either joint or task (Cartesian) space.
 % It employs the Multi-Parametric Toolbox MPT3. The MPT model is created by
@@ -24,13 +24,14 @@ function [u, flag] = control(arm, x_est, u, movt, params)
 
 %% LINEARIZATION
 % To linearize the model, we compute the 1st-order Taylor series
-% approximation of (1) dynamics dx/dt = f(x,u) and (2) output y = g(x),
-% about current state x_k and control u_k. The dynamics will take the
-% (affine) form dx/dt = f(x,u) = Ax + Bu + c, where A = df/dx and B =
-% df/du. The output equation will take the (affine) form y = g(x) = Cx + d,
-% where C = dg/dx. Both linear approximations are only reasonable for x
-% "close" to x_k, which we assume to hold over MPC's finite horizon. For
-% example, the linearization of the dynamics proceeds as follows:
+% approximation of (1) dynamics dx/dt = f(x,u) and (2) output (forward
+% kinematics) y = g(x), about the current state x_k and most recent control
+% u_(k-1). The dynamics will take the (affine) form dx/dt = f(x,u) = Ax + Bu +
+% c, where A = df/dx and B = df/du. The output equation will take the
+% (affine) form y = g(x) = Cx + d, where C = dg/dx. Both linear
+% approximations are only reasonable for x "close" to x_k, which we assume
+% to hold over MPC's finite horizon. For example, the linearization of the
+% dynamics proceeds as follows:
 %
 %   f(x,u) = f(x_k,u_k) + df/dx*(x - x_k) + df/du*(u - u_k) + H.O.T.
 %   f(x,u) ~ (df/dx)*x + (df/du)*u + [f(x_k,u_k) - (df/dx)*x_k - (df/du)*u)k]
@@ -117,7 +118,7 @@ cd = c*arm.Ts;
 % Parametric Toolbox MPT3.
 
 % define model
-model = LTISystem('A',Ad,'B',Bd,'f',cd,'C',C,'g',d,'Ts',movt.Ts);
+model = LTISystem('A',Ad,'B',Bd,'f',cd,'C',C,'g',d,'Ts',arm.Ts);
 
 % make model track a reference (can be time-varying)
 model.y.with('reference');
@@ -130,16 +131,9 @@ model.u.min = arm.torqLim(:,1);
 model.u.max = arm.torqLim(:,2);
 
 % define cost function
-switch movt.space
-    case 'joint'
-        model.y.penalty = QuadFunction(diag(ctrl.wP*[ones(arm.tDOF,1); ...
+model.y.penalty = QuadFunction( diag(1e3*[ones(arm.tDOF,1); ...
             1e-1*ones(arm.tDOF,1)]));
-    case 'task'
-        model.y.penalty = QuadFunction( diag(1e3*[ones(arm.tDOF,1); ...
-            1e-1*ones(arm.tDOF,1)]));
-    otherwise
-        
-end
+
 model.u.penalty = QuadFunction(ctrl.wU*diag(ones(arm.jDOF,1)));
 
 
@@ -148,7 +142,7 @@ model.u.penalty = QuadFunction(ctrl.wU*diag(ones(arm.jDOF,1)));
 MPC_ctrl = MPCController(model, ctrl.H);
 
 % simulate open-loop system
-u = MPC_ctrl.evaluate(arm.q, 'y.reference', movt.ref);
+u = MPC_ctrl.evaluate(arm.q, 'y.reference', ref);
 
 % check that optimal control is within bounds
 if (Tcurr(1) < params.torq_lim(1,1) || Tcurr(1) > params.torq_lim(1,2)) ...

@@ -1,6 +1,14 @@
 % This function defines the reference trajectory to be tracked by the arm,
 % saving all parametes to the input 'movt' struct.
 function [ref, inWS] = defineRef(arm, movt)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Can you explain why this method is necessary?  This looks like a hangover
+% from the previous code.  I was thinking that we would just feed the
+% controller a reference value and tell it what type of controller to use.
+% Then if we wanted it to track a weird trajectory, that could be defined
+% in the driver script instead for simplicity.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 switch movt.type
     

@@ -98,7 +98,7 @@ for th = ( 0:30:360 )*pi/180
         display(['Delta q = [' num2str( diff( histories.q')') ...
             ' ]''' ])
         
-        % Update simulation time and 
+        % Update simulation time and comp
         i = i +1;
         q_diff = diff( histories.q');
     end
