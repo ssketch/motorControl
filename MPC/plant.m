@@ -1,4 +1,3 @@
-function zNext = plant(arm)
 % This function solves the nonlinear equations of motion of an arm model
 % (over a single time step) using MATLAB's variable-step-size numerical
 % integrator 'ode45'. It updates the arm properties and outputs the
@@ -18,6 +17,7 @@ function zNext = plant(arm)
 %       |___________| Estimator |____________|
 %         x_est     |___________|
 
+function zNext = plant(arm)
 
 % solve equations of motion using ode45, starting from current arm state
 % and assuming that joint torques remain constant over the time step

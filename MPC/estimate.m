@@ -1,4 +1,3 @@
-function [xPnext, Pnext] = estimate(xP, P, y, T, params)
 % This function uses the brain's internal model, along with an efference
 % copy of the command sent to the arm and sensory feedback from the
 % proprioceptive system, to update an estimate of the arm's state, as well
@@ -28,6 +27,7 @@ function [xPnext, Pnext] = estimate(xP, P, y, T, params)
 %               |       computed uncertainties       |
 %               |____________________________________|
 
+function [xPnext, Pnext] = estimate(xP, P, y, T, params)
 
 % nonlinear model + unscented Kalman filter
 [xPnext, Pnext] = ukf(xP, P, y, T, @actuate, @sense, params);
