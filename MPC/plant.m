@@ -4,7 +4,7 @@ function zNext = plant(arm)
 % integrator 'ode45'. It updates the arm properties and outputs the
 % augmented state vector (as required for this function to be used in the
 % unscented Kalman filter for state estimation).
-
+%
 % ___________                     _____________________________
 % |         |              u*     |                           |   x
 % | Control |_____________________| Plant                     |____
@@ -18,16 +18,19 @@ function zNext = plant(arm)
 %       |___________| Estimator |____________|
 %         x_est     |___________|
 
-% solve the equations of motion using ode45
-[~, xTraj] = ode45(@(t,x) dynamics(arm,x,u), [0,arm.Ts], arm.x.val);
+% solve the equations of motion using ode45, starting from the current arm
+% state and assuming that joint torques remain constant over the time step
+[~, xTraj] = ode45(@(t,x) dynamics(arm,x), [0,arm.Ts], arm.x.val);
 
 % save the integrated result as new state of the arm
+nJnts = length(arm.q.val);
+arm.q.val = xTraj(end,1:nJnts)';
 arm.x.val = xTraj(end,:)';
 
 % save new arm state in the augmented state vector
 nStates = length( arm.x.min );
-xNext = arm.x.val;
-xNext(1:nStates) = arm.x.val;
+zNext = arm.x.val;
+zNext(1:nStates) = arm.x.val;
 
 % time-shift remainder of augmented state vector
 nDelSteps = floor(arm.Td/arm.Ts + 1);
@@ -38,15 +41,3 @@ if ~model
     xNext(1:nStates) = xNext(1:nStates) + ...
         sqrt(diag(params.Q)).*randn(nStates,1);
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% This function currently not working. My error message:
-% Error using  * 
-% Inner matrix dimensions must agree.
-% 
-% Error in plant (line 34)
-% xNext = xNext + Mprop*xNext;
-% 
-% Error in main_workspace (line 84)
-%         model = plant( model, u_star );
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

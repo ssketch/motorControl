@@ -4,7 +4,7 @@ function [u, flag] = control( arm, x, u, ref, space )
 % It employs the Multi-Parametric Toolbox MPT3. The MPT model is created by
 % first linearizing the arm model (both dynamics and output) about the 
 % current state estimate.
-
+%
 % ________________________________
 % |                              |
 % | Control                      |

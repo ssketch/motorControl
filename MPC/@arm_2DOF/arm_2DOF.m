@@ -28,6 +28,7 @@ classdef arm_2DOF < handle
     properties (GetAccess=public, SetAccess=public)
         
         Ts;        % sampling time [sec]
+        Tr;        % "reaction time" for replanning torque trajectory [sec]
         Td;        % delay between control and sensing [sec]
         coupling;  % coupling matrix for joint torques
         motrNoise; % standard deviation of motor noise [Nm]
@@ -71,6 +72,7 @@ classdef arm_2DOF < handle
                 
                 % initialize mutable properties to default values
                 arm.Ts = 0.001;
+                arm.Tr = 0.1; % (Wagner & Smith, 2008)
                 arm.Td = 0.1;
                 arm.coupling = eye(2);
                 arm.motrNoise = 0.0001;
@@ -99,11 +101,13 @@ classdef arm_2DOF < handle
                 arm.u.min = [torq1Min; torq2Min];
                 arm.u.max = [torq1Max; torq2Max];
 
-                % initialize state vectors
+                % initialize state vectors for arm in middle of defined
+                % workspace
                 arm.shld = [0;0];
                 arm.q.val = mean([arm.q.min, arm.q.max], 2);
                 arm.x.val = [arm.q.val; 0; 0];
-                arm.z.val = repmat(arm.x.val, floor(arm.Td/arm.Ts)+1, 1);
+                nDelay = ceil(arm.Td/arm.Ts);
+                arm.z.val = repmat(arm.x.val, nDelay+1, 1); % (nDelay + 1) includes current state
                 arm.u.val = [0;0];
                 [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
                 

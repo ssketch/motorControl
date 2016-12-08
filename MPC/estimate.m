@@ -5,7 +5,7 @@ function [xPnext, Pnext] = estimate(xP, P, y, T, params)
 % as this estimate's uncertainty. The estimation is performed with an
 % unscented Kalman filter, using the fully nonlinear dynamics with state
 % augmented to account for time delay. 
-
+%
 % ___________                                         _________
 % |         |                     u*                  |       |   x
 % | Control |_________________________________________| Plant |____
