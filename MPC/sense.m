@@ -1,12 +1,12 @@
-% This function senses arm state via a biased and noisy proprioceptive
-% system, accounting for time delay via state augmentation.
-function y = sense(arm, x)
+% This function senses arm state (in joint space) via a biased and noisy
+% proprioceptive system, accounting for time delay via state augmentation.
+% Note that this sensing is done in joint space regardless of the 'space'
+% set for control, which is only used for the purposes of MPC optimization.
+function y = sense(arm)
 
-% extract most delayed state from augmented state vector 
-% p.C = zeros(p.Nsensed,p.Nstates);
-% p.C(:,1:p.Nsensed) = eye(p.Nsensed);
-% 
-% p.Cext_act = [zeros(p.Nsensed,p.Nstates*p.numDelSteps) p.C zeros(p.Nsensed,1)];     % actual time delay
+% extract most delayed state from augmented state vector
+nStates = length(arm.x.val);
+y = arm.z.val(end-(nStates-1):end);
 
 % add bias & noise
 sensBias = computeBias(arm);

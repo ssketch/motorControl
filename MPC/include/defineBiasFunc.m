@@ -3,9 +3,9 @@
 % joint.
 function func = defineBiasFunc(data)
 
-nJnts = size(data,3);
-func.slope = zeros(nJnts,1);
-func.inter = zeros(nJnts,1);
+nJoints = size(data,3);
+func.slope = zeros(nJoints,1);
+func.inter = zeros(nJoints,1);
 
 for i = 1:size(data,3)
     [func.slope(i), func.inter(i)] = fitData(data(:,1,i), data(:,2,i));

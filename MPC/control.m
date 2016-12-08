@@ -1,4 +1,4 @@
-function [u, flag] = control( arm, x, u, ref, space )
+function [u, flag] = control(arm, x, u, ref, space)
 % This function computes the MPC control output u for a model of the arm
 % tracking a reference state ref in either joint or task (Cartesian) space.
 % It employs the Multi-Parametric Toolbox MPT3. The MPT model is created by
@@ -99,7 +99,7 @@ switch space
         end
         d = g - C*x;
     
-    % We can also use torque (generalized force) control
+    % torque (generalized force) control
     % tau = J'*
     case 'force'
         C = eye(nOutputs,nStates);

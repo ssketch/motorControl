@@ -4,6 +4,7 @@ function bias = computeBias(arm)
 
 m = arm.sensBias.slope;
 b = arm.sensBias.inter;
-bias = m.*arm.q(1:arm.jDOF) + b;
+
+bias = m .* arm.q + b;
 
 end
