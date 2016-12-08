@@ -5,14 +5,14 @@ function zNext = plant(arm)
 % augmented state vector (as required for this function to be used in the
 % unscented Kalman filter for state estimation).
 
-% ___________                     _____________________________
-% |         |              u*     |                           |   x
-% | Control |_____________________| Plant                     |____
-% |_________|              |      |   solve the differential  |
-%       |                  |      |   equation of motion for  |
-%       |                  |      |   the model given by      |
-%       |                  |      |   x_dot = f(x,u)          |
-%       |                  |      |___________________________|
+% ___________                     ____________________________
+% |         |              u*     |                          |   x
+% | Control |_____________________| Plant                    |____
+% |_________|              |      |   solve the differential |
+%       |                  |      |   equation of motion for |
+%       |                  |      |   the model given by     |
+%       |                  |      |   x_dot = f(x,u)         |
+%       |                  |      |__________________________|
 %       |           _______|_____            | 
 %       |           |           |            | y
 %       |___________| Estimator |____________|
