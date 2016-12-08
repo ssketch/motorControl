@@ -6,27 +6,27 @@ function [xPnext, Pnext] = estimate(xP, P, y, T, params)
 % unscented Kalman filter, using the fully nonlinear dynamics with state
 % augmented to account for time delay. 
 
-% ___________                                      _________
-% |         |                                      |       |
-% | Control |______________________________________| Plant |
-% |_________|                  |                   |_______|
-%       |                      |                       |
-%       |    __________________|___________________    |
-%       |    |                                    |    |
-%       |____| Estimator                          |____|
-%            |   unscented Kalman filter (UKF):   |
-%            |    1) predict arm state & sensory  |
-%            |       feedback via internal model  |
-%            |       & unscented transform (UT)   |
-%            |       of sigma points              |
-%            |    2) compute uncertainty in each  |
-%            |       prediction                   |
-%            |    3) update predicted state with  |
-%            |       difference between actual &  |
-%            |       predicted sensory feedback,  |
-%            |       weighted according to        |
-%            |       computed uncertainties       |
-%            |____________________________________|
+% ___________                                         _________
+% |         |                     u*                  |       |   x
+% | Control |_________________________________________| Plant |____
+% |_________|                     |                   |_______|
+%       |                         |                       |
+%       |       __________________|___________________    |
+%       |       |                                    |    | y
+%       |_______| Estimator                          |____|
+%         x_est |   unscented Kalman filter (UKF):   |
+%               |    1) predict arm state & sensory  |
+%               |       feedback via internal model  |
+%               |       & unscented transform (UT)   |
+%               |       of sigma points              |
+%               |    2) compute uncertainty in each  |
+%               |       prediction                   |
+%               |    3) update predicted state with  |
+%               |       difference between actual &  |
+%               |       predicted sensory feedback,  |
+%               |       weighted according to        |
+%               |       computed uncertainties       |
+%               |____________________________________|
 
 % nonlinear model + unscented Kalman filter
 [xPnext, Pnext] = ukf(xP, P, y, T, @actuate, @sense, params);

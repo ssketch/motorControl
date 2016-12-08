@@ -1,21 +1,22 @@
-function xNext = plant(arm, u)
+function zNext = plant(arm)
 % This function solves the nonlinear equations of motion of an arm model
 % (over a single time step) using MATLAB's variable-step-size numerical
-% integrator 'ode45'. It updates both the state attribute of the arm, as
-% well as the state vector x augmented to account for time delay.
+% integrator 'ode45'. It updates the arm properties and outputs the
+% augmented state vector (as required for this function to be used in the
+% unscented Kalman filter for state estimation).
 
 % ___________                     __________________________________
-% |         |                     |                                |
-% | Control |_____________________| Plant                          |
+% |         |              u*     |                                |   x
+% | Control |_____________________| Plant                          |____
 % |_________|              |      |    solve the differential      |
 %       |                  |      |    equation of motion for the  |
 %       |                  |      |    for the model given by      |
 %       |                  |      |    x_dot = f(x,u)              |
 %       |                  |      |________________________________|
 %       |           _______|_____     | 
-%       |           |           |     |
+%       |           |           |     | y
 %       |___________| Estimator |_____|
-%                   |___________|     
+%         x_est     |___________|     
 
 % solve the equations of motion using ode45
 [~, xTraj] = ode45(@(t,q) dynamics(arm,q,u), [0,arm.Ts], arm.x.val);

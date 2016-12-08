@@ -14,8 +14,13 @@ modSubj.M = 70;
 modSubj.H = 1.80;
 intModel = arm_2DOF(modSubj);
 
-% update model parameters
-% TO DO
+% update model parameters (e.g., if the subject has suffered a stroke,
+% muscle synergies/joint coupling might not be captured by the internal
+% model)
+
+%%%%%%%%%
+% TO DO %
+%%%%%%%%%
 
 % define movement parameters
 movt.space = 'task';       % movement space ('joint' / 'task')
