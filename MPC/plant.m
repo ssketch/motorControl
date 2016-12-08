@@ -18,26 +18,31 @@ function zNext = plant(arm)
 %       |___________| Estimator |____________|
 %         x_est     |___________|
 
-% solve the equations of motion using ode45, starting from the current arm
-% state and assuming that joint torques remain constant over the time step
+
+% solve equations of motion using ode45, starting from current arm state
+% and assuming that joint torques remain constant over the time step
 [~, xTraj] = ode45(@(t,x) dynamics(arm,x), [0,arm.Ts], arm.x.val);
 
-% save the integrated result as new state of the arm
-nJnts = length(arm.q.val);
-arm.q.val = xTraj(end,1:nJnts)';
+% add motor noise (scaled by time step) to integrated result
+nStates = length(arm.x.min);
+xTraj(end,:) = xTraj(end,:) + ...
+    arm.Ts * (arm.motrNoise*ones(1,nStates)) .* rand(1,nStates);
+
+% save noisy new arm state in arm model
+nJoints = length(arm.q.val);
+arm.q.val = xTraj(end,1:nJoints)';
 arm.x.val = xTraj(end,:)';
 
-% save new arm state in the augmented state vector
-nStates = length( arm.x.min );
-zNext = arm.x.val;
+% update current state within augmented state vector
+zNext = arm.z.val;
 zNext(1:nStates) = arm.x.val;
 
-% time-shift remainder of augmented state vector
-nDelSteps = floor(arm.Td/arm.Ts + 1);
-Mprop = diag(ones((nStates)*nDelSteps,1),-(nStates)); % time-shift matrix
-xNext = xNext + Mprop*xNext;
+% time shift past states within augmented state vector
+nDelay = ceil(arm.Td/arm.Ts);
+Mshift = diag(ones(nStates*nDelay,1), -nStates);
+zNext = zNext + Mshift*zNext;
 
-if ~model
-    xNext(1:nStates) = xNext(1:nStates) + ...
-        sqrt(diag(params.Q)).*randn(nStates,1);
+% save augmented state in arm model
+arm.z.val = zNext;
+
 end

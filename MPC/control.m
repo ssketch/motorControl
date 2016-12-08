@@ -23,6 +23,7 @@ function [u, flag] = control( arm, x, u, ref, space )
 %                  x_est          |___________|     
 %
 
+
 %% LINEARIZATION
 % To linearize the model, we compute the 1st-order Taylor series
 % approximation of (1) dynamics dx/dt = f(x,u) and (2) output (forward

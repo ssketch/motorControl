@@ -6,8 +6,6 @@ function y = sense(arm, x)
 % p.C = zeros(p.Nsensed,p.Nstates);
 % p.C(:,1:p.Nsensed) = eye(p.Nsensed);
 % 
-% % extended state to account for time delay
-% p.Cext_mod = [zeros(p.Nsensed,p.Nstates*p.numDelSteps_mod) p.C zeros(p.Nsensed,1)]; % modeled time delay
 % p.Cext_act = [zeros(p.Nsensed,p.Nstates*p.numDelSteps) p.C zeros(p.Nsensed,1)];     % actual time delay
 
 % add bias & noise
