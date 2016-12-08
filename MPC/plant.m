@@ -1,8 +1,6 @@
 % This function solves the nonlinear equations of motion of an arm model
 % (over a single time step) using MATLAB's variable-step-size numerical
-% integrator 'ode45'. It updates the arm properties and outputs the
-% augmented state vector (as required for this function to be used in the
-% unscented Kalman filter for state estimation).
+% integrator 'ode45'.
 %
 % ___________                     _____________________________
 % |         |              u*     |                           |   x
@@ -16,7 +14,11 @@
 %       |           |           |            | y
 %       |___________| Estimator |____________|
 %         x_est     |___________|
-
+%
+%
+% The function updates the arm properties and outputs the augmented state
+% vector, as required for this function to be used in the unscented Kalman
+% filter for state estimation.
 function zNext = plant(arm)
 
 % solve equations of motion using ode45, starting from current arm state
@@ -32,6 +34,7 @@ xTraj(end,:) = xTraj(end,:) + ...
 nJoints = length(arm.q.val);
 arm.q.val = xTraj(end,1:nJoints)';
 arm.x.val = xTraj(end,:)';
+[arm.y.val, ~, ~] = fwdKin(arm);
 
 % update current state within augmented state vector
 zNext = arm.z.val;

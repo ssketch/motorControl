@@ -1,5 +1,5 @@
 % This function 
-function [A, B, C, c, d] = linearize(arm, x, u, space)
+function [A, B, C, c, d] = linearize(arm, x_est, space)
 
 %% LINEARIZE
 % To linearize the model, we compute the 1st-order Taylor series

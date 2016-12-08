@@ -26,10 +26,18 @@
 %               |       weighted according to        |
 %               |       computed uncertainties       |
 %               |____________________________________|
+%
+%
+% The function outputs a flag. TO DO
+function flag = estimate(arm, intModel, params)
 
-function [xPnext, Pnext] = estimate(xP, P, y, T, params)
+% sense noisy output from arm
+
+%%%%%%%%%
+% TO DO %
+%%%%%%%%%
 
 % nonlinear model + unscented Kalman filter
-[xPnext, Pnext] = ukf(xP, P, y, T, @actuate, @sense, params);
+[xPnext, Pnext] = ukf(xP, P, y, T, @plant, @sense);
 
 end

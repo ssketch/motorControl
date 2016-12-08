@@ -20,11 +20,22 @@
 %                |                |           |     |
 %                |________________| Estimator |_____|
 %                  x_est          |___________|     
-
-function [u, flag] = control(arm, x, u, space, ref)
+%
+%
+% The function outputs a flag. 'flag = 0' implies no problems and the
+% computed optimal control is saved in the arm's properties. 'flag = 1'
+% signals that the linearization failed and the function returns without
+% attempting to compute the optimal control. 'flag = 2' signals that the
+% computed optimal control is outside of the arm's torque limits; the value
+% is not saved in the arm's properties.
+function flag = control(arm, x_est, ref, params)
 
 % linearize & discretize arm model
-[A, B, C, c, d] = linearize(arm, x, u, space);
+[A, B, C, c, d] = linearize(arm, x_est, params.space);
+if ~isreal(A) || sum(sum(isnan(A))) > 0
+    flag = 1;
+    return
+end
 
 % define model for MPT3
 model = LTISystem('A',A,'B',B,'f',c,'C',C,'g',d,'Ts',arm.Ts);
@@ -40,21 +51,25 @@ model.u.min = arm.u.min;
 model.u.max = arm.u.max;
 
 % define cost function
-model.y.penalty = QuadFunction( diag(1e3*[ones(length(arm.q.min),1); ...
-            1e-1*ones(length(arm.q.min),1)]));
-model.u.penalty = QuadFunction( diag(ones(length(u),1)));
+nInputs = length(arm.u.val);
+nOutputs = length(arm.y.val);
+model.u.penalty = QuadFunction( params.alpha * diag(params.wU*ones(nInputs,1)) );
+model.y.penalty = QuadFunction( diag(params.wP*[ones(nOutputs,1) ; ...
+                                     params.wV*ones(nOutputs,1)]) );
 
 % create MPC controller
-MPC_ctrl = MPCController(model, ctrl.H);
+MPC_ctrl = MPCController(model, params.H);
 
-% simulate open-loop system
-u = MPC_ctrl.evaluate(x, 'y.reference', ref);
+% simulate open-loop system to find optimal control
+uOpt = MPC_ctrl.evaluate(x, 'y.reference', ref);
 
 % check that optimal control is within bounds
-if (Tcurr(1) < params.torq_lim(1,1) || Tcurr(1) > params.torq_lim(1,2)) ...
-        || (Tcurr(2) < params.torq_lim(2,1) || Tcurr(2) > params.torq_lim(2,2))
-    flag = 1;
+if all(uOpt >= arm.u.min) && all(uOpt <= arm.u.max)
+    flag = 2;
     return
+else
+    flag = 0;
+    arm.u.val = uOpt;
 end
 
 end        
