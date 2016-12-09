@@ -16,6 +16,11 @@ plot(arm.shld(1), arm.shld(2), 'ko','MarkerSize',20,'MarkerFaceColor','k');
 plot(arm.elbw(1), arm.elbw(2), 'ko','MarkerSize',20,'MarkerFaceColor','k');
 plot(arm.y.val(1), arm.y.val(2), 'ko','MarkerSize',20,'MarkerFaceColor','k');
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Note: these axes don't actually cover the whole workspace; postures in
+%       quandrant 4 don't show up
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % set axes to cover workspace (depends on handedness)
 if strcmp(arm.hand, 'right' )
     axis([-0.75 * arm.l1,       arm.l1 + arm.l2, ...
