@@ -6,13 +6,6 @@ classdef arm_4DOF < handle
     % properties that, once set in constructor, remain constant
     properties (GetAccess=public, SetAccess=private)
         
-        jDOF = 4;         % joint-space degrees of freedom (shoulder & 
-                          % elbow angle)
-        tDOF = 3;         % task-space degrees of freedom (x & y, not theta)
-        shld = [0;0;0];   % position of shoulder, in task coordinates [m]
-        B = 0.25 .* ones(4,4) + eye(4).*2.75; % damping matrix, Crevecouer 
-                                              % 2013 [Nms/rad]
-                                              
         hand;    % handedness [right or left]
         m3;      % upperarm mass, Winter [kg]
         m4;      % forearm mass, Winter [kg]
@@ -26,8 +19,7 @@ classdef arm_4DOF < handle
         r4;      % forearm radius of gyration (proximal), Winter [m]
         I3;      % upperarm moment of inertia about shoulder, Winter [kg-m^2]
         I4;      % forearm moment of inertia about elbow, Winter [kg-m^2]
-        thLim;   % joint angle limits [rad]
-        torqLim; % joint torque limits [Nm]
+        B;       % damping matrix [Nms/rad]
         
     end
     
@@ -35,12 +27,22 @@ classdef arm_4DOF < handle
     % course of simulation
     properties (GetAccess=public, SetAccess=public)
         
-        q;    % state, in joint coordinates [rad,rad/s]
-        x;    % state, in task coordinates [m,m/s]
-        elbow; % position of elbow, in task coordinates [m]
+        Ts;  % sampling time [sec]
+        Tr;  % "reaction time" for recomputing "optimal" controls [sec]
+        Td;  % delay between control and sensing [sec]
+        coupling;   % coupling matrix - merging muscle synergies (eg. Clark et al., 2010)
+        motrNoise;  % standard deviation of motor noise [N-m]
+        sensNoise;  % standard deviation of sensory noise [rad]
+        
+        q;    % joint angles [rad]
+        u;    % joint torques [Nm]
+        x;    % state, in joint coordinates [rad,rad/s]
+        y;    % state, in Cartesian coordinates [m,m/s]
+        z;    % state, in joint coordinates, augmented for time delay [rad,rad/s]
+        P;    % covariance matrix representing uncertainty in augmented state, z
+        shld; % position of shoulder, in Cartesian coordinates [m]
+        elbw; % position of elbow, in Cartesian coordinates [m]
         inWS; % 1 = in workspace, 0 = outside workspace
-    
-        Ts = 0.01; % Time step in seconds
 
     end
     
@@ -51,7 +53,10 @@ classdef arm_4DOF < handle
         function arm = arm_4DOF(subj, movt)
             if  nargin > 0
                 
-                % set constant properties
+                % Helpful constants
+                toRad = pi/180;
+                
+                % set immutable properties
                 arm.hand = subj.hand;
                 arm.m3 = 0.028*subj.M;
                 arm.m4 = 0.022*subj.M;
@@ -63,35 +68,64 @@ classdef arm_4DOF < handle
                 arm.r4 = 0.827*arm.l4;
                 arm.I3 = arm.m3*arm.r3^2;
                 arm.I4 = arm.m4*arm.r4^2;
+                arm.B = 0.25*ones(4,4) + 0.25*eye(4); % (Crevecoeur, 2013)
+
+                % initialize mutable properties to default values
+                arm.Ts = 0.001;
+                arm.Tr = 0.1;  % (Wagner & Smith, 2008)
+                arm.Td = 0.06; % (Crevecoeur, 2013)
+                arm.coupling = eye(4);
+                arm.motrNoise = 0.0001;
+                posNoise = 0.0001;  % noise on position feedback [deg]
+                velNoise = 0.00001; % noise on velocity feedback [deg/s]
+                arm.sensNoise = [posNoise*ones(1,4); velNoise*ones(1,4)]*toRad;
+
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % Not sure what exactly to do here to translate this to
+                % 4DOF.
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                biasData(:,:,2) = [20 0;40 0;65 0]*toRad;
+                biasData(:,:,4) = [30 0;60 0;80 0]*toRad;
+                arm.sensBias = defineBiasFunc(biasData);
                 
-                % joint limits
-                toRad = pi/180;
-                th2Min = -70*toRad; th2Max = 120*toRad;        % shoulder angle limits [rad]
-                th4Min = 0*toRad;   th4Max = 170*toRad;        % elbow angle limits [rad]
-                th2dotMin = -50*toRad;  th2dotMax = 90*toRad;  % shoulder velocity limits [rad/s]
-                th4dotMin = -120*toRad; th4dotMax = 120*toRad; % elbow velocity limits [rad/s]
-                torq1Min = -85;     torq1Max = 100;            % shoulder extension torquelimits [Nm]
-                torq2Min = -60;     torq2Max = 75;             % shoulder abduction torque limits [Nm]               
-                torq3Min = -85;     torq3Max = 100;            % shoulder rotation torque limits [Nm]
-                torq4Min = -60;     torq4Max = 75;             % elbow torque limits [Nm]
-                thLim = [th2Min, th2Max;
-                         th4Min, th4Max];
-                thDotLim = [th2dotMin, th2dotMax;
-                            th4dotMin, th4dotMax];
-                torqLim = [ torq1Min, torq1Max;
-                            torq2Min, torq2Max
-                            torq3Min, torq3Max;
-                            torq4Min, torq4Max];
                 
-                arm.thLim = [thLim; thDotLim];
-                arm.thLim = [arm.thLim; -inf*ones(4,1), inf*ones(4,1)];
+                % set default joint limits
+                th1Min = [];        % Min. shoulder extension [rad]
+                th1Max = [];        % Max. shoulder extension [rad]
+                th2Min = -70*toRad; % Max. shoulder adduction [rad]
+                th2Max = 120*toRad; % Max. shoulder abduction [rad]
+                th3Min = [];        % Min. shoulder rotation [rad]
+                th3Max = [];        % Max. shoulder rotation [rad]
+                th4Min = 0*toRad;       % Max elbow flexion [rad]
+                th4Max = 170*toRad;     % Max elbow extension [rad]
+                arm.q.min = [ th1Min; th2Min; th3Min; th4Min ];
+                arm.q.max = [ th1Max; th2Max; th3Max; th4Max ];
                 
-                arm.torqLim = torqLim;
+                % set default actuator limits
+                torq1Min = -85;     
+                torq1Max = 100;            % shoulder extension torquelimits [Nm]
+                torq2Min = -60;     
+                torq2Max = 75;             % shoulder abduction torque limits [Nm]               
+                torq3Min = -85;     
+                torq3Max = 100;            % shoulder rotation torque limits [Nm]
+                torq4Min = -60;     
+                torq4Max = 75;             % elbow torque limits [Nm]
+                arm.u.min = [ torq1Min; torq2Min; torq3Min; torq4Min ];
+                arm.u.max = [ torq1Max; torq2Max; torq3Max; torq4Max ];
                 
-%                 % initialize dynamic properties
-%                 arm.x = [movt.p_i;movt.v_i];
-%                 [arm.q, arm.elbow, arm.inWS] = arm.invKin();
+                % initialize state vectors for arm in middle of defined
+                % workspace
+                arm.shld = [0;0;0];
+                arm.q.val = mean([arm.q.min, arm.q.max], 2);
+                arm.u.val = zeros(1,4);
+                arm.x.val = [arm.q.val; zeros(1,4)];
+                [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
+                nDelay = ceil(arm.Td/arm.Ts);
+                arm.z.val = repmat(arm.x.val, nDelay+1, 1); % (nDelay + 1) includes current state
+                arm.P = zeros(length(arm.z.val));           % 0 = no uncertainty in state information
                 
+            else
+                warning('Must specify subject parameters.')                
             end
         end
         

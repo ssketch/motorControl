@@ -7,7 +7,8 @@
 % ________________________________
 % |                              |
 % | Control                      |
-% |   linearize dx/dt = f(x,u)   |              _________
+% |   linearize dx/dt = f(x,u)   | 
+% |   discretize dx/dt = Ax+Bu+c |              _________
 % |   linearize y = g(x)         |       u*     |       |   x
 % |                              |______________| Plant |____
 % |   min  y'Qy + u'Ru           |       |      |_______|  

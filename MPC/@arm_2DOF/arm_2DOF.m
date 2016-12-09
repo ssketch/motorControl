@@ -82,10 +82,9 @@ classdef arm_2DOF < handle
                 arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad;
                 biasData(:,:,1) = [20 0;40 0;65 0]*toRad;
                 biasData(:,:,2) = [30 0;60 0;80 0]*toRad;
-                arm.sensBias = fitBiasFunc(biasData);
+                arm.sensBias = defineBiasFunc(biasData);
                 
                 % set joint limits to default values
-                toRad = pi/180;
                 th1Min = -70; % shoulder angle min [deg]
                 th1Max = 120; % shoulder angle max [deg]
                 th2Min = 0;   % elbow angle min [deg]
