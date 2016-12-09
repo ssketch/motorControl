@@ -14,8 +14,8 @@
 % |   s.t. dx/dt = Ax + Bu + f   |       |          |
 % |        y = Cx + g            |       |          |  
 % |        x_min <= x <= x_max   |       |          |
-% |        u_min <= u <= u_max   |       |          |
-% |______________________________|       |          | y
+% |        u_min <= u <= u_max   |       |          | x_sens
+% |______________________________|       |          |
 %                |                _______|_____     |
 %                |                |           |     |
 %                |________________| Estimator |_____|
@@ -28,31 +28,31 @@
 % attempting to compute the optimal control. 'flag = 2' signals that the
 % computed optimal control is outside of the arm's torque limits; the value
 % is not saved in the arm's properties.
-function flag = control(arm, x_est, ref, params)
+function [u, flag] = control(armModel, x_est, ref, params)
 
 % linearize & discretize arm model
-[A, B, C, c, d] = linearize(arm, x_est, params.space);
+[A, B, C, c, d] = linearize(armModel, x_est, params.space);
 if ~isreal(A) || sum(sum(isnan(A))) > 0
     flag = 1;
     return
 end
 
 % define model for MPT3
-model = LTISystem('A',A,'B',B,'f',c,'C',C,'g',d,'Ts',arm.Ts);
+model = LTISystem('A',A,'B',B,'f',c,'C',C,'g',d,'Ts',armModel.Ts);
 
 % make model track a reference (can be time-varying)
 model.y.with('reference');
 model.y.reference = 'free';
 
 % set (hard) constraints
-model.x.min = arm.x.min;
-model.x.max = arm.x.max;
-model.u.min = arm.u.min;
-model.u.max = arm.u.max;
+model.x.min = armModel.x.min;
+model.x.max = armModel.x.max;
+model.u.min = armModel.u.min;
+model.u.max = armModel.u.max;
 
 % define cost function
-nInputs = length(arm.u.val);
-nOutputs = length(arm.y.val);
+nInputs = length(armModel.u.val);
+nOutputs = length(armModel.y.val);
 model.u.penalty = QuadFunction( params.alpha * diag(params.wU*ones(nInputs,1)) );
 model.y.penalty = QuadFunction( diag(params.wP*[ones(nOutputs,1) ; ...
                                      params.wV*ones(nOutputs,1)]) );
@@ -61,15 +61,15 @@ model.y.penalty = QuadFunction( diag(params.wP*[ones(nOutputs,1) ; ...
 MPC_ctrl = MPCController(model, params.H);
 
 % simulate open-loop system to find optimal control
-uOpt = MPC_ctrl.evaluate(x, 'y.reference', ref);
+u = MPC_ctrl.evaluate(x, 'y.reference', ref);
 
 % check that optimal control is within bounds
-if all(uOpt >= arm.u.min) && all(uOpt <= arm.u.max)
+if all(u >= armModel.u.min) && all(u <= armModel.u.max)
     flag = 2;
     return
 else
     flag = 0;
-    arm.u.val = uOpt;
+    armModel.u.val = u;
 end
 
 end        

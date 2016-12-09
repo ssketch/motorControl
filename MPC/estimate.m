@@ -11,7 +11,7 @@
 % |_________|                     |                   |_______|
 %       |                         |                       |
 %       |       __________________|___________________    |
-%       |       |                                    |    | y
+%       |       |                                    |    | x_sens
 %       |_______| Estimator                          |____|
 %         x_est |   unscented Kalman filter (UKF):   |
 %               |    1) predict arm state & sensory  |
@@ -29,15 +29,16 @@
 %
 %
 % The function outputs a flag. TO DO
-function flag = estimate(arm, intModel, params)
+function [x_est, flag] = estimate(intModel, x_sens, u)
 
-% sense noisy output from arm
+% perform unscented Kalman filtering
+zP = intModel.z.val;
+P = intModel.P;
+[zPnext, Pnext, flag] = ukf(zP, P, x_sens, u, @plant, @sense);
+x_est
 
-%%%%%%%%%
-% TO DO %
-%%%%%%%%%
-
-% nonlinear model + unscented Kalman filter
-[xPnext, Pnext] = ukf(xP, P, y, T, @plant, @sense);
+% update internal model
+intModel.z.val = zPnext;
+intModel.P = Pnext;
 
 end

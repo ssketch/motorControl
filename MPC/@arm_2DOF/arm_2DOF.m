@@ -36,10 +36,11 @@ classdef arm_2DOF < handle
         sensBias;  % slope & intercept vectors defining sensory bias [rad]
         
         q;    % joint angles [rad]
-        x;    % state, in joint coordinates [rad,rad/s]
-        z;    % state, in joint coordinates, augmented for time delay [rad,rad/s]
         u;    % joint torques [Nm]
+        x;    % state, in joint coordinates [rad,rad/s]
         y;    % state, in Cartesian coordinates [m,m/s]
+        z;    % state, in joint coordinates, augmented for time delay [rad,rad/s]
+        P;    % covariance matrix representing uncertainty in augmented state, z
         shld; % position of shoulder, in Cartesian coordinates [m]
         elbw; % position of elbow, in Cartesian coordinates [m]
         inWS; % 1 = in workspace, 0 = outside workspace
@@ -105,11 +106,12 @@ classdef arm_2DOF < handle
                 % workspace
                 arm.shld = [0;0];
                 arm.q.val = mean([arm.q.min, arm.q.max], 2);
+                arm.u.val = [0;0];
                 arm.x.val = [arm.q.val; 0; 0];
+                [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
                 nDelay = ceil(arm.Td/arm.Ts);
                 arm.z.val = repmat(arm.x.val, nDelay+1, 1); % (nDelay + 1) includes current state
-                arm.u.val = [0;0];
-                [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
+                arm.P = zeros(length(arm.z.val));           % 0 = no uncertainty in state information
                 
             else
                 warning('Must specify subject parameters.')

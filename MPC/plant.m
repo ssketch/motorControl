@@ -11,7 +11,7 @@
 %       |                  |      |   x_dot = f(x,u)          |
 %       |                  |      |___________________________|
 %       |           _______|_____            | 
-%       |           |           |            | y
+%       |           |           |            | x_sens
 %       |___________| Estimator |____________|
 %         x_est     |___________|
 %
@@ -19,11 +19,11 @@
 % The function updates the arm properties and outputs the augmented state
 % vector, as required for this function to be used in the unscented Kalman
 % filter for state estimation.
-function zNext = plant(arm)
+function zNext = plant(arm, u)
 
 % solve equations of motion using ode45, starting from current arm state
 % and assuming that joint torques remain constant over the time step
-[~, xTraj] = ode45(@(t,x) dynamics(arm,x), [0,arm.Ts], arm.x.val);
+[~, xTraj] = ode45(@(t,x) dynamics(arm,x,u), [0,arm.Ts], arm.x.val);
 
 % add motor noise (scaled by time step) to integrated result
 nStates = length(arm.x.min);
