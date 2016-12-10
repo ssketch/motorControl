@@ -28,17 +28,17 @@
 %               |____________________________________|
 %
 %
-% The function outputs a flag. TO DO
-function [x_est, flag] = estimate(intModel, x_sens, u)
+% The function also outputs a flag. TO DO
+function [x_est, flag] = estimate(armModel, x_sens, u)
 
 % perform unscented Kalman filtering
-zP = intModel.z.val;
-P = intModel.P;
+zP = armModel.z.val;
+P = armModel.P;
 [zPnext, Pnext, flag] = ukf(zP, P, x_sens, u, @plant, @sense);
 x_est
 
 % update internal model
-intModel.z.val = zPnext;
-intModel.P = Pnext;
+armModel.z.val = zPnext;
+armModel.P = Pnext;
 
 end

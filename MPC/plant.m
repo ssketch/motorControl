@@ -17,23 +17,24 @@
 %
 %
 % The function updates the arm properties and outputs the augmented state
-% vector, as required for this function to be used in the unscented Kalman
-% filter for state estimation.
+% vector. The augmented state being the sole output of this function is a
+% requirement for the function to be used in the unscented Kalman filter
+% for state estimation.
 function zNext = plant(arm, u)
 
 % solve equations of motion using ode45, starting from current arm state
 % and assuming that joint torques remain constant over the time step
 [~, xTraj] = ode45(@(t,x) dynamics(arm,x,u), [0,arm.Ts], arm.x.val);
+xNext = xTraj(end,:);
 
 % add motor noise (scaled by time step) to integrated result
-nStates = length(arm.x.min);
-xTraj(end,:) = xTraj(end,:) + ...
-    arm.Ts * (arm.motrNoise*ones(1,nStates)) .* rand(1,nStates);
+nStates = length(xNext);
+xNext = xNext + arm.Ts * (arm.motrNoise*ones(1,nStates)) .* rand(1,nStates);
 
 % save noisy new arm state in arm model
 nJoints = length(arm.q.val);
-arm.q.val = xTraj(end,1:nJoints)';
-arm.x.val = xTraj(end,:)';
+arm.q.val = xNext(1:nJoints)';
+arm.x.val = xNext;
 [arm.y.val, ~, ~] = fwdKin(arm);
 
 % update current state within augmented state vector

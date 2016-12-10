@@ -23,7 +23,7 @@
 %                  x_est          |___________|     
 %
 %
-% The function outputs a flag. 'flag = 0' implies no problems and the
+% The function also outputs a flag. 'flag = 0' implies no problems and the
 % computed optimal control is saved in the arm's properties. 'flag = 1'
 % signals that the linearization failed and the function returns without
 % attempting to compute the optimal control. 'flag = 2' signals that the
@@ -31,15 +31,28 @@
 % is not saved in the arm's properties.
 function [u, flag] = control(armModel, x_est, ref, params)
 
-% linearize & discretize arm model
+% if necessary, set default parameter values
+if nargin < 4
+    params.space = 'task';        % space for reference tracking ('joint' or 'task' or 'force')
+    params.H = arm.Tr/arm.Ts + 1; % MPC prediction horizon (until can next reoptimize)
+    params.wP = 1e3;              % position cost
+    params.wV = 1e-1;             % velocity cost
+    params.wU = 1;                % control cost
+    params.alpha = 1e10;          % weighting between state (pos/vel) and control costs
+end
+
+% linearize arm model
 [A, B, C, c, d] = linearize(armModel, x_est, params.space);
 if ~isreal(A) || sum(sum(isnan(A))) > 0
     flag = 1;
     return
 end
 
-% define model for MPT3
-model = LTISystem('A',A,'B',B,'f',c,'C',C,'g',d,'Ts',armModel.Ts);
+% discretize dynamics of arm model
+[Ad, Bd, cd] = discretize(armModel.Ts, A, B, c);
+
+% define LTI model for MPT3 package
+model = LTISystem('A',Ad,'B',Bd,'f',cd,'C',C,'g',d,'Ts',armModel.Ts);
 
 % make model track a reference (can be time-varying)
 model.y.with('reference');

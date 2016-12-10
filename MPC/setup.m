@@ -21,11 +21,3 @@ intModel = arm_2DOF(modSubj);
 %%%%%%%%%
 % TO DO %
 %%%%%%%%%
-
-% define control parameters
-ctrl.space = 'task';       % space in which reference is tracked ('joint' or 'task' or 'force')
-ctrl.H = arm.T/arm.Ts + 1; % MPC prediction horizon
-crtl.wP = 1e3;             % position cost
-ctrl.wV = 1e-1;            % velocity cost
-ctrl.wU = 1;               % control effort cost
-ctrl.alpha = 1e10;         % weighting between state (pos/vel) and control costs

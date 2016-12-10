@@ -6,14 +6,13 @@
 %       'ode45'.
 function f = dynamics(arm, x, u)
 
-% if no input is specified (and there is one stored in the model), use
-% stored value
-if nargin < 3 && ~isempty(arm.u.val)
-    x = arm.x.val;
+% if no input is specified, use stored value
+if nargin < 3
+    u = arm.u.val;
     
     % if no state is specified, use current arm state
     if nargin == 1
-        u = arm.u.val;
+        x = arm.x.val;
     end
 end
 
