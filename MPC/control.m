@@ -1,6 +1,6 @@
-% This function computes the MPC control output u for a model of the arm
-% tracking a reference state ref in either joint or task (Cartesian) space.
-% It employs the Multi-Parametric Toolbox MPT3. The MPT model is created by
+% This function computes the MPC control output for a model of the arm
+% tracking a reference state in either joint or task (Cartesian) space. It
+% employs the Multi-Parametric Toolbox MPT3. The MPT model is created by
 % first linearizing the arm model (both dynamics and output) about the 
 % current state estimate.
 %
@@ -28,7 +28,7 @@
 % signals that the linearization failed and the function returns without
 % attempting to compute the optimal control. 'flag = 2' signals that the
 % computed optimal control is outside of the arm's torque limits; the value
-% is not saved in the arm's properties.
+% is not saved in the arm's properties. The 'params' input is optional.
 function [u, flag] = control(armModel, x_est, ref, params)
 
 % if necessary, set default parameter values

@@ -1,6 +1,6 @@
 % This function discretizes a linear (or affine) dynamical system using a
-% zero-order hold approximation and time step Ts. The derivation for an
-% affine system is as follows:
+% zero-order hold approximation. The derivation for an affine system is as
+% follows:
 %
 %   dx/dt = Ax + Bu + c
 %   (x+ - x)/Ts = Ax + Bu + c
@@ -8,8 +8,8 @@
 %   x+ = (A*Ts+I)x + (B*Ts)u + (c*Ts)
 %   x+ = Ad*x + Bd*u + cd
 %
-% The final input c need not be included if the system is purely linear
-% (i.e., dx/dt = Ax + Bu). 
+% The final input c is optional (i.e., not necessary a purely linear system
+% dx/dt = Ax + Bu). 
 function [Ad, Bd, cd] = discretize(Ts, A, B, c)
 
 Ad = A*Ts + eye(size(A));

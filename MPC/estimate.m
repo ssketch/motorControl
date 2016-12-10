@@ -29,16 +29,21 @@
 %
 %
 % The function also outputs a flag. TO DO
-function [x_est, flag] = estimate(armModel, x_sens, u)
+function [x_est, flag] = estimate(intModel, x_sens, u)
 
-% perform unscented Kalman filtering
-zP = armModel.z.val;
-P = armModel.P;
-[zPnext, Pnext, flag] = ukf(zP, P, x_sens, u, @plant, @sense);
-x_est
+% perform unscented Kalman filtering to update internal model's estimation
+% of augmented state
+ukf(intModel, x_sens, u, @plant, @sense);
 
-% update internal model
-armModel.z.val = zPnext;
-armModel.P = Pnext;
+% extract estimate of current state
+nStates = length(intModel.x.val);
+x_est = intModel.z.val(1:nStates);
+
+% update other state variables within internal model
+nJoints = length(intModel.q.val);
+intModel.x.val = x_est;
+intModel.q.val = x_est(1:nJoints);
+[intModel.y.val, ~, ~] = fwdKin(intModel);
+intModel.u.val = u;
 
 end
