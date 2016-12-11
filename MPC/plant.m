@@ -16,11 +16,11 @@
 %         x_est     |___________|
 %
 %
-% The function updates the arm properties and outputs the augmented state
-% vector. The augmented state being the sole output of this function is a
-% requirement for the function to be used in the unscented Kalman filter
-% for state estimation  (see 'estimate.m').
-function zNext = plant(arm, u)
+% The function updates the augmented state vector, from which all other
+% state variable can be extracted. The augmented state being the sole
+% output of this function is a requirement for the function to be used in
+% the unscented Kalman filter for state estimation  (see 'estimate.m').
+function zNext = plant(arm, u, )
 
 % solve equations of motion using ode45, starting from current arm state
 % and assuming that joint torques remain constant over the time step
@@ -31,22 +31,21 @@ xNext = xTraj(end,:);
 nStates = length(arm.x.val);
 xNext = xNext + arm.Ts * (arm.motrNoise*ones(1,nStates)) .* rand(1,nStates);
 
-% save noisy new arm state in arm model
-nJoints = length(arm.q.val);
-arm.x.val = xNext;
-arm.q.val = xNext(1:nJoints)';
-[arm.y.val, ~, ~] = fwdKin(arm);
-
 % update current state within augmented state vector
 zNext = arm.z.val;
-zNext(1:nStates) = arm.x.val;
+zNext(1:nStates) = xNext;
 
 % time shift past states within augmented state vector
 nDelay = ceil(arm.Td/arm.Ts);
 Mshift = diag(ones(nStates*nDelay,1), -nStates);
 zNext = zNext + Mshift*zNext;
 
-% save augmented state in arm model
+% update state variables for arm object
+nJoints = length(arm.q.val);
+arm.u.val = u;
+arm.x.val = xNext;
+arm.q.val = xNext(1:nJoints)';
+[arm.y.val, arm.elbow, ~] = fwdKin(arm);
 arm.z.val = zNext;
 
 end

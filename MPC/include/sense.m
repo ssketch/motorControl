@@ -2,14 +2,14 @@
 % proprioceptive system, accounting for time delay via state augmentation.
 % Note that this sensing is done in joint space regardless of the space
 % set for control, which is only used for the purposes of MPC optimization.
-function xSens = sense(arm)
+function x_sens = sense(arm)
 
 % extract most delayed state from augmented state vector
 nStates = length(arm.x.val);
-xSens = arm.z.val(end-(nStates-1):end);
+x_sens = arm.z.val(end-(nStates-1):end);
 
 % add bias & noise
 sensBias = computeBias(arm);
-xSens = xSens + sensBias + arm.sensNoise;
+x_sens = x_sens + sensBias + arm.sensNoise;
 
 end

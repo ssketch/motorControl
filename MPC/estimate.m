@@ -27,23 +27,22 @@
 %               |       computed uncertainties       |
 %               |____________________________________|
 %
-%
-% The function also outputs a flag. TO DO
-function [x_est, flag] = estimate(intModel, x_sens, u)
+function x_est = estimate(intModel, u, x_sens)
 
-% perform unscented Kalman filtering to update internal model's estimation
-% of augmented state
-ukf(intModel, x_sens, u, @plant, @sense);
+% perform unscented Kalman filtering
+[z_est, P] = ukf(intModel, x_sens, u, @plant, @sense);
 
-% extract estimate of current state
+% extract estimate of current state from augmented state estimate
 nStates = length(intModel.x.val);
-x_est = intModel.z.val(1:nStates);
+x_est = z_est(1:nStates);
 
-% update other state variables within internal model
+% update state variables for internal model object
 nJoints = length(intModel.q.val);
-intModel.x.val = x_est;
-intModel.q.val = x_est(1:nJoints);
-[intModel.y.val, ~, ~] = fwdKin(intModel);
 intModel.u.val = u;
+intModel.x.val = x_est;
+intModel.q.val = x_est(1:nJoints)';
+[intModel.y.val, intModel.elbow, ~] = fwdKin(intModel);
+intModel.z.val = z_est;
+intModel.P = P;
 
 end

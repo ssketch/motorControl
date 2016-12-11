@@ -27,8 +27,9 @@
 % computed optimal control is saved in the arm's properties. 'flag = 1'
 % signals that the linearization failed and the function returns without
 % attempting to compute the optimal control. 'flag = 2' signals that the
-% computed optimal control is outside of the arm's torque limits; the value
-% is not saved in the arm's properties. The 'params' input is optional.
+% computed optimal control is outside of the arm's torque limits and the
+% value is not saved in the arm's properties. The 'params' input is
+% optional.
 function [u, flag] = control(armModel, x_est, ref, params)
 
 % if necessary, set default parameter values
@@ -41,7 +42,7 @@ if nargin < 4
     params.alpha = 1e10;          % weighting between state (pos/vel) and control costs
 end
 
-% linearize arm model
+% linearize arm model (and check linearization)
 [A, B, C, c, d] = linearize(armModel, x_est, params.space);
 if ~isreal(A) || sum(sum(isnan(A))) > 0
     flag = 1;
@@ -83,7 +84,6 @@ if all(u >= armModel.u.min) && all(u <= armModel.u.max)
     return
 else
     flag = 0;
-    armModel.u.val = u;
 end
 
 end        
