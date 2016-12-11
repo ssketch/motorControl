@@ -1,5 +1,5 @@
-% This function uses sensory feedback in concert with the full nonlinear
-% arm model to estimate the arm's state, as well as this estimate's
+% This function uses sensory feedback in concert with the nonlinear arm
+% model to estimate the arm's state, as well as this estimate's
 % uncertainty. The unscented Kalman filter algorithm is based on Julier,
 % S.J. and Uhlmann, J.K., Unscented Filtering and Nonlinear Estimation,
 % Proceedings of the IEEE, Vol. 92, No. 3, pp. 401-422, 2004. The original
@@ -7,17 +7,22 @@
 function [z_est, P] = ukf(armModel, x_sens, u, f, g)
 
 % define parameters
-nStates = length(armModel.x.val);              % number of states
-nStatesAug = length(armModel.z.val);           % number of (augmented) states
-nOutputs = length(x_sens);                     % number of sensed outputs
-alpha = 0.15;                                  % default (tunable)
-ki = 0;                                        % default (tunable)
-beta = 2;                                      % default (tunable)
-lambda = alpha^2*(nStatesAug+ki) - nStatesAug; % scaling factor
-c = nStatesAug+lambda;                         % scaling factor
+n = length(armModel.x.val);        % number of states
+N = length(armModel.z.val);     % number of (augmented) states
+m = length(x_sens);                % number of sensed outputs
+alpha = 0.15;                      % default (tunable)
+ki = 0;                            % default (tunable)
+beta = 2;                     % default (tunable)
+lambda = alpha^2*(N+ki) - N); % scaling factor
+c = N + lambda;               % scaling factor
+
+% create process and sensing noise matrices, Q and R
+Q = zeros(N);
+Q(1:n,1:n) = armModel.Ts * diag(armModel.motrNoise*ones(n,1));
+R = armModel.Ts * diag(armModel.sensNoise);
 
 % compute weights for means & covariance
-Wm = [lambda/c (0.5/c + zeros(1,2*nStatesAug))];
+Wm = [lambda/c (0.5/c + zeros(1,2*N))];
 Wc = Wm;
 Wc(1) = Wc(1) + (1-alpha^2+beta);
 
@@ -25,23 +30,19 @@ Wc(1) = Wc(1) + (1-alpha^2+beta);
 c = sqrt(c);
 Z = sigmas(armModel.z.val, armModel.P, c);
 
-% create process and sensing noise matrices, Q and R
-Q = zeros(nStatesAug);
-Q(1:nStates,1:nStates) = armModel.Ts * diag(armModel.motrNoise*ones(nStates,1));
-R = armModel.Ts * diag(armModel.sensNoise);
-
 % perform unscented transforms
-[z1, Z1, P1, Z2] = ut(armModel, f, Z,  Wm, Wc, nStatesAug, Q, u); % (augmented) plant
-[y1,  ~, P2, Y2] = ut(armModel, g, Z1, Wm, Wc, nOutputs,   R, u); % sensing
+[z, Pz, Z1, Zd] = ut(armModel, f, u, Q, Z,  Wm, Wc, N); % (augmented) plant
+[y, Py,  ~, Yd] = ut(armModel, g, u, R, Z1, Wm, Wc, m); % sensing
 
 % update state estimate and covariance
-P12 = Z2*diag(Wc)*Y2';
-K = P12/P2;
-z_est = z1 + K*(x_sens-y1);
-P = P1 - K*P12';
+Pzy = Zd*diag(Wc)*Yd';
+K = Pzy/Py;
+z_est = z + K*(x_sens-y);
+P = Pz - K*Pzy';
 
 
-% This helper function computes the sigma points around a state x.
+% This helper function computes the sigma points around a state x given
+% covariance P.
 function X = sigmas(x, P, c)
 
 if min(eig(P)) < 1e-4
@@ -52,22 +53,27 @@ Y = x(:,ones(1,length(x)));
 X = [x Y+A Y-A];
 
 
-% This helper function performs an unscented transform on the sigma points.
-function [y, Y, P, Y1] = ut(armModel, f, X, Wm, Wc, n, cov, u)
+% This helper function performs an unscented transform through the
+% nonlinear map f on the sigma points X. It outputs the transformed mean y,
+% covariance P, sigma points Y, and deviations (of sigma points from mean)
+% Yd.
+function [y, P, Y, Yd] = ut(armModel, f, u, cov, X, Wm, Wc, n)
 
-nStatesAug = length(armModel.z.val);
-L = size(X,2);
+L = size(X,2);  % number of sigma points
 y = zeros(n,1);
 Y = zeros(n,L);
+N = length(armModel.z.val);
 
+% transform each sigma point & compute mean as weighted sum
 for k = 1:L
-    if length(cov) == nStatesAug
-        Y(:,k) = f(X(:,k));       % working with plant
+    if n == N
+        Y(:,k) = f(armModel, u, X(:,k)); % working with plant
     else
-        Y(:,k) = f(X(:,k), u);    % working with sensor
+        Y(:,k) = f(armModel, X(:,k));    % working with sensor
     end
     y = y + Wm(k)*Y(:,k);
 end
 
-Y1 = Y - y(:,ones(1,L));
-P = Y1*diag(Wc)*Y1' + cov;
+% compute deviations and covariance
+Yd = Y - y(:,ones(1,L));
+P = Yd*diag(Wc)*Yd' + cov;
