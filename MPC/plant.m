@@ -1,5 +1,5 @@
-% This function solves the nonlinear equations of motion of an arm model
-% (over a single time step) using MATLAB's variable-step-size numerical
+% This function solves the nonlinear equations of motion for an arm (over
+% a single time step) using MATLAB's variable-step-size numerical
 % integrator 'ode45'.
 %
 % ___________                     _____________________________
@@ -16,12 +16,13 @@
 %         x_est     |___________|
 %
 %
-% The function updates the augmented state vector, from which all other
-% state variable can be extracted. The augmented state being the sole
-% output of this function is a requirement for the function to be used in
-% the unscented Kalman filter for state estimation  (see 'estimate.m').
-% Note that input 'z' is optional. If 'z' is omitted, the plant will be
-% actuated from the current state of the arm object.
+% The function outputs the augmented state vector for the next time step.
+% It also updates state variables for the input arm object. The augmented
+% state being the sole output of this function is a requirement for the
+% function to be used in the unscented Kalman filter for state estimation
+% (see 'estimate.m'). Note that input 'zCurr' is optional. If omitted, the
+% plant will be actuated from the current state of the arm object.
+
 function zNext = plant(arm, u, zCurr)
 
 % if no state is specified, use current arm state
@@ -30,16 +31,18 @@ if nargin < 3
 end
 
 % extract current state from augmented state vector
+nJoints = length(arm.q.val);
 nStates = length(arm.x.val);
 xCurr = zCurr(1:nStates);
 
 % solve equations of motion using ode45, starting from current arm state
 % and assuming that joint torques remain constant over the time step
 [~, xTraj] = ode45(@(t,x) dynamics(arm,x,u), [0,arm.Ts], xCurr);
-xNext = xTraj(end,:);
+xNext = xTraj(end,:)';
 
-% add motor noise (scaled by time step) to integrated result
-xNext = xNext + arm.Ts * (arm.motrNoise*ones(1,nStates)) .* rand(1,nStates);
+% add motor noise (scaled by time step) to integrated positions
+xNext = xNext + ...
+    arm.Ts * (arm.motrNoise*[ones(nJoints,1);zeros(nJoints,1)]) .* rand(nStates,1);
 
 % update current state within augmented state vector
 zNext = zCurr;
@@ -55,7 +58,7 @@ nJoints = length(arm.q.val);
 arm.u.val = u;
 arm.x.val = xNext;
 arm.q.val = xNext(1:nJoints)';
-[arm.y.val, arm.elbow, ~] = fwdKin(arm);
+[arm.y.val, arm.elbow, arm.inWS] = fwdKin(arm);
 arm.z.val = zNext;
 
 end

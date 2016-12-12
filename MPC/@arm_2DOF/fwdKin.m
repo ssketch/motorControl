@@ -6,7 +6,7 @@
 function [y, elbw, reachable] = fwdKin(arm, x)
 
 % if no state is specified, use current arm state
-if nargin == 1
+if nargin < 2
     x = arm.x.val;
 end
 

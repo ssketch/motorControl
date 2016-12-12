@@ -4,7 +4,7 @@
 function J = jacobian(arm, x)
 
 % if no state specified, use current arm state
-if nargin == 1
+if nargin < 2
     x = arm.x.val;
 end
 

@@ -1,56 +1,122 @@
-clear; clc; close all;
-%%% This main function is to be used for the development and testing of
-%%% object-oriented implementations of the arm model
+close all
+clear
+clc
 
-% Initialize MPT3 toolbox
-addpath( genpath([pwd '/tbxmanager']));
+% add folders to path
+addpath(genpath([pwd '/include']));
 
-% Subject characteristics
-subj.M = 70;    % kg
-subj.H = 1.80;  % meters
-subj.hand = 'right';
+% define subject arm (physical)
+actSubj.hand = 'right'; % hand being tested
+actSubj.M = 70;         % mass [kg]
+actSubj.H = 1.80;       % height [meters]
+arm = arm_2DOF(actSubj);
 
-% Define a model.  We'll start with the 2 degree of freedom planar model
-model = arm_2DOF(subj);
+% extract arm parameters
+nJoints = length(arm.q.val);
+nStates = length(arm.x.val);
+nInputs = length(arm.u.val);
+nOutputs = length(arm.y.val);
 
-% Initially, the model will be resting at 0 degrees of shoulder horizontal
-% rotation and 0 degrees of elbow flexion.
-model.q = zeros(4,1);
+% define internal model (mental)
+modSubj.hand = 'right';
+modSubj.M = 70;
+modSubj.H = 1.80;
+intModel = arm_2DOF(modSubj);
 
-% Perform a reach:
-for i = 1:10
+% update model parameters (e.g., if the subject has suffered a stroke,
+% muscle synergies/joint coupling might not be captured by the internal
+% model)
+%%%%%%%%%
+% TO DO %
+%%%%%%%%%
+
+% define reach movement
+T = 1;                             % total time to simulate [sec]
+t = 0:arm.Ts:T;                    % time vector [sec]
+n = length(t);                     % number of time steps
+d = 0.35;                          % reach distance [m]
+th = 15;                           % reach angle [deg]
+p_i = [-0.15;0.3];                 % initial position [m]
+v_i = [0;0];                       % initial velocity [m/s]
+y_i = [p_i;v_i];                   % initial state [m,m/s]
+p_f = p_i + d*[cosd(th);sind(th)]; % desired end position [m]
+v_f = [0;0];                       % desired end velocity [m/s]
+y_f = [p_f;v_f];                   % desired end state [m,m/s]
+ref.space = 'task';                % space in which to track reference
+ref.traj = repmat(y_f,1,n);        % reference trajectory [m,m/s]
+
+% update model state variables to match initial conditions for movement
+% NOTE: internal model's state estimate is grounded by vision
+arm.y.val = y_i;
+[arm.x.val, arm.elbw, arm.inWS] = arm.invKin;
+arm.q.val = arm.x.val(1:nJoints);
+nDelay = ceil(arm.Td/arm.Ts);
+arm.z.val = repmat(arm.x.val, nDelay+1, 1);
+
+intModel.y.val = arm.y.val;
+[intModel.x.val, intModel.elbw, intModel.inWS] = intModel.invKin;
+intModel.q.val = intModel.x.val(1:nJoints);
+nDelay = ceil(intModel.Td/intModel.Ts);
+intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
+
+% declare variables to save
+u = zeros(nInputs,n);
+q = zeros(nJoints,n);
+x = zeros(nStates,n);
+y = zeros(nOutputs,n);
+q_est = zeros(nJoints,n);
+x_est = zeros(nStates,n);
+y_est = zeros(nOutputs,n);
+
+% simulate reach
+progBar = waitbar(0,'Simulating reach ... t = ');
+for i = 1:n
     
-    % Compute the optimal control value
-    u_star = control( model, zeros(2,1), [ones(2,1); zeros(2,1)], ...
-        'cartesian');
+    % display progress of simulation
+    waitbar(i/n, progBar, ['Simulating reach ... t = ',num2str(t(i))]);
     
-    % Implement the optimal torques on the model.
-    model = plant( model, u_star );
+    % save current data
+    u(:,i) = arm.u.val;
+    q(:,i) = arm.q.val;
+    x(:,i) = arm.x.val;
+    y(:,i) = arm.y.val;
+    q_est(:,i) = intModel.q.val;
+    x_est(:,i) = intModel.x.val;
+    y_est(:,i) = intModel.y.val;
     
-    % Sense the resulting sensory outputs and estimate the next state.
-   
+    % compute optimal control
+    [u_opt, flag] = control(intModel, t(i), ref.traj(:,i));
     
+    % check for problems with control computation
+    if flag == 1
+        warning('Linearization of model failed.')
+        return
+    elseif flag == 2
+        warning('Computed control out of bounds.')
+        return
+    end
     
-    draw( model);
+    % actuate arm with optimal control & sense feedback
+    zNext = plant(arm, u_opt);
+    x_sens = sense(arm, zNext);
+    
+    % sense feedback and estimate current state
+    x_est = estimate(intModel, u_opt, x_sens);
 
 end
+close(progBar)
 
+% save data in a struct
+data.t = t;
+data.u = u;
+data.q.act = q;
+data.x.act = x;
+data.y.act = y;
+data.q.est = q_est;
+data.x.est = x_est;
+data.y.est = y_est; 
 
-
-% The 4 DOF model also works with the same framework:
-% Setup the model
-model = arm_4DOF(subj);
-
-% Set the inital state
-model.q = zeros(8,1);
-
-for i = 1:10
-    
-    % Compute the optimal control value
-    u_star = control( model, zeros(4,1), [ones(3,1); zeros(3,1)], ...
-        'cartesian')
-    
-    % Implement the optimal torques on the model.
-    model = plant( model, u_star );
-
-end
+% display results of simulation
+%%%%%%%%%
+% TO DO %
+%%%%%%%%%

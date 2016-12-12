@@ -1,47 +1,40 @@
-% This function displays the results of simulation. It creates a movie of the arm movement, plots position/
-% velocity in Cartesian space, and plots joint torques/hand forces over
-% time. All figures are saved in EPS format.
-function plotResults(results, movemnt, params)
+% This function displays the results of simulation. It creates a movie of
+% the arm movement, plots position/velocity in joint/Cartesian space, and
+% plots joint torques over time. All figures are saved in EPS format.
+function plotResults(arm, data)
 
-% extract results from simulation
-th = results.xAct(1:2,:);
-th_dot = results.xAct(3:4,:);
-th_est = results.xEst(1:2,:);
-th_dot_est = results.xEst(3:4,:);
-T = results.T;
-tsim = results.t;
+% define parameters
+numJoints = length(arm.q.val);
+numStates = length(arm.x.val);
+numInputs = length(arm.u.val);
+numOutputs = length(arm.y.val);
+n = length(data.t);
+toDeg = 180/pi;
 
 % create & save movie of arm movement
 figure()
-for i = 1:5:length(th)
-    M(i) = drawArm(th(:,i), params);
+for i = 1:5:n
+    M(i) = draw(arm, data.x(:,i));
 end
 save('./results/reachingMovie','M');
 
 % downsample data for plotting
-p_a = zeros(2,length(th));
-v_a = zeros(2,length(th));
-p_e = zeros(2,length(th));
-v_e = zeros(2,length(th));
-for i = 1:length(th)
-    [p_a(:,i),~,~,~,v_a(:,i)] = fwdKin(th(:,i),th_dot(:,i),params);
-    [p_e(:,i),~,~,~,v_e(:,i)] = fwdKin(th_est(:,i),th_dot_est(:,i),params);
-end
 f_down = 5;
-t = downsample(tsim',f_down)';
-p_a = downsample(p_a',f_down)';
-v_a = downsample(v_a',f_down)';
-p_e = downsample(p_e',f_down)';
-v_e = downsample(v_e',f_down)';
-T = downsample(T',f_down)';
+t = downsample(data.t',f_down)';
+u = downsample(data.u',f_down)';
+q = downsample(data.q.act',f_down)';
+x = downsample(data.x.act',f_down)';
+y = downsample(data.y.act',f_down)';
+q_est = downsample(data.q.est',f_down)';
+x_est = downsample(data.x.est',f_down)';
+y_est = downsample(data.y.est',f_down)';
 
-toDeg = 180/pi;
-th_a = downsample(th',f_down)'*toDeg;
-th_dot_a = downsample(th_dot',f_down)'*toDeg;
-th_e = downsample(th_est',f_down)'*toDeg;
-th_dot_e = downsample(th_dot_est',f_down)'*toDeg;
+% plot position and velocity over time
+%%%%%%%%%
+% TO DO %
+%%%%%%%%%
 
-% plot position and velocity
+% plot position and velocity in space
 figure()
 plot(p_a(1,:),p_a(2,:),'b',p_e(1,:),p_e(2,:),'c--','LineWidth',1.5);
 hold on

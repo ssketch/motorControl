@@ -7,7 +7,7 @@
 function [x, elbw, reachable] = invKin(arm, y)
 
 % check that given state is within arm workspace, ignoring joint limits
-if nargin == 2
+if nargin > 1
     tooClose = abs(arm.l1-arm.l2) > norm(y(1:2));
     tooFar = abs(arm.l1+arm.l2) < norm(y(1:2));
     if tooClose || tooFar
