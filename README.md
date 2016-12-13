@@ -1,6 +1,15 @@
 # motorControl
 software for all work in the Stanford CHARM Lab pertaining to human motor control (and how it relates to stroke-induced deficits)
 
+What's included:
+1) Scripts to compute reaching trajectories, workspaces, and force envelopes (main_*.m).
+2) Control, plant, and estimate blocks to compute the model predictive control outputs, integrate the arm state, and sense the resulting change of state, respectively.
+3) Include directory with helper functions for the control and estimate blocks including the MPT3 toolbox for model predictive control.
+4) Class definitions for a 2-dimensional, 2 degree-of-freedom, RR robot model of the arm and a 3-dimensional, 4 degree-of-freedom, RRRR robot model of the arm.
+5) A resource folder to with useful information and functions to help develop and understand the code package.
+6) A wiki describing the package and its uses.
+
+_________________________________________
 Using Git from the terminal instructions:
 Push changes to git:
 Step 1:  Navigate to the directory that you're working out of for git
