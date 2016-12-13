@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta name="generator" content="jemdoc, see http://jemdoc.jaboc.net/" />
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link rel="stylesheet" href="jemdoc.css" type="text/css" />
+<title>Control</title>
+</head>
+<body>
+<table summary="Table for page layout." id="tlayout">
+<tr valign="top">
+<td id="layout-menu">
+<div class="menu-category">General</div>
+<div class="menu-item"><a href="index.html">Home</a></div>
+<div class="menu-item"><a href="control.html" class="current">Control</a></div>
+<div class="menu-category">Models</div>
+<div class="menu-item"><a href="dof2.html">2DOF</a></div>
+<div class="menu-item"><a href="dof4.html">4DOF</a></div>
+</td>
+<td id="layout-content">
+<div id="toptitle">
+<h1>Control</h1>
+</div>
+<h2>MPC Controller</h2>
+<p>Bullet points:  While most papers indicate that human motor control obeys optimality principles, there are some that suggest that a model predictive controller (MPC) might be a more reasonable approximation (link to Wolpert paper).  MPCs look ahead several time steps and choose the optimal solution given what the controller can see, rather than finding the true optimal solution.  </p>
+<p>We use the MPT3 toolbox developed at ETHz, which allows for the simple implementation of MPC.  However, it relies on linear models of the system dynamics, so we first linearize the nonlinear plant dynamics of our model using a first-order Taylor series approximation <a href="show">math</a> and then transform the model into discrete time using a zero-order hold approximation <a href="show">math</a>.</p>
+<h3>Joint-space control</h3>
+<h3>Task-space control</h3>
+<h3>Force control</h3>
+<h2>Unscented Kalman filter</h2>
+<p>For control, the brain needs reliable information about the arm's current state. However, at a time <img class="eq" src="eqs/14848044661-130.png" alt="t" style="vertical-align: -1px" />, the brain has only delayed and noisy sensory information. Just as the (unimpaired) human sensorimotor system appears to optimally control movements, it also appears to optimally estimate the state of the limb citep{Shadmehr2008}. We approximate this optimal estimation using a Kalman filter, modeling uncertainty in both the arm dynamics (i.e., the brain's internal model of these dynamics) and sensory feedback as additive white noise:</p>

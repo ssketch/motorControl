@@ -1,0 +1,42 @@
+# jemdoc: menu{Menu}{control.html}
+= Control
+
+
+
+== MPC Controller
+
+Bullet points:  While most papers indicate that human motor control obeys optimality principles, there are some that suggest that a model predictive controller (MPC) might be a more reasonable approximation (link to Wolpert paper).  MPCs look ahead several time steps and choose the optimal solution given what the controller can see, rather than finding the true optimal solution.  
+
+We use the MPT3 toolbox developed at ETHz, which allows for the simple implementation of MPC.  However, it relies on linear models of the system dynamics, so we first linearize the nonlinear plant dynamics of our model using a first-order Taylor series approximation [show math] and then transform the model into discrete time using a zero-order hold approximation [show math].
+
+=== Joint-space control
+ 
+
+=== Task-space control
+
+
+=== Force control
+
+
+== Unscented Kalman filter
+For control, the brain needs reliable information about the arm's current state. However, at a time $t$, the brain has only delayed and noisy sensory information. Just as the (unimpaired) human sensorimotor system appears to optimally control movements, it also appears to optimally estimate the state of the limb \citep{Shadmehr2008}. We approximate this optimal estimation using a Kalman filter, modeling uncertainty in both the arm dynamics (i.e., the brain's internal model of these dynamics) and sensory feedback as additive white noise:
+\(
+\begin{alignat*}{3}
+  \overrightarrow{z}_{t+1} &= g(\overrightarrow{z}_{t},\overrightarrow{\tau}_{t}) + w_{t} \\
+  \overrightarrow{y}_{t} &= \begin{bmatrix} 0 & 0 & \cdots & 0 & I \end{bmatrix}\overrightarrow{z}_{t} + v_{t}
+\end{alignat*}
+where $w_{t} \sim \mathcal{N}(0,Q)$ and $v_{t} \sim \mathcal{N}(0,R)$, with covariance matrices defined as follows:
+\begin{alignat*}{3}
+  Q &= \textup{diag}(\sigma_{\tau}^2, \sigma_{\tau}^2, \sigma_{\tau}^2, \sigma_{\tau}^2, 0, 0 \: \cdots \: 0) \\
+  R &= \textup{diag}(\sigma_{\theta_{1}}^2, \sigma_{\theta_{2}}^2, \sigma_{\dot{\theta_{1}}}^2, \sigma_{\dot{\theta_{2}}}^2)
+\end{alignat*}
+\)
+
+Standard deviation of the ``process'' noise, $\sigma_{\tau}$, is assumed to be several orders of magnitude smaller than standard deviations of sensory noise, $\sigma_{\theta_{i}}$ and $\sigma_{\dot{\theta_{i}}}$. By accounting for time delay via state augmentation, the filter estimates all states within the interval of the time delay. Given the arm's nonlinear dynamics, we use an unscented Kalman filter (UKF). The UKF uses sampling points to capture the mean and covariance of the state estimate. Unlike the extended Kalman filter (another option with nonlinear dynamics), which relies on approximation, the UKF's sampling points can be exactly propagated through through the nonlinear equations. To the best of our knowledge, use of an UKF in the neuromechanical setting has not been seen in the literature.
+
+
+== Integration of model dynamics
+
+Model dynamics given by the function…
+
+are integrated forward in time using a fourth-order Runge-Kutta integrator using a variable time step commonly used in MATLAB, ode45.m.
