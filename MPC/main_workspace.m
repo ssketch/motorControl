@@ -2,7 +2,7 @@ clear; clc; close all;
 set(0,'DefaultFigureWindowStyle','docked')
 %%% This script computes the workspace for the simulated arm
 
-%% Step 1: Setup arm and MPC toolbox
+%% Setup arm and MPC toolbox
 % Add all include folders to the working directory
 addpath( genpath([pwd '/include']));
 
@@ -14,12 +14,7 @@ subj.Td = 0;
 subj.coupled = false;
 
 % Define a model.  We'll start with the 2 degree of freedom planar model
-model = arm_2DOF(subj);
-
-% Initially, the model will be resting at 0 degrees of shoulder horizontal
-% rotation and 0 degrees of elbow flexion.
-% model.q = [mean( model.thLim(1:2,:), 2 ); 0; 0 ];
-% model.q = [ model.thLim(1:2,1); 0; 0 ];
+model = arm_4DOF(subj);
 model.draw;
 
 
@@ -31,10 +26,10 @@ model.draw;
 % at the shoulder.
 
 % Specify the radius of the circle designating target locations
-r = 10;
+r = 3; % m
 
 % Save the locations of the arm and hand throughout the simulation and the
-% computed control values.
+% computed control values
 histories.u = zeros(length(model.u.min), 1);
 histories.x = model.x.val;
 histories.y = fwdKin( model );
@@ -51,7 +46,7 @@ for th = ( 0:30:360 )*pi/180
 
     % Reset the model so we start from the same initial posture at the
     % beginning of each reach.
-    model = arm_2DOF(subj);
+    model = arm_4DOF(subj);
 
 
     %% Simulate reach.
@@ -62,11 +57,10 @@ for th = ( 0:30:360 )*pi/180
     % seconds.
     while model.withinLimits && ( max(abs( x_diff(end,:))) > 1e-2  ...
             || i*model.Ts < 0.1 )
-    % while model.withinLimits && any( ref - model.fwdKin > 1e-1 )
 
         % Compute the optimal control value
         try
-            u_star = control( model, model.x.val, histories.u(:,end), ref, 'cartesian' );
+            u_star = control( model, i*model.Ts, ref, 'cartesian' );
             % Note: The finite differences method used to linearize the
             % dynamics may cause joint limitation violation warnings even when
             % the actual posture satisfies the constraints.
@@ -81,7 +75,7 @@ for th = ( 0:30:360 )*pi/180
         end
 
         % Implement the optimal torques on the model.
-        model = plant( model, u_star ); 
+         plant( model, u_star ); 
         model.draw;
 
 
@@ -96,12 +90,12 @@ for th = ( 0:30:360 )*pi/180
         % Let us know how long the simulation is taking and how much things
         % are changing at each step
         display(['Time = ' num2str(i*model.Ts) 'sec'])
-        display(['Delta q = [' num2str( diff( histories.q')') ...
+        display(['Delta q = [' num2str( diff( histories.x')) ...
             ' ]''' ])
         
         % Update simulation time and 
         i = i +1;
-        x_diff = diff( histories.q');
+        x_diff = diff( histories.x');
     end
 end
 

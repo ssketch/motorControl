@@ -33,6 +33,7 @@ classdef arm_4DOF < handle
         coupling;   % coupling matrix - merging muscle synergies (eg. Clark et al., 2010)
         motrNoise;  % standard deviation of motor noise [N-m]
         sensNoise;  % standard deviation of sensory noise [rad]
+        sensBias;  % slope & intercept vectors defining sensory bias [rad]
         
         q;    % joint angles [rad]
         u;    % joint torques [Nm]
@@ -90,16 +91,18 @@ classdef arm_4DOF < handle
                 
                 
                 % set default joint limits
-                th1Min = [];        % Min. shoulder extension [rad]
-                th1Max = [];        % Max. shoulder extension [rad]
-                th2Min = -70*toRad; % Max. shoulder adduction [rad]
-                th2Max = 120*toRad; % Max. shoulder abduction [rad]
-                th3Min = [];        % Min. shoulder rotation [rad]
-                th3Max = [];        % Max. shoulder rotation [rad]
+                th1Min = -30*toRad;     % Min. shoulder extension [rad]
+                th1Max = 100*toRad;     % Max. shoulder extension [rad]
+                th2Min = -70*toRad;     % Max. shoulder adduction [rad]
+                th2Max = 120*toRad;     % Max. shoulder abduction [rad]
+                th3Min = -49*toRad;     % Min. shoulder rotation [rad]
+                th3Max = 90*toRad;      % Max. shoulder rotation [rad]
                 th4Min = 0*toRad;       % Max elbow flexion [rad]
                 th4Max = 170*toRad;     % Max elbow extension [rad]
                 arm.q.min = [ th1Min; th2Min; th3Min; th4Min ];
                 arm.q.max = [ th1Max; th2Max; th3Max; th4Max ];
+                arm.x.min = [ arm.q.min; -inf*ones(4,1) ]; % no explicit velocity limits
+                arm.x.max = [ arm.q.max; inf*ones(4,1) ]; 
                 
                 % set default actuator limits
                 torq1Min = -85;     
@@ -117,8 +120,8 @@ classdef arm_4DOF < handle
                 % workspace
                 arm.shld = [0;0;0];
                 arm.q.val = mean([arm.q.min, arm.q.max], 2);
-                arm.u.val = zeros(1,4);
-                arm.x.val = [arm.q.val; zeros(1,4)];
+                arm.u.val = zeros(4,1);
+                arm.x.val = [arm.q.val; zeros(4,1)];
                 [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
                 nDelay = ceil(arm.Td/arm.Ts);
                 arm.z.val = repmat(arm.x.val, nDelay+1, 1); % (nDelay + 1) includes current state

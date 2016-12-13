@@ -5,6 +5,16 @@
 % hand forces.
 function f = dynamics(arm, x, u)
 
+% if no input is specified, use stored value
+if nargin < 3
+    u = arm.u.val;
+    
+    % if no state is specified, use current arm state
+    if nargin < 2
+        x = arm.x.val;
+    end
+end
+
 % Mass matrix
 M11 = arm.I3 + arm.I4 + arm.l3^2*arm.m4*cos(x(2))^2 + ...
     arm.m3*arm.s3^2*cos(x(2))^2 + ...
@@ -73,7 +83,7 @@ M24 = arm.I4*cos(x(2))*cos(x(4)) - ...
     arm.s4*cos(x(4))*sin(x(2)) - ...
     arm.s4*cos(x(2))*sin(x(3))*sin(x(4)));
 
-M31 = M31;
+M31 = M13;
 M32 = M23;
 M33 = arm.I3 + arm.I4 + (arm.m4*arm.s4^2)/2 - ...
     (arm.m4*arm.s4^2*cos(2*x(4)))/2;                                                                                             
@@ -94,7 +104,7 @@ M34 = arm.I4*cos(x(4)) - ...
     (sin(x(2))*sin(x(4)) + ...
     cos(x(2))*cos(x(4))*sin(x(3)));
 
-M41 = M41;
+M41 = M14;
 M42 = M24;
 M43 = M34;
 M44 = arm.m4*arm.s4^2 + arm.I4;
