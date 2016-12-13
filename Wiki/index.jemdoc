@@ -1,0 +1,10 @@
+# jemdoc: menu{MENU}{index.html}
+= /Nearly/ Optimal Control of an Arm
+
+
+Background information:
+We want to understand how humans control movement and what goes wrong in the event of a stroke.  We believe that a better understanding of what goes wrong after illness or injury will allow us to develop targeted treatments. etc.
+
+
+
+== Modeling the arm as a robotic arm 
