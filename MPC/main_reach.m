@@ -26,16 +26,25 @@ intModel = arm_2DOF(modSubj);
 % update model parameters (e.g., if the subject has suffered a stroke,
 % muscle synergies/joint coupling might not be captured by the internal
 % model)
-%%%%%%%%%
-% TO DO %
-%%%%%%%%%
+stroke = 0;
+if stroke
+    arm.Td = 0.16;         % increased delay from deafferentation
+    arm.coupling = eye(2); % representing muscle synergies
+    posNoise = 10;
+    velNoise = 0.1;
+    arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad; % (Cusmano, 2014)
+    biasData(:,:,1) = [20 -10;40 0;65 12]*toRad;                    % (Cusmano, 2014)
+    biasData(:,:,2) = [80 -8;100 5]*toRad;
+    arm.sensBias = defineBiasFunc(biasData);
+    intModel.motrNoise = 0.1; % prediction noise
+end
 
 % define reach movement
 T = 1;                             % total time to simulate [sec]
 t = 0:arm.Ts:T;                    % time vector [sec]
 n = length(t);                     % number of time steps
 d = 0.35;                          % reach distance [m]
-th = 15;                           % reach angle [deg]
+th = 10;                           % reach angle [deg]
 p_i = [-0.15;0.3];                 % initial position [m]
 v_i = [0;0];                       % initial velocity [m/s]
 y_i = [p_i;v_i];                   % initial state [m,m/s]
@@ -46,7 +55,8 @@ ref.space = 'task';                % space in which to track reference
 ref.traj = repmat(y_f,1,n);        % reference trajectory [m,m/s]
 
 % update model state variables to match initial conditions for movement
-% NOTE: internal model's state estimate is grounded by vision
+% NOTE: internal model's state estimate is grounded by vision (i.e.,
+% ----  assuming perfect vision, it matches the arm's actual state)
 arm.y.val = y_i;
 [arm.x.val, arm.elbw, arm.inWS] = arm.invKin;
 arm.q.val = arm.x.val(1:nJoints);
@@ -76,7 +86,7 @@ for i = 1:n
     waitbar(i/n, progBar, ['Simulating reach ... t = ',num2str(t(i))]);
     
     % save current data
-    u(:,i) = arm.u.val;
+    u(:,i) = arm.u.val; % = intModel.u.val (they receive same input)
     q(:,i) = arm.q.val;
     x(:,i) = arm.x.val;
     y(:,i) = arm.y.val;
@@ -85,7 +95,7 @@ for i = 1:n
     y_est(:,i) = intModel.y.val;
     
     % compute optimal control
-    [u_opt, flag] = control(intModel, t(i), ref.traj(:,i));
+    [u_opt, flag] = control(intModel, t(i), ref.traj(:,i), ref.space);
     
     % check for problems with control computation
     if flag == 1
@@ -100,7 +110,7 @@ for i = 1:n
     zNext = plant(arm, u_opt);
     x_sens = sense(arm, zNext);
     
-    % sense feedback and estimate current state
+    % estimate current state
     x_est = estimate(intModel, u_opt, x_sens);
 
 end
@@ -117,6 +127,4 @@ data.x.est = x_est;
 data.y.est = y_est; 
 
 % display results of simulation
-%%%%%%%%%
-% TO DO %
-%%%%%%%%%
+plotResults(arm, data)

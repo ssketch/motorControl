@@ -7,14 +7,14 @@
 function [z_est, P] = ukf(armModel, x_sens, u, f, g)
 
 % define parameters
-n = length(armModel.x.val);        % number of states
-N = length(armModel.z.val);     % number of (augmented) states
-m = length(x_sens);                % number of sensed outputs
-alpha = 0.15;                      % default (tunable)
-ki = 0;                            % default (tunable)
-beta = 2;                     % default (tunable)
-lambda = alpha^2*(N+ki) - N); % scaling factor
-c = N + lambda;               % scaling factor
+n = length(armModel.x.val);  % number of states
+N = length(armModel.z.val);  % number of (augmented) states
+m = length(x_sens);          % number of sensed outputs
+alpha = 0.15;                % default (tunable)
+ki = 0;                      % default (tunable)
+beta = 2;                    % default (tunable)
+lambda = alpha^2*(N+ki) - N; % scaling factor
+c = N + lambda;              % scaling factor
 
 % create process and sensing noise matrices, Q and R
 Q = zeros(N);

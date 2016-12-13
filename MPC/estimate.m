@@ -44,8 +44,8 @@ x_est = z_est(1:nStates);
 nJoints = length(armModel.q.val);
 armModel.u.val = u;
 armModel.x.val = x_est;
-armModel.q.val = x_est(1:nJoints)';
-[armModel.y.val, armModel.elbow, armModel.inWS] = fwdKin(armModel);
+armModel.q.val = x_est(1:nJoints);
+[armModel.y.val, armModel.elbw, armModel.inWS] = fwdKin(armModel);
 armModel.z.val = z_est;
 armModel.P = P;
 

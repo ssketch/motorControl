@@ -134,7 +134,7 @@ classdef arm_4DOF < handle
         [x, elbow, reachable] = fwdKin(arm, q)
         [q, elbow, reachable] = invKin(arm, x)
         f = dynamics(arm, u, ctrlSpace)
-        M = draw(arm)
+        M = draw(arm, x)
         
     end
     

@@ -72,16 +72,16 @@ classdef arm_2DOF < handle
                 arm.B = [0.05 0.025;0.025 0.05]; % (Crevecoeur, 2013)
                 
                 % initialize mutable properties to default values
-                arm.Ts = 0.001;
+                arm.Ts = 0.02;
                 arm.Tr = 0.1;  % (Wagner & Smith, 2008)
                 arm.Td = 0.06; % (Crevecoeur, 2013)
                 arm.coupling = eye(2);
-                arm.motrNoise = 0.0001;
-                posNoise = 0.0001;  % noise on position feedback [deg]
-                velNoise = 0.00001; % noise on velocity feedback [deg/s]
-                arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad;
-                biasData(:,:,1) = [20 0;40 0;65 0]*toRad;
-                biasData(:,:,2) = [30 0;60 0;80 0]*toRad;
+                arm.motrNoise = 10e-6; % (Crevecoeur, 2013)
+                posNoise = 10e-6;
+                velNoise = 10e-6;
+                arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad; % (Crevecoeur, 2013)
+                biasData(:,:,1) = [20 -2;40 0;65 3]*toRad; % (Cusmano, 2014)
+                biasData(:,:,2) = [30 -6;60 2;80 7]*toRad;
                 arm.sensBias = defineBiasFunc(biasData);
                 
                 % set joint limits to default values
@@ -94,7 +94,7 @@ classdef arm_2DOF < handle
                 arm.x.min = [arm.q.min; -inf; -inf]; % no explicit velocity limits
                 arm.x.max = [arm.q.max;  inf;  inf];
                 
-                torq1Min = -85; % min shoulder torque [Nm]
+                torq1Min = -85; % min shoulder torque [Nm] (Chadwick, 2014)
                 torq1Max = 100; % max shoulder torque [Nm]
                 torq2Min = -60; % min elbow torque [Nm]
                 torq2Max = 75;  % max elbow torque [Nm]
@@ -123,7 +123,7 @@ classdef arm_2DOF < handle
         [x, elbw, reachable] = invKin(arm, y)
         J = jacobian(arm, x)
         f = dynamics(arm, x, u)
-        M = draw(arm)
+        M = draw(arm, x)
         
     end
     

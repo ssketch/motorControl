@@ -1,23 +1,29 @@
 % This function draws the arm in its current configuration, outputting a
 % frame. It assumes that the shoulder is at (0,0), the default for any
 % 'arm' object.
-function M = draw(arm)
+function M = draw(arm, x)
+
+% if no state is specified, use current arm state
+if nargin < 2
+    x = arm.x.val;
+end
+
 % Run forwad kinematics just to be sure
-[ arm.x, arm.elbow ] = fwdKin( arm, arm.q );
+[ y, elbw ] = fwdKin( arm, x );
 
 % plot limbs
-plot3([arm.shld(1), arm.elbow(1)], [arm.shld(2), arm.elbow(2)], ...
-      [arm.shld(3), arm.elbow(3)], 'b', 'LineWidth', 6 )
+plot3([arm.shld(1), elbw(1)], [arm.shld(2), elbw(2)], ...
+      [arm.shld(3), elbw(3)], 'b', 'LineWidth', 6 )
 hold on
-plot3([arm.elbow(1), arm.y.val(1)], [arm.elbow(2), arm.y.val(2)], ...
-      [arm.elbow(3), arm.y.val(3)], 'c', 'LineWidth', 6 )
+plot3([elbw(1), y(1)], [elbw(2), y(2)], ...
+      [elbw(3), y(3)], 'c', 'LineWidth', 6 )
 
 % plot joints
 plot3( arm.shld(1), arm.shld(2), arm.shld(3), ...
     'ko', 'MarkerSize', 20, 'MarkerFaceColor', 'k');
-plot3( arm.elbow(1), arm.elbow(2), arm.elbow(3), ...
+plot3( elbw(1), elbw(2), elbw(3), ...
     'ko', 'MarkerSize', 20, 'MarkerFaceColor', 'k');
-plot3( arm.y.val(1), arm.y.val(2), arm.y.val(3), ...
+plot3( y(1), y(2), y(3), ...
     'ko','MarkerSize',20,'MarkerFaceColor','k');
 
 % set axes to cover workspace (depends on handedness)

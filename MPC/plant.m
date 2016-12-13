@@ -40,9 +40,13 @@ xCurr = zCurr(1:nStates);
 [~, xTraj] = ode45(@(t,x) dynamics(arm,x,u), [0,arm.Ts], xCurr);
 xNext = xTraj(end,:)';
 
-% add motor noise (scaled by time step) to integrated positions
+% add motor noise (scaled by time step)
+% NOTE: Motor noise is only added to the joint velocity terms because they
+% ----  are the direct result of the applied joint torques. The position
+%       terms are just the result of integrating these velocities. Any
+%       noise on the position terms arrives there indirectly.
 xNext = xNext + ...
-    arm.Ts * (arm.motrNoise*[ones(nJoints,1);zeros(nJoints,1)]) .* rand(nStates,1);
+    arm.Ts * (arm.motrNoise*[zeros(nJoints,1);ones(nJoints,1)]) .* rand(nStates,1);
 
 % update current state within augmented state vector
 zNext = zCurr;
@@ -57,8 +61,8 @@ zNext = zNext + Mshift*zNext;
 nJoints = length(arm.q.val);
 arm.u.val = u;
 arm.x.val = xNext;
-arm.q.val = xNext(1:nJoints)';
-[arm.y.val, arm.elbow, arm.inWS] = fwdKin(arm);
+arm.q.val = xNext(1:nJoints);
+[arm.y.val, arm.elbw, arm.inWS] = fwdKin(arm);
 arm.z.val = zNext;
 
 end
