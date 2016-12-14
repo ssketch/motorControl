@@ -5,11 +5,14 @@ clc
 % add folders to path
 addpath(genpath([pwd '/include']));
 
-% define subject arm (physical)
-actSubj.hand = 'right'; % hand being tested
-actSubj.M = 70;         % mass [kg]
-actSubj.H = 1.80;       % height [meters]
-arm = arm_2DOF(actSubj);
+% define subject
+subj.hand = 'right'; % hand being tested
+subj.M = 70;         % mass [kg]
+subj.H = 1.80;       % height [meters]
+
+% define subject's physical arm & internal arm model (mental)
+arm = arm_2DOF(subj);
+intModel = arm_2DOF(subj);
 
 % extract arm parameters
 nJoints = length(arm.q.val);
@@ -17,18 +20,12 @@ nStates = length(arm.x.val);
 nInputs = length(arm.u.val);
 nOutputs = length(arm.y.val);
 
-% define internal model (mental)
-modSubj.hand = 'right';
-modSubj.M = 70;
-modSubj.H = 1.80;
-intModel = arm_2DOF(modSubj);
-
 % update model parameters (e.g., if the subject has suffered a stroke,
 % muscle synergies/joint coupling might not be captured by the internal
 % model)
 stroke = 0;
 if stroke
-    arm.Td = 0.16;         % increased delay from deafferentation
+    arm.Td = 0.16;         % increased delay (e.g., from deafferentation)
     arm.coupling = eye(2); % representing muscle synergies
     posNoise = 10;
     velNoise = 0.1;
@@ -44,7 +41,7 @@ T = 1;                             % total time to simulate [sec]
 t = 0:arm.Ts:T;                    % time vector [sec]
 n = length(t);                     % number of time steps
 d = 0.35;                          % reach distance [m]
-th = 10;                           % reach angle [deg]
+th = 30;                           % reach angle [deg]
 p_i = [-0.15;0.3];                 % initial position [m]
 v_i = [0;0];                       % initial velocity [m/s]
 y_i = [p_i;v_i];                   % initial state [m,m/s]
@@ -71,12 +68,12 @@ intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
 
 % declare variables to save
 u = zeros(nInputs,n);
-q = zeros(nJoints,n);
-x = zeros(nStates,n);
-y = zeros(nOutputs,n);
-q_est = zeros(nJoints,n);
-x_est = zeros(nStates,n);
-y_est = zeros(nOutputs,n);
+qAct = zeros(nJoints,n);
+qEst = zeros(nJoints,n);
+xAct = zeros(nStates,n);
+xEst = zeros(nStates,n);
+yAct = zeros(nOutputs,n);
+yEst = zeros(nOutputs,n);
 
 % simulate reach
 progBar = waitbar(0,'Simulating reach ... t = ');
@@ -87,12 +84,12 @@ for i = 1:n
     
     % save current data
     u(:,i) = arm.u.val; % = intModel.u.val (they receive same input)
-    q(:,i) = arm.q.val;
-    x(:,i) = arm.x.val;
-    y(:,i) = arm.y.val;
-    q_est(:,i) = intModel.q.val;
-    x_est(:,i) = intModel.x.val;
-    y_est(:,i) = intModel.y.val;
+    qAct(:,i) = arm.q.val;
+    xAct(:,i) = arm.x.val;
+    yAct(:,i) = arm.y.val;
+    qEst(:,i) = intModel.q.val;
+    xEst(:,i) = intModel.x.val;
+    yEst(:,i) = intModel.y.val;
     
     % compute optimal control
     [u_opt, flag] = control(intModel, t(i), ref.traj(:,i), ref.space);
@@ -119,12 +116,12 @@ close(progBar)
 % save data in a struct
 data.t = t;
 data.u = u;
-data.q.act = q;
-data.x.act = x;
-data.y.act = y;
-data.q.est = q_est;
-data.x.est = x_est;
-data.y.est = y_est; 
+data.q.act = qAct;
+data.x.act = xAct;
+data.y.act = yAct;
+data.q.est = qEst;
+data.x.est = xEst;
+data.y.est = yEst; 
 
 % display results of simulation
 plotResults(arm, data)

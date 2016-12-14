@@ -10,10 +10,12 @@ end
 
 if strcmp( arm.hand, 'right' )
     J = [(-arm.l1*sin(x(1)) - arm.l2*sin(x(1)+x(2))) -arm.l2*sin(x(1)+x(2));
-         (arm.l1*cos(x(1)) + arm.l2*cos(x(1)+x(2)))   arm.l2*cos(x(1)+x(2))];
+         (arm.l1*cos(x(1)) + arm.l2*cos(x(1)+x(2)))   arm.l2*cos(x(1)+x(2));
+         0                                            0];
 else
     J = [(arm.l1*sin(x(1)) + arm.l2*sin(x(1)+x(2))) arm.l2*sin(x(1)+x(2));
-         (arm.l1*cos(x(1)) + arm.l2*cos(x(1)+x(2))) arm.l2*cos(x(1)+x(2))];
+         (arm.l1*cos(x(1)) + arm.l2*cos(x(1)+x(2))) arm.l2*cos(x(1)+x(2));
+         0                                          0];
 end
 
 end

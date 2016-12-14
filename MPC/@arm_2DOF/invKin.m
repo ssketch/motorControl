@@ -37,7 +37,7 @@ end
 
 % translate velocity
 J = jacobian(arm, x);
-x(3:4,:) = J \ y(3:4);
+x(3:4,:) = J(1:2,1:2) \ y(4:5);
 
 % check that resulting state is within joint limits
 reachable = withinLimits(arm, x);

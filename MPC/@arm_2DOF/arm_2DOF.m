@@ -103,7 +103,7 @@ classdef arm_2DOF < handle
 
                 % initialize state vectors for arm in middle of defined
                 % workspace
-                arm.shld = [0;0];
+                arm.shld = [0;0;0];
                 arm.q.val = mean([arm.q.min, arm.q.max], 2);
                 arm.u.val = [0;0];
                 arm.x.val = [arm.q.val; 0; 0];

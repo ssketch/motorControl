@@ -69,9 +69,9 @@ export_fig './results/posTraj' -eps
 hold off
 
 figure()
-quiver(px(1,:),py(2,:),vx(1,:),vy(2,:),'b','LineWidth',1);
+quiver(px,py,vx,vy,'b','LineWidth',1);
 hold on
-quiver(px_est(1,:),py_est(2,:),vx_est(1,:),vy_est(2,:),'c','LineWidth',1);
+quiver(px_est,py_est,vx_est,vy_est,'c','LineWidth',1);
 axis equal
 grid on
 title('Velocity','FontSize',22);
