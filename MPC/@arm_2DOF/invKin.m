@@ -27,12 +27,12 @@ s2 = sqrt(1 - c2^2);
 if strcmp(arm.hand,'right')
     x(1,:) = atan2(y(2),y(1)) - atan2(arm.l2*s2,(arm.l1+arm.l2*c2));
     x(2,:) = atan2(s2,c2);
-    elbw = arm.shld + [arm.l1*cos(x(1));arm.l1*sin(x(1))];
+    elbw = arm.shld + [arm.l1*cos(x(1));arm.l1*sin(x(1));0];
 else
     s2 = -s2;
     x(1,:) = pi - (atan2(y(2),y(1)) - atan2(arm.l2*s2,(arm.l1+arm.l2*c2)));
     x(2,:) = -atan2(s2,c2);
-    elbw = arm.shld + [arm.l1*cos(pi-x(1));arm.l1*sin(pi-x(1))];
+    elbw = arm.shld + [arm.l1*cos(pi-x(1));arm.l1*sin(pi-x(1));0];
 end
 
 % translate velocity

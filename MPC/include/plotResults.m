@@ -1,13 +1,12 @@
 % This function displays the results of simulation. It creates a movie of
 % the arm movement, plots position/velocity in joint/Cartesian space, and
 % plots joint torques over time. All figures are saved in EPS format.
-% NOTE: Currently, this only supports 2-DOF arm planar movements.
 function plotResults(arm, data)
 
 % define parameters
 nJoints = length(arm.q.val);
-nStates = length(arm.x.val);
-nOutputs = length(arm.y.val);
+nStatesJnt = length(arm.x.val);
+nStatesTsk = length(arm.y.val);
 n = length(data.t);
 toDeg = 180/pi;
 
@@ -19,7 +18,13 @@ end
 save('./results/reachingMovie','M');
 
 % downsample data for plotting
+fields = fieldnames(data);
 f_down = 2;
+
+%%%%%%%%%
+% TO DO %
+%%%%%%%%%
+
 t = downsample(data.t',f_down)';
 u = downsample(data.u',f_down)';
 q = downsample(data.q.act',f_down)'*toDeg;

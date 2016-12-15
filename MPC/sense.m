@@ -17,7 +17,7 @@ x_sens = z(end-(nStates-1):end);
 
 % add bias & noise
 nJoints = length(arm.q.val);
-sensBias = computeBias(arm);
-x_sens = x_sens + [sensBias;zeros(nJoints,1)] + arm.sensNoise;
+sensBias = [computeBias(arm);zeros(nJoints,1)];
+x_sens = x_sens + sensBias + arm.sensNoise;
 
 end

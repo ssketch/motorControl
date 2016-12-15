@@ -31,7 +31,6 @@ if nargin < 3
 end
 
 % extract current state from augmented state vector
-nJoints = length(arm.q.val);
 nStates = length(arm.x.val);
 xCurr = zCurr(1:nStates);
 
@@ -45,6 +44,7 @@ xNext = xTraj(end,:)';
 % ----  are the direct result of the applied joint torques. The position
 %       terms are just the result of integrating these velocities. Any
 %       noise on the position terms arrives there indirectly.
+nJoints = length(arm.q.val);
 xNext = xNext + ...
     arm.Ts * (arm.motrNoise*[zeros(nJoints,1);ones(nJoints,1)]) .* rand(nStates,1);
 
@@ -58,7 +58,6 @@ Mshift = diag(ones(nStates*nDelay,1), -nStates);
 zNext = zNext + Mshift*zNext;
 
 % update state variables for arm object
-nJoints = length(arm.q.val);
 arm.u.val = u;
 arm.x.val = xNext;
 arm.q.val = xNext(1:nJoints);

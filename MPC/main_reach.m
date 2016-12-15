@@ -16,53 +16,62 @@ intModel = arm_2DOF(subj);
 
 % extract arm parameters
 nJoints = length(arm.q.val);
-nStates = length(arm.x.val);
+nStatesJnt = length(arm.x.val);
+nStatesTsk = length(arm.y.val);
 nInputs = length(arm.u.val);
-nOutputs = length(arm.y.val);
 
 % update model parameters (e.g., if the subject has suffered a stroke,
 % muscle synergies/joint coupling might not be captured by the internal
 % model)
 stroke = 0;
 if stroke
-    arm.Td = 0.16;         % increased delay (e.g., from deafferentation)
+    arm.Td = 0.16;         % increased feedback delay
     arm.coupling = eye(2); % representing muscle synergies
-    posNoise = 10;
-    velNoise = 0.1;
+    posNoise = 10;         % NEED SOURCE
+    velNoise = 0.1;        % NEED SOURCE
     arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad; % (Cusmano, 2014)
     biasData(:,:,1) = [20 -10;40 0;65 12]*toRad;                    % (Cusmano, 2014)
     biasData(:,:,2) = [80 -8;100 5]*toRad;
     arm.sensBias = defineBiasFunc(biasData);
-    intModel.motrNoise = 0.1; % prediction noise
+    intModel.motrNoise = 0.1; % prediction noise (arbitrary)
 end
 
-% define reach movement
-T = 1;                             % total time to simulate [sec]
-t = 0:arm.Ts:T;                    % time vector [sec]
-n = length(t);                     % number of time steps
-d = 0.35;                          % reach distance [m]
-th = 30;                           % reach angle [deg]
-p_i = [-0.15;0.3];                 % initial position [m]
-v_i = [0;0];                       % initial velocity [m/s]
-y_i = [p_i;v_i];                   % initial state [m,m/s]
-p_f = p_i + d*[cosd(th);sind(th)]; % desired end position [m]
-v_f = [0;0];                       % desired end velocity [m/s]
-y_f = [p_f;v_f];                   % desired end state [m,m/s]
-ref.space = 'task';                % space in which to track reference
-ref.traj = repmat(y_f,1,n);        % reference trajectory [m,m/s]
+% define movement
+T = 1;                               % total time to simulate [sec]
+t = 0:arm.Ts:T;                      % time vector [sec]
+n = length(t);                       % number of time steps
+d = 0.35;                            % reach distance [m]
+th = 30;                             % reach angle [deg]
+p_i = [-0.15;0.3;0];                 % initial position [m]
+v_i = [0;0;0];                       % initial velocity [m/s]
+y_i = [p_i;v_i];                     % initial state, in Cartesian coordinates [m,m/s]
+[x_i,~,~] = arm.invKin(y_i);         % initial state, in joint coordinates [rad,rad/s]
+p_f = p_i + d*[cosd(th);sind(th);0]; % desired end position [m]
+v_f = [0;0;0];                       % desired end velocity [m/s]
+y_f = [p_f;v_f];                     % desired end state, in Cartesian coordinates [m,m/s]
+[x_f,~,~] = arm.invKin(y_f);         % desired end state, in joint coordinates [rad,rad/s]
+space = 'task';                      % space in which to track reference ('joint' or 'task')
+switch space
+    case 'joint' 
+        ref = repmat(x_f,1,n); % reference to track [rad,rad/s]
+    case 'task'
+        ref = repmat(y_f,1,n); % [m,m/s]
+    otherwise
+        ref = repmat(y_f,1,n); % task space by default
+end
 
 % update model state variables to match initial conditions for movement
-% NOTE: internal model's state estimate is grounded by vision (i.e.,
-% ----  assuming perfect vision, it matches the arm's actual state)
+% NOTE: internal model's state estimates are grounded by vision (i.e.,
+% ----  assuming perfect vision, they match the arm's actual state)
+arm.x.val = x_i;
+arm.q.val = x_i(1:nJoints);
 arm.y.val = y_i;
-[arm.x.val, arm.elbw, arm.inWS] = arm.invKin;
-arm.q.val = arm.x.val(1:nJoints);
 nDelay = ceil(arm.Td/arm.Ts);
 arm.z.val = repmat(arm.x.val, nDelay+1, 1);
 
-intModel.y.val = arm.y.val;
-[intModel.x.val, intModel.elbw, intModel.inWS] = intModel.invKin;
-intModel.q.val = intModel.x.val(1:nJoints);
+intModel.x.val = x_i;
+intModel.q.val = x_i(1:nJoints);
+intModel.y.val = y_i;
 nDelay = ceil(intModel.Td/intModel.Ts);
 intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
 
@@ -70,10 +79,10 @@ intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
 u = zeros(nInputs,n);
 qAct = zeros(nJoints,n);
 qEst = zeros(nJoints,n);
-xAct = zeros(nStates,n);
-xEst = zeros(nStates,n);
-yAct = zeros(nOutputs,n);
-yEst = zeros(nOutputs,n);
+xAct = zeros(nStatesJnt,n);
+xEst = zeros(nStatesJnt,n);
+yAct = zeros(nStatesTsk,n);
+yEst = zeros(nStatesTsk,n);
 
 % simulate reach
 progBar = waitbar(0,'Simulating reach ... t = ');
@@ -92,14 +101,9 @@ for i = 1:n
     yEst(:,i) = intModel.y.val;
     
     % compute optimal control
-    [u_opt, flag] = control(intModel, t(i), ref.traj(:,i), ref.space);
-    
-    % check for problems with control computation
-    if flag == 1
-        warning('Linearization of model failed.')
-        return
-    elseif flag == 2
-        warning('Computed control out of bounds.')
+    [u_opt, flag] = control(intModel, t(i), ref(:,i), space);
+    if flag
+        warning('Linearization failed.')
         return
     end
     
