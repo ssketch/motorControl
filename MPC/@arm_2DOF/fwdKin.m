@@ -13,10 +13,7 @@ end
 % check that joint limits are satisfied
 reachable = withinLimits(arm, x);
 if ~reachable
-    y = NaN;
-    elbw = NaN;
     warning('Posture exceeds joint limitations.')
-    return
 end
 
 % translate position

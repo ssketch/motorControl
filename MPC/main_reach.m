@@ -5,6 +5,10 @@ clc
 % add folders to path
 addpath(genpath([pwd '/include']));
 
+% set optimization algorithm
+options = optimset('Algorithm','interior-point');
+% SET THIS WHEN 'fmin___' IS CALLED
+
 % define subject
 subj.hand = 'right'; % hand being tested
 subj.M = 70;         % mass [kg]
@@ -53,10 +57,11 @@ y_f = [p_f;v_f];                     % desired end state, in Cartesian coordinat
 space = 'task';                      % space in which to track reference ('joint' or 'task')
 switch space
     case 'joint' 
-        ref = repmat(x_f,1,n); % reference to track [rad,rad/s]
+        ref = repmat(x_f,1,n); % joint-space reference to track [rad,rad/s]
     case 'task'
-        ref = repmat(y_f,1,n); % [m,m/s]
+        ref = repmat(y_f,1,n); % task-space reference to track [m,m/s]
     otherwise
+        space = 'task';
         ref = repmat(y_f,1,n); % task space by default
 end
 
@@ -128,4 +133,4 @@ data.x.est = xEst;
 data.y.est = yEst; 
 
 % display results of simulation
-plotResults(arm, data)
+%plotResults(arm, data)

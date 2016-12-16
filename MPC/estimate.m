@@ -1,6 +1,6 @@
-% This function uses a model of the arm, a copy of the command
-% sent to the actual arm, and sensory feedback to update an estimate of the
-% arm's state, as well as this estimate's uncertainty. The estimation is
+% This function uses a model of the arm, a copy of the command sent to the
+% actual arm, and sensory feedback to update an estimate of the arm's
+% state, as well as this estimate's uncertainty. The estimation is
 % performed with an unscented Kalman filter, using the fully nonlinear
 % dynamics with state augmented to account for time delay. 
 %

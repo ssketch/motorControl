@@ -14,6 +14,7 @@ if nargin > 1
         reachable = 0;
         x = NaN;
         elbw = NaN;
+        warning('Desired state outside of workspace.')
         return
     end
 % if no state specified, use current arm state
@@ -42,9 +43,7 @@ x(3:4,:) = J(1:2,1:2) \ y(4:5);
 % check that resulting state is within joint limits
 reachable = withinLimits(arm, x);
 if ~reachable
-    x = NaN;
-    elbw = NaN;
-    return
+    warning('Posture exceeds joint limitations.')
 end
 
 end

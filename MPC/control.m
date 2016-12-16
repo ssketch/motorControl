@@ -39,52 +39,42 @@ if nargin < 5
     params.alpha = 1e10;                    % weighting between state (pos/vel) and control costs
 end
 
-% only reoptimize if reaction time has passed
-if mod(t,armModel.Tr) == 0
+% not enough time has passed to reoptimize control
+if mod(t,armModel.Tr) ~= 0
     u = armModel.u.val;
     flag = 0;
+
+% ready to reoptimize control
 else
     
     % linearize arm model (and check linearization)
-    [A, B, C, D, f, g] = linearize(armModel, space);
+    [A, B, f, C, D, g] = linearize(armModel, ref, space);
     if ~isreal(A) || sum(sum(isnan(A))) > 0
         flag = 1;
         return
     end
     
     % discretize dynamics of arm model
-    [Ad, Bd, fd] = discretize(armModel.Ts, A, B, c);
+    [Ad, Bd, fd] = discretize(armModel.Ts, A, B, f);
     
     % define LTI model for MPT3 package
-    model = LTISystem('A',Ad,'B',Bd,'f',fd,'C',C,'g',g,'Ts',armModel.Ts);
+    model = LTISystem('A',Ad,'B',Bd,'f',fd,'C',C,'D',D,'g',g,'Ts',armModel.Ts);
     
-    % make model track a reference (can be time-varying)
+    % make model track a reference
     model.y.with('reference');
     model.y.reference = 'free';
     
     % set (hard) constraints
-    model.x.min = armModel.x.min;
-    model.x.max = armModel.x.max;
-    model.u.min = armModel.u.min;
-    model.u.max = armModel.u.max;
+    model.x.min = armModel.x.min;   model.x.max = armModel.x.max;
+    model.u.min = armModel.u.min;   model.u.max = armModel.u.max;
     
-    % define cost function
+    % define cost function (NOTE: this assumes that half of the outputs are
+    % positions and half are velocities)
     nInputs = length(armModel.u.val);
-    nOutputs = size(ref,1);
-    switch space
-        case {'joint', 'task'}
-            model.u.penalty = QuadFunction( diag(params.wU*ones(nInputs,1)) );
-            model.y.penalty = QuadFunction(  params.alpha * ...
-                diag([params.wP*ones(nOutputs/2,1) ; params.wV*ones(nOutputs/2,1)]) );
-        case 'force'
-            model.u.penalty = QuadFunction( zeros(nInputs) );
-            model.y.penalty = QuadFunction(  params.alpha * ...
-                diag([params.wP*ones(nOutputs/2,1) ; params.wV*ones(nOutputs/2,1)]) );
-        otherwise
-            model.u.penalty = QuadFunction( diag(params.wU*ones(nInputs,1)) );
-            model.y.penalty = QuadFunction(  params.alpha * ...
-                diag([params.wP*ones(nOutputs/2,1) ; params.wV*ones(nOutputs/2,1)]) );
-    end
+    nOutputs = length(ref);
+    model.u.penalty = QuadFunction( diag(params.wU*ones(nInputs,1)) );
+    model.y.penalty = QuadFunction(  params.alpha * ...
+        diag([params.wP*ones(nOutputs/2,1) ; params.wV*ones(nOutputs/2,1)]) );
     
     % create MPC controller
     ctrl = MPCController(model, params.H);
@@ -93,6 +83,7 @@ else
     u = ctrl.evaluate(armModel.x.val, 'y.reference', ref);
     armModel.u.val = u;
     flag = 0;
+    
 end
 
 end        
