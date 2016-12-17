@@ -134,4 +134,4 @@ data.x.est = xEst;
 data.y.est = yEst; 
 
 % display results of simulation
-%plotResults(arm, data)
+% plotResults(arm, data)
