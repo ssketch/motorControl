@@ -119,6 +119,7 @@ for i = 1:n
     % estimate current state
     x_est = estimate(intModel, u_opt, x_sens);
 
+    arm.draw
 end
 close(progBar)
 

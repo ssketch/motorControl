@@ -76,6 +76,8 @@ else
     model.y.penalty = QuadFunction(  params.alpha * ...
         diag([params.wP*ones(nOutputs/2,1) ; params.wV*ones(nOutputs/2,1)]) );
     
+    mptopt('lpsolver', 'sqp', 'qpsolver', 'sqp')
+
     
     % create MPC controller
     ctrl = MPCController(model, params.H);
