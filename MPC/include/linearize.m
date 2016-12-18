@@ -67,11 +67,11 @@ switch space
     % output task-space coordinates by linearizing forward kinematics
     case 'task'
         C = zeros(nOutputs,nStates);
-        g = fwdKin(arm, x_est);
+        [g,~,~] = fwdKin(arm, x_est);
         for i = 1:nStates
             x_eps = x_est;
-            x_eps(i) = x_eps(i) + eps;  % one state perturbed
-            g_eps = fwdKin(arm, x_eps); % state-perturbed forward kinematics
+            x_eps(i) = x_eps(i) + eps;        % one state perturbed
+            [g_eps,~,~] = fwdKin(arm, x_eps); % state-perturbed forward kinematics
             C(:,i) = (g_eps-g)/eps;
         end
         D = zeros(nOutputs,nInputs);

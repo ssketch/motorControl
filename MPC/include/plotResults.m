@@ -1,99 +1,102 @@
 % This function displays the results of simulation. It creates a movie of
 % the arm movement, plots position/velocity in joint/Cartesian space, and
-% plots joint torques over time. All figures are saved in EPS format.
-function plotResults(arm, data)
+% plots joint torques over time. The 'planar' parameter views 3D
+% Cartesian plots in the top-down 2D plane. All figures are saved in EPS
+% format.
+function plotResults(arm, data, planar)
+
+clc
 
 % define parameters
-nJoints = length(arm.q.val);
-nStatesJnt = length(arm.x.val);
-nStatesTsk = length(arm.y.val);
+toRad = pi/180;
 n = length(data.t);
-toDeg = 180/pi;
+nJoints = length(arm.q.val);
+nStatesTsk = length(arm.y.val);
 
 % create & save movie of arm movement
 figure()
 for i = 1:n
-    M(i) = draw(arm, data.x.act(:,i));
+    M(i) = draw(arm, data.xAct(:,i)*toRad);
 end
 save('./results/reachingMovie','M');
 
 % downsample data for plotting
 fields = fieldnames(data);
 f_down = 2;
+for i = 1:length(fields)
+    data.(fields{i}) = downsample(data.(fields{i})',f_down)';
+end
 
-%%%%%%%%%
-% TO DO %
-%%%%%%%%%
-
-t = downsample(data.t',f_down)';
-u = downsample(data.u',f_down)';
-q = downsample(data.q.act',f_down)'*toDeg;
-x = downsample(data.x.act',f_down)'*toDeg;
-qdot = x(nJoints+1:nStates,:);
-y = downsample(data.y.act',f_down)';
-px = y(1,:);
-py = y(2,:);
-vx = y(nOutputs/2+1,:);
-vy = y(nOutputs/2+2,:);
-q_est = downsample(data.q.est',f_down)'*toDeg;
-x_est = downsample(data.x.est',f_down)'*toDeg;
-qdot_est = x_est(nJoints+1:nStates,:);
-y_est = downsample(data.y.est',f_down)';
-px_est = y_est(1,:);
-py_est = y_est(2,:);
-vx_est = y_est(nOutputs/2+1,:);
-vy_est = y_est(nOutputs/2+2,:);
+% parse out variables to plot
+data.qdotAct = data.xAct(nJoints+1:end,:);
+data.qdotEst = data.xEst(nJoints+1:end,:);
+data.pAct = data.yAct(1:nStatesTsk/2,:);
+data.pEst = data.yEst(1:nStatesTsk/2,:);
+data.vAct = data.yAct(nStatesTsk/2+1:end,:);
+data.vEst = data.yEst(nStatesTsk/2+1:end,:);
 
 % plot position and velocity over time
 figure()
 subplot(2,1,1)
-plot(t,q,t,q_est,'LineWidth',3);
+plot(data.t,data.qAct,data.t,data.qEst,'LineWidth',3); 
 grid on
 ylabel('Position [deg]','FontSize',14);
-legend('act, shoulder','act, elbow',...
-    'est, shoulder','est, elbow','Location','NorthEast');
+actNames = cell(nJoints,1); actNames(:) = {', act'};
+estNames = cell(nJoints,1); estNames(:) = {', est'};
+legendNames = strcat([arm.DOFs;arm.DOFs], [actNames;estNames]);
+legend(legendNames,'Location','NorthEast');
 subplot(2,1,2)
-plot(t,qdot,t,qdot_est,'LineWidth',3);
+plot(data.t,data.qdotAct,data.t,data.qdotEst,'LineWidth',3);
 grid on
-xlabel('t [sec]','FontSize',20);
+xlabel('t [sec]','FontSize',16);
 ylabel('Velocity [^d^e^g/_s_e_c]','FontSize',12);
-legend('act, shoulder','act, elbow',...
-    'est, shoulder','est, elbow','Location','NorthEast');
 export_fig './results/timePlots' -eps
 
 % plot position and velocity in space
 figure()
-plot(px,py,'b',px_est,py_est,'c--','LineWidth',1.5);
+plot3(data.pAct(1,:),data.pAct(2,:),data.pAct(3,:),'b','LineWidth',1.5);
+hold on
+plot3(data.pEst(1,:),data.pEst(2,:),data.pEst(3,:),'c--','LineWidth',1.5);
 axis equal
 grid on
+if planar
+    view(0,90)
+end
 title('Position','FontSize',22);
 xlabel('x','FontSize',20);
 ylabel('y','FontSize',20);
+zlabel('z','FontSize',20);
 legend('actual','estimated','Location','NorthEast');
 export_fig './results/posTraj' -eps
 hold off
 
 figure()
-quiver(px,py,vx,vy,'b','LineWidth',1);
+quiver3(data.pAct(1,:),data.pAct(2,:),data.pAct(3,:),...
+    data.vAct(1,:),data.vAct(2,:),data.vAct(3,:),'b','LineWidth',1);
 hold on
-quiver(px_est,py_est,vx_est,vy_est,'c','LineWidth',1);
+quiver3(data.pEst(1,:),data.pEst(2,:),data.pEst(3,:),...
+    data.vEst(1,:),data.vEst(2,:),data.vEst(3,:),'c--','LineWidth',1);
 axis equal
 grid on
+if planar
+    view(0,90)
+end
 title('Velocity','FontSize',22);
 xlabel('x','FontSize',20);
 ylabel('y','FontSize',20);
+zlabel('z','FontSize',20);
 legend('actual','estimated','Location','NorthEast');
 export_fig './results/velTraj' -eps
 hold off
 
 % plot joint torques over time
 figure()
-plot(t,u(1,:),'r',t,u(2,:),'b','LineWidth',3);
+plot(data.t,data.u,'LineWidth',3);
 grid on
 title('Joint Torques','FontSize',22);
 xlabel('t [sec]','FontSize',20);
 ylabel('T [Nm]','FontSize',20);
-legend('shoulder','elbow','Location','Best')
+legend(arm.DOFs,'Location','NorthEast');
 export_fig './results/commTraj' -eps
 
 end

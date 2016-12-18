@@ -8,6 +8,7 @@ classdef arm_2DOF < handle
     % properties that, once set in constructor, remain constant
     properties (GetAccess=public, SetAccess=private)
         
+        DOFs; % cell array of DOF names for plotting
         hand; % handedness [right or left]
         m1;   % upperarm mass [kg]
         m2;   % forearm mass [kg]
@@ -58,6 +59,7 @@ classdef arm_2DOF < handle
                 toRad = pi/180;
                 
                 % set immutable properties
+                arm.DOFs = {'shld';'elbw'};
                 arm.hand = subj.hand;
                 arm.m1 = 0.028*subj.M; % (Winter, 2009)
                 arm.m2 = 0.022*subj.M;
