@@ -117,18 +117,23 @@ for i = 1:n
     yEst(:,i) = intModel.y.val;
     
     % compute optimal control
-    [u_opt, flag] = control(intModel, t(i), ref(:,i), space);
+    % not enough time has passed to reoptimize control
+    if mod(t(i),arm.Tr) == 0
+        [u_opt, flag] = control(intModel, t(i), ref(:,i), space);
+    end
     if flag
         warning('Linearization failed.')
         return
     end
     
     % actuate arm with optimal control & sense feedback
-    zNext = plant(arm, u_opt);
+    zNext = plant(arm, u_opt(:,1));
     x_sens = sense(arm, zNext);
     
     % estimate current state
-    x_est = estimate(intModel, u_opt, x_sens);
+    x_est = estimate(intModel, u_opt(:,1), x_sens);
+
+    u_opt = u_opt(:,2:end);
 
 end
 close(progBar)

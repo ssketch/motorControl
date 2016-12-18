@@ -86,6 +86,11 @@ else
     armModel.u.val = u;
     flag = 0;
     
+    loop = ClosedLoop( ctrl, model );
+    Nsim = armModel.Tr/armModel.Ts;
+    data = loop.simulate( armModel.x.val, Nsim, 'y.reference', ref );
+    u = data.U;
+    
 end
 
 end        
