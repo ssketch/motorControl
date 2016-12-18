@@ -4,7 +4,7 @@
 % default for any 'arm' object. It also outputs elbow position for
 % plotting. If no state is specified as input, the function performs
 % forward kinematics on the current state of the 'arm' object.
-function [x, elbow, reachable] = fwdKin(arm, x)
+function [y, elbow, reachable] = fwdKin(arm, x)
 
 % if no state is specified, use current arm state
 if nargin < 2
@@ -20,15 +20,23 @@ if ~reachable
     return
 end
 
-
 % POSITION
-elbow = [  -arm.l3*cos(x(2))*sin(x(1)); 
-            arm.l3*sin(x(2)); 
-           -arm.l3*cos(x(1))*cos(x(2))];
+% elbow position
+elbow = [  -arm.l1*cos(x(1) + 1.57)*sin(x(2)); 
+           -arm.l1*cos(x(2)); 
+           -arm.l1*sin(x(1) + 1.57)*sin(x(2))];
 
-y(1,1) = -arm.l4*(sin(x(4))*(cos(x(1))*cos(x(3)) + sin(x(1))*sin(x(2))*sin(x(3))) + cos(x(2))*cos(x(4))*sin(x(1)));
-y(2,1) = arm.l4*(cos(x(4))*sin(x(2)) - cos(x(2))*sin(x(3))*sin(x(4)));
-y(3,1) = arm.l4*(sin(x(4))*(cos(x(3))*sin(x(1)) - cos(x(1))*sin(x(2))*sin(x(3))) - cos(x(1))*cos(x(2))*cos(x(4)));
+% Hand position
+y(1,1) = -arm.l2*(sin(x(4))*(sin(x(1) + 1.57)*sin(x(3) - 1.57) - cos(x(1)...
+    + 1.57)*cos(x(3) - 1.57)*cos(x(2))) + cos(x(1) ...
+    + 1.57)*cos(x(4))*sin(x(2))) - arm.l1*cos(x(1) + 1.57)*sin(x(2));
+y(2,1) = -arm.l2*(cos(x(2))*cos(x(4)) + cos(x(3) ...
+    - 1.57)*sin(x(2))*sin(x(4))) - arm.l1*cos(x(2));
+y(3,1) = -arm.l2*(cos(x(4))*(sin(x(1) + 1.57)*sin(x(2)) - 2.3e-49) ...
+    - sin(x(4))*(cos(x(1) + 1.57)*sin(x(3) - 1.57) + sin(x(1) ...
+    + 1.57)*cos(x(3) - 1.57)*cos(x(2)))) - arm.l1*sin(x(1) ...
+    + 1.57)*sin(x(2));
+
 
 y = y + elbow;
 
@@ -38,6 +46,6 @@ end
     
 % VELOCITY
 J = arm.jacobian(x);
-x(4:6) = J*x(5:8);
+y(4:6) = J*x(5:8);
 
 end
