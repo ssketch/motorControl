@@ -28,7 +28,7 @@
 % without attempting to compute the optimal control. The 'params' input is
 % optional.
 
-function [u, flag] = control(armModel, t, ref, space, params)
+function [u, flag] = control(armModel, ref, space, params)
 
 % if necessary, set default parameter values
 if nargin < 5
@@ -39,58 +39,43 @@ if nargin < 5
     params.alpha = 1e10;                    % weighting between state (pos/vel) and control costs
 end
 
-% not enough time has passed to reoptimize control
-if mod(t,armModel.Tr) ~= 0
-    %u = armModel.u.val;
-    nInputs = length(armModel.u.val);
-    u = zeros(nInputs,1); % just motor noise to actuate muscles
-    flag = 0;
-
-% ready to reoptimize control
-else
-    
-    % linearize arm model (and check linearization)
-    [A, B, f, C, D, g] = linearize(armModel, ref, space);
-    if ~isreal(A) || sum(sum(isnan(A))) > 0
-        flag = 1;
-        return
-    end
-    
-    % discretize dynamics of arm model
-    [Ad, Bd, fd] = discretize(armModel.Ts, A, B, f);
-    
-    % define LTI model for MPT3 package
-    model = LTISystem('A',Ad,'B',Bd,'f',fd,'C',C,'D',D,'g',g,'Ts',armModel.Ts);
-    
-    % make model track a reference
-    model.y.with('reference');
-    model.y.reference = 'free';
-    
-    % set (hard) constraints
-    model.x.min = armModel.x.min;   model.x.max = armModel.x.max;
-    model.u.min = armModel.u.min;   model.u.max = armModel.u.max;
-    
-    % define cost function (NOTE: this assumes that half of the outputs are
-    % positions and half are velocities)
-    nInputs = length(armModel.u.val);
-    nOutputs = length(ref);
-    model.u.penalty = QuadFunction( diag(params.wU*ones(nInputs,1)) );
-    model.y.penalty = QuadFunction(  params.alpha * ...
-        diag([params.wP*ones(nOutputs/2,1) ; params.wV*ones(nOutputs/2,1)]) );
-    
-    % create MPC controller
-    ctrl = MPCController(model, params.H);
-    
-    % simulate open-loop system to find optimal control
-    u = ctrl.evaluate(armModel.x.val, 'y.reference', ref);
-    armModel.u.val = u;
-    flag = 0;
-    
-    loop = ClosedLoop( ctrl, model );
-    Nsim = armModel.Tr/armModel.Ts;
-    data = loop.simulate( armModel.x.val, Nsim, 'y.reference', ref );
-    u = data.U;
-    
+% linearize arm model (and check linearization)
+[A, B, f, C, D, g] = linearize(armModel, ref, space);
+if ~isreal(A) || sum(sum(isnan(A))) > 0
+    flag = 1;
+    return
 end
+
+% discretize dynamics of arm model
+[Ad, Bd, fd] = discretize(armModel.Ts, A, B, f);
+
+% define LTI model for MPT3 package
+model = LTISystem('A',Ad,'B',Bd,'f',fd,'C',C,'D',D,'g',g,'Ts',armModel.Ts);
+
+% make model track a reference
+model.y.with('reference');
+model.y.reference = 'free';
+
+% set (hard) constraints
+model.x.min = armModel.x.min;   model.x.max = armModel.x.max;
+model.u.min = armModel.u.min;   model.u.max = armModel.u.max;
+
+% define cost function (NOTE: this assumes that half of the outputs are
+% positions and half are velocities)
+nInputs = length(armModel.u.val);
+nOutputs = length(ref);
+model.u.penalty = QuadFunction( diag(params.wU*ones(nInputs,1)) );
+model.y.penalty = QuadFunction(  params.alpha * ...
+    diag([params.wP*ones(nOutputs/2,1) ; params.wV*ones(nOutputs/2,1)]) );
+
+% create MPC controller
+ctrl = MPCController(model, params.H);
+
+% simulate closed-loop system to find optimal control
+loop = ClosedLoop(ctrl, model);
+Nsim = armModel.Tr/armModel.Ts;
+data = loop.simulate(armModel.x.val, Nsim, 'y.reference', ref);
+u = data.U;
+flag = 0;
 
 end        

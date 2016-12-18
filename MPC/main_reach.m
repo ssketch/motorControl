@@ -96,7 +96,6 @@ for i = 1:n
     
     % display progress of simulation
     waitbar(i/n, progBar, ['Simulating reach ... t = ',num2str(t(i))]);
-    
     if debug
         draw(arm);
         disp(' ');
@@ -116,24 +115,27 @@ for i = 1:n
     yAct(:,i) = arm.y.val;
     yEst(:,i) = intModel.y.val;
     
-    % compute optimal control
-    % not enough time has passed to reoptimize control
+    % compute optimal control (only if enough time has passed)
     if mod(t(i),arm.Tr) == 0
-        [u_opt, flag] = control(intModel, t(i), ref(:,i), space);
+        [u_optTraj, flag] = control(intModel, ref(:,i), space);
+        if flag
+            warning('Linearization failed.')
+            return
+        end
     end
-    if flag
-        warning('Linearization failed.')
-        return
-    end
+    u_opt = u_optTraj(:,1);
+    arm.u.val = u_opt;
+    intModel.u.val = u_opt;
     
     % actuate arm with optimal control & sense feedback
-    zNext = plant(arm, u_opt(:,1));
+    zNext = plant(arm, u_opt);
     x_sens = sense(arm, zNext);
     
     % estimate current state
-    x_est = estimate(intModel, u_opt(:,1), x_sens);
+    x_est = estimate(intModel, u_opt, x_sens);
 
-    u_opt = u_opt(:,2:end);
+    % discard most recently applied control
+    u_optTraj = u_optTraj(:,2:end);
 
 end
 close(progBar)
