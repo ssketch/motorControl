@@ -41,7 +41,9 @@ end
 
 % not enough time has passed to reoptimize control
 if mod(t,armModel.Tr) ~= 0
-    u = armModel.u.val;
+    %u = armModel.u.val;
+    nInputs = length(armModel.u.val);
+    u = zeros(nInputs,1); % just motor noise to actuate muscles
     flag = 0;
 
 % ready to reoptimize control
@@ -75,7 +77,6 @@ else
     model.u.penalty = QuadFunction( diag(params.wU*ones(nInputs,1)) );
     model.y.penalty = QuadFunction(  params.alpha * ...
         diag([params.wP*ones(nOutputs/2,1) ; params.wV*ones(nOutputs/2,1)]) );
-    
     
     % create MPC controller
     ctrl = MPCController(model, params.H);

@@ -5,9 +5,10 @@ clc
 % add folders to path
 addpath(genpath([pwd '/include']));
 
-% set optimization algorithm
-options = optimset('Algorithm','interior-point');
-% SET THIS WHEN 'fmin___' IS CALLED
+% define parameters
+debug = 0;
+toDeg = 180/pi;
+planar = 1;
 
 % define subject
 subj.hand = 'right'; % hand being tested
@@ -81,13 +82,13 @@ nDelay = ceil(intModel.Td/intModel.Ts);
 intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
 
 % declare variables to save
-u = zeros(nInputs,n);
-qAct = zeros(nJoints,n);
-qEst = zeros(nJoints,n);
-xAct = zeros(nStatesJnt,n);
-xEst = zeros(nStatesJnt,n);
-yAct = zeros(nStatesTsk,n);
-yEst = zeros(nStatesTsk,n);
+u = zeros(nInputs,n);       % [Nm]
+qAct = zeros(nJoints,n);    % [deg]
+qEst = zeros(nJoints,n);    % [deg]
+xAct = zeros(nStatesJnt,n); % [deg,deg/s]
+xEst = zeros(nStatesJnt,n); % [deg,deg/s]
+yAct = zeros(nStatesTsk,n); % [m,m/s]
+yEst = zeros(nStatesTsk,n); % [m,m/s]
 
 % simulate reach
 progBar = waitbar(0,'Simulating reach ... t = ');
@@ -96,13 +97,23 @@ for i = 1:n
     % display progress of simulation
     waitbar(i/n, progBar, ['Simulating reach ... t = ',num2str(t(i))]);
     
+    if debug
+        draw(arm);
+        disp(' ');
+        disp('x = ');
+        disp(arm.x.val);
+        disp(' ');
+        disp('x_est = ');
+        disp(intModel.x.val);
+    end
+    
     % save current data
     u(:,i) = arm.u.val; % = intModel.u.val (they receive same input)
-    qAct(:,i) = arm.q.val;
-    xAct(:,i) = arm.x.val;
+    qAct(:,i) = arm.q.val*toDeg;
+    qEst(:,i) = intModel.q.val*toDeg;
+    xAct(:,i) = arm.x.val*toDeg;
+    xEst(:,i) = intModel.x.val*toDeg;
     yAct(:,i) = arm.y.val;
-    qEst(:,i) = intModel.q.val;
-    xEst(:,i) = intModel.x.val;
     yEst(:,i) = intModel.y.val;
     
     % compute optimal control
@@ -119,19 +130,18 @@ for i = 1:n
     % estimate current state
     x_est = estimate(intModel, u_opt, x_sens);
 
-    arm.draw
 end
 close(progBar)
 
 % save data in a struct
 data.t = t;
 data.u = u;
-data.q.act = qAct;
-data.x.act = xAct;
-data.y.act = yAct;
-data.q.est = qEst;
-data.x.est = xEst;
-data.y.est = yEst; 
+data.qAct = qAct;
+data.qEst = qEst;
+data.xAct = xAct;
+data.xEst = xEst;
+data.yAct = yAct;
+data.yEst = yEst;
 
 % display results of simulation
-% plotResults(arm, data)
+plotResults(arm, data, planar)
