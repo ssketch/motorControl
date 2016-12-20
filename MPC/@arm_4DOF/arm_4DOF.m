@@ -7,18 +7,16 @@ classdef arm_4DOF < handle
     properties (GetAccess=public, SetAccess=private)
         
         hand;    % handedness [right or left]
-        m3;      % upperarm mass, Winter [kg]
-        m4;      % forearm mass, Winter [kg]
-        l1 = 0;  % Distance from shoulder flex/ext joint to ab/adduction joint
-        l2 = 0;  % Distance from shouler ab/adduction to rotation joint
-        l3;      % upperarm length, Winter [m]
-        l4;      % forearm length, Winter [m]
-        s3;      % shoulder to upperarm COM, Winter [m]
-        s4;      % elbow to forearm COM, Winter [m]
-        r3;      % upperarm radius of gyration (proximal), Winter [m]
-        r4;      % forearm radius of gyration (proximal), Winter [m]
-        I3;      % upperarm moment of inertia about shoulder, Winter [kg-m^2]
-        I4;      % forearm moment of inertia about elbow, Winter [kg-m^2]
+        m1;      % upperarm mass, Winter [kg]
+        m2;      % forearm mass, Winter [kg]
+        l1;      % upperarm length, Winter [m]
+        l2;      % forearm length, Winter [m]
+        s1;      % shoulder to upperarm COM, Winter [m]
+        s2;      % elbow to forearm COM, Winter [m]
+        r1;      % upperarm radius of gyration (proximal), Winter [m]
+        r2;      % forearm radius of gyration (proximal), Winter [m]
+        I1;      % upperarm moment of inertia about shoulder, Winter [kg-m^2]
+        I2;      % forearm moment of inertia about elbow, Winter [kg-m^2]
         B;       % damping matrix [Nms/rad]
         
     end
@@ -59,16 +57,16 @@ classdef arm_4DOF < handle
                 
                 % set immutable properties
                 arm.hand = subj.hand;
-                arm.m3 = 0.028*subj.M;
-                arm.m4 = 0.022*subj.M;
-                arm.l3 = 0.188*subj.H;
-                arm.l4 = 0.253*subj.H;
-                arm.s3 = 0.436*arm.l3;
-                arm.s4 = 0.682*arm.l4;
-                arm.r3 = 0.542*arm.l3;
-                arm.r4 = 0.827*arm.l4;
-                arm.I3 = arm.m3*arm.r3^2;
-                arm.I4 = arm.m4*arm.r4^2;
+                arm.m1 = 0.028*subj.M;
+                arm.m2 = 0.022*subj.M;
+                arm.l1 = 0.188*subj.H;
+                arm.l2 = 0.253*subj.H;
+                arm.s1 = 0.436*arm.l1;
+                arm.s2 = 0.682*arm.l2;
+                arm.r1 = 0.542*arm.l1;
+                arm.r2 = 0.827*arm.l2;
+                arm.I1 = arm.m1*arm.r1^2;
+                arm.I2 = arm.m2*arm.r2^2;
                 arm.B = 0.25*ones(4,4) + 0.25*eye(4); % (Crevecoeur, 2013)
 
                 % initialize mutable properties to default values
@@ -105,14 +103,14 @@ classdef arm_4DOF < handle
                 arm.x.max = [ arm.q.max; inf*ones(4,1) ]; 
                 
                 % set default actuator limits
-                torq1Min = -85;     
-                torq1Max = 100;            % shoulder extension torquelimits [Nm]
-                torq2Min = -60;     
-                torq2Max = 75;             % shoulder abduction torque limits [Nm]               
-                torq3Min = -85;     
-                torq3Max = 100;            % shoulder rotation torque limits [Nm]
+                torq1Min = -85;     % shoulder flexion torque limits [Nm]
+                torq1Max = 100;     % shoulder extension torque limits [Nm]
+                torq2Min = -75;     % shoulder adduction torque limits [Nm]
+                torq2Max =  75;     % shoulder abduction torque limits [Nm]               
+                torq3Min = -60;     
+                torq3Max =  50;     % shoulder rotation torque limits [Nm]
                 torq4Min = -60;     
-                torq4Max = 75;             % elbow torque limits [Nm]
+                torq4Max =  75;     % elbow torque limits [Nm]
                 arm.u.min = [ torq1Min; torq2Min; torq3Min; torq4Min ];
                 arm.u.max = [ torq1Max; torq2Max; torq3Max; torq4Max ];
                 

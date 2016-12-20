@@ -35,17 +35,17 @@ M34 = arm.I2 + arm.m2*arm.s2^2*sin(x(4))*(cos(x(4))*(sin(x(1) + 1.57)*sin(x(3) -
 
 M44 = arm.I2 + arm.m2*arm.s2^2*(cos(x(2))*sin(x(4)) - cos(x(3) - 1.57)*cos(x(4))*sin(x(2)))^2 + arm.m2*arm.s2^2*(cos(x(4))*(cos(x(1) + 1.57)*sin(x(3) - 1.57) + sin(x(1) + 1.57)*cos(x(3) - 1.57)*cos(x(2))) + sin(x(1) + 1.57)*sin(x(2))*sin(x(4)))^2 + arm.m2*arm.s2^2*(cos(x(4))*(sin(x(1) + 1.57)*sin(x(3) - 1.57) - cos(x(1) + 1.57)*cos(x(3) - 1.57)*cos(x(2))) - cos(x(1) + 1.57)*sin(x(2))*sin(x(4)))^2;
 
-arm.m21 = arm.m12;
+M21 = M12;
 
-M31 = arm.m13;
-M32 = arm.m23;
+M31 = M13;
+M32 = M23;
 
-M41 = arm.m14;
-M42 = arm.m24;
+M41 = M14;
+M42 = M24;
 M43 = M34;
  
-M = [ arm.m11 arm.m12 arm.m13 arm.m14;
-      arm.m21 arm.m22 arm.m23 arm.m24;
+M = [ M11 M12 M13 M14;
+      M21 M22 M23 M24;
       M31 M32 M33 M34;
       M41 M42 M43 M44 ];
   
