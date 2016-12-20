@@ -15,7 +15,7 @@ end
 reachable = withinLimits(arm, x);
 if ~reachable
     y = NaN;
-    elbw = NaN;
+    elbow = NaN;
     warning('Posture exceeds joint limitations.')
     return
 end

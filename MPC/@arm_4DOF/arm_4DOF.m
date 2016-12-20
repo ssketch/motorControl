@@ -77,7 +77,7 @@ classdef arm_4DOF < handle
                 arm.motrNoise = 0.0001;
                 posNoise = 0.0001;  % noise on position feedback [deg]
                 velNoise = 0.00001; % noise on velocity feedback [deg/s]
-                arm.sensNoise = [posNoise*ones(1,4); velNoise*ones(1,4)]*toRad;
+                arm.sensNoise = [posNoise*ones(4,1); velNoise*ones(4,1)]*toRad;
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % Not sure what exactly to do here to translate this to
