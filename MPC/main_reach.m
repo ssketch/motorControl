@@ -31,7 +31,8 @@ nInputs = length(arm.u.val);
 stroke = 0;
 if stroke
     arm.Td = 0.16;         % increased feedback delay
-    arm.coupling = eye(2); % representing muscle synergies
+    arm.coupling = arm.coupling * [ 1, 0, 0, 0; 0, 1, .13, .63;
+                    0, 0, 1, 0; .8, .06, 0, 1]; % coupled joint torques (Dewald, 1995)
     posNoise = 10;         % NEED SOURCE
     velNoise = 0.1;        % NEED SOURCE
     arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad; % (Cusmano, 2014)
