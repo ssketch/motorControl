@@ -28,18 +28,18 @@ nInputs = length(arm.u.val);
 % update model parameters (e.g., if the subject has suffered a stroke,
 % muscle synergies/joint coupling might not be captured by the internal
 % model)
-stroke = 0;
+stroke = true;
 if stroke
-    arm.Td = 0.16;         % increased feedback delay
+%     arm.Td = 0.16;         % increased feedback delay
     arm.coupling = arm.coupling * [ 1, 0, 0, 0; 0, 1, .13, .63;
                     0, 0, 1, 0; .8, .06, 0, 1]; % coupled joint torques (Dewald, 1995)
-    posNoise = 10;         % NEED SOURCE
-    velNoise = 0.1;        % NEED SOURCE
-    arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad; % (Cusmano, 2014)
-    biasData(:,:,1) = [20 -10;40 0;65 12]*toRad;                    % (Cusmano, 2014)
-    biasData(:,:,2) = [80 -8;100 5]*toRad;
-    arm.sensBias = defineBiasFunc(biasData);
-    intModel.motrNoise = 0.1; % prediction noise (arbitrary)
+%     posNoise = 10;         % NEED SOURCE
+%     velNoise = 0.1;        % NEED SOURCE
+%     arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*pi/180; % (Cusmano, 2014)
+%     biasData(:,:,1) = [20 -10;40 0;65 12]*pi/180;                    % (Cusmano, 2014)
+%     biasData(:,:,2) = [80 -8;100 5]*pi/180;
+%     arm.sensBias = defineBiasFunc(biasData);
+%     intModel.motrNoise = 0.1; % prediction noise (arbitrary)
 end
 
 % define movement
