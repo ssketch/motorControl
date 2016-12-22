@@ -75,15 +75,15 @@ classdef arm_2DOF < handle
                 
                 % initialize mutable properties to default values
                 arm.Ts = 0.02;
-                arm.Tr = 0.1;  % (Wagner & Smith, 2008)
-                arm.Td = 0.06; % (Crevecoeur, 2013)
+                arm.Tr = 0.1;          % (Wagner & Smith, 2008)
+                arm.Td = 0.06;         % (Crevecoeur, 2013)
                 arm.coupling = eye(2);
                 arm.motrNoise = 10e-6; % (Crevecoeur, 2013)
-                posNoise = 10e-6;
-                velNoise = 10e-6;
-                arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad; % (Crevecoeur, 2013)
-                biasData(:,:,1) = [20 -2;40 0;65 3]*toRad; % (Cusmano, 2014)
-                biasData(:,:,2) = [30 -6;60 2;80 7]*toRad;
+                posNoise = 3;          % (Yousif, 2015)
+                velNoise = 0.1;
+                arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad;
+                biasData(:,:,1) = [25 -4;40 -2;55 0]*toRad; % (Yousif, 2015)
+                biasData(:,:,2) = [80 5;95 7;100 8]*toRad;  % (Yousif, 2015)
                 arm.sensBias = defineBiasFunc(biasData);
                 
                 % set joint limits to default values

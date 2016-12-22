@@ -8,6 +8,7 @@ addpath(genpath([pwd '/include']));
 % define parameters
 debug = 0;
 toDeg = 180/pi;
+toRad = pi/180;
 planar = 1;
 
 % define subject
@@ -28,17 +29,16 @@ nInputs = length(arm.u.val);
 % update model parameters (e.g., if the subject has suffered a stroke,
 % muscle synergies/joint coupling might not be captured by the internal
 % model)
-stroke = 0;
+stroke = 1;
 if stroke
-    arm.Td = 0.16;         % increased feedback delay
-    arm.coupling = eye(2); % representing muscle synergies
-    posNoise = 10;         % NEED SOURCE
-    velNoise = 0.1;        % NEED SOURCE
-    arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad; % (Cusmano, 2014)
-    biasData(:,:,1) = [20 -10;40 0;65 12]*toRad;                    % (Cusmano, 2014)
-    biasData(:,:,2) = [80 -8;100 5]*toRad;
-    arm.sensBias = defineBiasFunc(biasData);
-    intModel.motrNoise = 0.1; % prediction noise (arbitrary)
+    %arm.Td = 0.16;              % increased feedback delay
+    arm.coupling = eye(nInputs); % representing muscle synergies
+    posNoise = 10;               % (Yousif, 2015)
+    arm.sensNoise(1:nJoints) = posNoise*ones(nJoints,1)*toRad;
+    biasData_stroke(:,:,1) = [25 -8;35 -2;50 6]*toRad; % (Yousif, 2015)
+    biasData_stroke(:,:,2) = [80 -8;90 0;100 6]*toRad;
+    arm.sensBias = defineBiasFunc(biasData_stroke);
+    intModel.motrNoise = 1e-6; % prediction noise (arbitrary)
 end
 
 % define movement
@@ -46,7 +46,7 @@ T = 1;                               % total time to simulate [sec]
 t = 0:arm.Ts:T;                      % time vector [sec]
 n = length(t);                       % number of time steps
 d = 0.35;                            % reach distance [m]
-th = 30;                             % reach angle [deg]
+th = 10;                             % reach angle [deg]
 p_i = [-0.15;0.3;0];                 % initial position [m]
 v_i = [0;0;0];                       % initial velocity [m/s]
 y_i = [p_i;v_i];                     % initial state, in Cartesian coordinates [m,m/s]
@@ -115,7 +115,7 @@ for i = 1:n
     yAct(:,i) = arm.y.val;
     yEst(:,i) = intModel.y.val;
     
-    % compute optimal control (only if enough time has passed)
+    % compute optimal control trajectory (only if enough time has passed)
     if mod(t(i),arm.Tr) == 0
         [u_optTraj, flag] = control(intModel, ref(:,i), space);
         if flag
@@ -123,9 +123,14 @@ for i = 1:n
             return
         end
     end
-    u_opt = u_optTraj(:,1);
-    arm.u.val = u_opt;
-    intModel.u.val = u_opt;
+    
+    % set torque to zero if haven't planned that far in advance;
+    % otherwise, grab torque from preplanned trajectory
+    if isempty(u_optTraj)
+        u_opt = zeros(nInputs,1);
+    else
+        u_opt = u_optTraj(:,1);
+    end
     
     % actuate arm with optimal control & sense feedback
     zNext = plant(arm, u_opt);
