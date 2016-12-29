@@ -31,14 +31,13 @@ nInputs = length(arm.u.val);
 % model)
 stroke = 1;
 if stroke
-    %arm.Td = 0.16;              % increased feedback delay
     arm.coupling = eye(nInputs); % representing muscle synergies
     posNoise = 10;               % (Yousif, 2015)
     arm.sensNoise(1:nJoints) = posNoise*ones(nJoints,1)*toRad;
     biasData_stroke(:,:,1) = [25 -8;35 -2;50 6]*toRad; % (Yousif, 2015)
     biasData_stroke(:,:,2) = [80 -8;90 0;100 6]*toRad;
     arm.sensBias = defineBiasFunc(biasData_stroke);
-    intModel.motrNoise = 1e-6; % prediction noise (arbitrary)
+    intModel.motrNoise = 1e-1; % prediction noise (arbitrary)
 end
 
 % define movement
@@ -133,7 +132,7 @@ for i = 1:n
     end
     
     % actuate arm with optimal control & sense feedback
-    zNext = plant(arm, u_opt);
+    zNext = actuate(arm, u_opt);
     x_sens = sense(arm, zNext);
     
     % estimate current state

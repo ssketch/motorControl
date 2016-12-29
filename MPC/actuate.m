@@ -23,7 +23,7 @@
 % (see 'estimate.m'). Note that input 'zCurr' is optional. If omitted, the
 % plant will be actuated from the current state of the arm object.
 
-function zNext = plant(arm, u, zCurr)
+function zNext = actuate(arm, u, zCurr)
 
 % if no state is specified, use current arm state
 if nargin < 3
