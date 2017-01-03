@@ -4,6 +4,7 @@
 % set for control, which is only used for the purposes of MPC optimization.
 % Not that input 'z' is optional. If 'z' is omitted, sensing will be done
 % using the current state of the arm object.
+
 function x_sens = sense(arm, z)
 
 % if no state is specified, use current arm state
