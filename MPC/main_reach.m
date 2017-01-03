@@ -6,8 +6,6 @@ clc
 addpath(genpath([pwd '/include']));
 
 % define parameters
-debug = 0;
-toDeg = 180/pi;
 toRad = pi/180;
 planar = 1;
 
@@ -23,8 +21,6 @@ intModel = arm_2DOF(subj);
 % extract arm parameters
 nInputs = length(arm.u.val);
 nJoints = length(arm.q.val);
-nStatesJnt = length(arm.x.val);
-nStatesTsk = length(arm.y.val);
 
 % update model parameters (e.g., if the subject has suffered a stroke,
 % muscle synergies/joint coupling might not be captured by the internal
@@ -65,6 +61,10 @@ switch space
         ref = repmat(y_f,1,n); % task space by default
 end
 
+movt.space = space;
+movt.ref = ref;
+movt.t = t;
+
 % update model state variables to match initial conditions for movement
 % NOTE: internal model's state estimates are grounded by vision (i.e.,
 % ----  assuming perfect vision, they match the arm's actual state)
@@ -80,79 +80,8 @@ intModel.y.val = y_i;
 nDelay = ceil(intModel.Td/intModel.Ts);
 intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
 
-% declare variables to save
-u = zeros(nInputs,n);       % [Nm]
-qAct = zeros(nJoints,n);    % [deg]
-qEst = zeros(nJoints,n);    % [deg]
-xAct = zeros(nStatesJnt,n); % [deg,deg/s]
-xEst = zeros(nStatesJnt,n); % [deg,deg/s]
-yAct = zeros(nStatesTsk,n); % [m,m/s]
-yEst = zeros(nStatesTsk,n); % [m,m/s]
-
 % simulate reach
-progBar = waitbar(0,'Simulating reach ... t = ');
-for i = 1:n
-    
-    % display progress of simulation
-    waitbar(i/n, progBar, ['Simulating reach ... t = ',num2str(t(i))]);
-    if debug
-        draw(arm);
-        disp(' ');
-        disp('x = ');
-        disp(arm.x.val);
-        disp(' ');
-        disp('x_est = ');
-        disp(intModel.x.val);
-    end
-    
-    % save current data
-    u(:,i) = arm.u.val; % = intModel.u.val (they receive same input)
-    qAct(:,i) = arm.q.val*toDeg;
-    qEst(:,i) = intModel.q.val*toDeg;
-    xAct(:,i) = arm.x.val*toDeg;
-    xEst(:,i) = intModel.x.val*toDeg;
-    yAct(:,i) = arm.y.val;
-    yEst(:,i) = intModel.y.val;
-    
-    % compute optimal control trajectory (only if enough time has passed)
-    if mod(t(i),arm.Tr) == 0
-        [u_optTraj, flag] = control(intModel, ref(:,i), space);
-        if flag
-            warning('Linearization failed.')
-            return
-        end
-    end
-    
-    % set torque to zero if haven't planned that far in advance;
-    % otherwise, grab torque from preplanned trajectory
-    if isempty(u_optTraj)
-        u_opt = zeros(nInputs,1);
-    else
-        u_opt = u_optTraj(:,1);
-    end
-    
-    % actuate arm with optimal control & sense feedback
-    zNext = actuate(arm, u_opt);
-    x_sens = sense(arm, zNext);
-    
-    % estimate current state
-    x_est = estimate(intModel, u_opt, x_sens);
-
-    % discard most recently applied control
-    u_optTraj = u_optTraj(:,2:end);
-
-end
-close(progBar)
-
-% save data in a struct
-data.t = t;
-data.u = u;
-data.qAct = qAct;
-data.qEst = qEst;
-data.xAct = xAct;
-data.xEst = xEst;
-data.yAct = yAct;
-data.yEst = yEst;
+data = simulate(movt, arm, intModel);
 
 % display results of simulation
 plotResults(arm, data, planar)
