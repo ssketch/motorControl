@@ -30,7 +30,7 @@ progBar = waitbar(0,'Simulating reach ... t = ');
 for i = 1:n
     
     % display progress of simulation
-    waitbar(i/n, progBar, ['Simulating reach ... t = ',num2str(t(i))]);
+    waitbar(i/n, progBar, ['Simulating reach ... t = ',num2str(movt.t(i))]);
     
     % save current data
     u(:,i)    = arm.u.val; % = intModel.u.val (they receive same input)
@@ -73,7 +73,7 @@ close(progBar)
 
 % save data in a struct
 toDeg = 180/pi;
-data.t = t;
+data.t = movt.t;
 data.u = u;
 data.qAct = qAct*toDeg;
 data.qEst = qEst*toDeg;
