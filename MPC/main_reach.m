@@ -21,10 +21,10 @@ arm = arm_2DOF(subj);
 intModel = arm_2DOF(subj);
 
 % extract arm parameters
+nInputs = length(arm.u.val);
 nJoints = length(arm.q.val);
 nStatesJnt = length(arm.x.val);
 nStatesTsk = length(arm.y.val);
-nInputs = length(arm.u.val);
 
 % update model parameters (e.g., if the subject has suffered a stroke,
 % muscle synergies/joint coupling might not be captured by the internal

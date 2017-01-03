@@ -1,9 +1,9 @@
 % This function simulates a movement with a given arm and internal arm
 % model using model-predictive control and Kalman filter-based estimation.
 % The input movement 'movt' is a struct with the parameters 'space'
-% ('joint','task', or 'force'), ref (a discretized trajectory the arm
-% should follow in the defined space), and t (the associated discrete time
-% vector).
+% ('joint','task', or 'force'), 'ref' (a discretized trajectory the arm
+% tries to follow in the defined space), and 't' (the associated discrete
+% time vector).
 
 function data = simulate(movt, arm, intModel)
 
@@ -12,6 +12,9 @@ nInputs    = length(arm.u.val);
 nJoints    = length(arm.q.val);
 nStatesJnt = length(arm.x.val);
 nStatesTsk = length(arm.y.val);
+
+% extract movement parameters
+n = length(movt.t);
 
 % declare variables to save
 u    = zeros(nInputs,n);    % [Nm]
@@ -39,7 +42,7 @@ for i = 1:n
     yEst(:,i) = intModel.y.val;
     
     % compute optimal control trajectory (only if enough time has passed)
-    if mod(t(i),arm.Tr) == 0
+    if mod(movt.t(i),arm.Tr) == 0
         [u_optTraj, flag] = control(intModel, movt.ref(:,i), movt.space);
         if flag
             warning('Linearization failed.')
@@ -59,8 +62,8 @@ for i = 1:n
     zNext = actuate(arm, u_opt);
     x_sens = sense(arm, zNext);
     
-    % estimate current state
-    x_est = estimate(intModel, u_opt, x_sens);
+    % estimate current state, storing it in internal model
+    estimate(intModel, u_opt, x_sens);
 
     % discard most recently applied control
     u_optTraj = u_optTraj(:,2:end);
@@ -69,12 +72,13 @@ end
 close(progBar)
 
 % save data in a struct
+toDeg = 180/pi;
 data.t = t;
 data.u = u;
-data.qAct = qAct;
-data.qEst = qEst;
-data.xAct = xAct;
-data.xEst = xEst;
+data.qAct = qAct*toDeg;
+data.qEst = qEst*toDeg;
+data.xAct = xAct*toDeg;
+data.xEst = xEst*toDeg;
 data.yAct = yAct;
 data.yEst = yEst;
 
