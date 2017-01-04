@@ -3,7 +3,16 @@
 % The input movement 'movt' is a struct with the parameters 'space'
 % ('joint','task', or 'force'), 'ref' (a discretized trajectory the arm
 % tries to follow in the defined space), and 't' (the associated discrete
-% time vector).
+% time vector). The output data contains the following:
+%
+%   t:    time vector [sec]
+%   u:    joint torques [Nm]
+%   qAct: joint angles [deg]
+%   xAct: arm state, in joint coordinates [deg,deg/s]
+%   yAct: arm state, in task coordinates [m,m/s]
+%   qEst: estimated joint angles [deg]
+%   xEst: estimated arm state, in joint coordinates [deg,deg/s]
+%   yEst: estimated arm state, in task coordinates [m,m/s]
 
 function data = simulate(movt, arm, intModel)
 
