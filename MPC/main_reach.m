@@ -6,8 +6,7 @@ clc
 addpath(genpath([pwd '/include']));
 
 % define parameters
-debug = 0;
-toDeg = 180/pi;
+toRad = pi/180;
 planar = 1;
 
 % define subject
@@ -20,14 +19,13 @@ arm = arm_2DOF(subj);
 intModel = arm_2DOF(subj);
 
 % extract arm parameters
-nJoints = length(arm.q.val);
-nStatesJnt = length(arm.x.val);
-nStatesTsk = length(arm.y.val);
 nInputs = length(arm.u.val);
+nJoints = length(arm.q.val);
 
 % update model parameters (e.g., if the subject has suffered a stroke,
 % muscle synergies/joint coupling might not be captured by the internal
 % model)
+<<<<<<< HEAD
 stroke = true;
 if stroke
 %     arm.Td = 0.16;         % increased feedback delay
@@ -40,6 +38,17 @@ if stroke
 %     biasData(:,:,2) = [80 -8;100 5]*pi/180;
 %     arm.sensBias = defineBiasFunc(biasData);
 %     intModel.motrNoise = 0.1; % prediction noise (arbitrary)
+=======
+stroke = 1;
+if stroke
+    arm.coupling = eye(nInputs); % representing muscle synergies
+    posNoise = 10;               % (Yousif, 2015)
+    arm.sensNoise(1:nJoints) = posNoise*ones(nJoints,1)*toRad;
+    biasData_stroke(:,:,1) = [25 -8;35 -2;50 6]*toRad; % (Yousif, 2015)
+    biasData_stroke(:,:,2) = [80 -8;90 0;100 6]*toRad;
+    arm.sensBias = defineBiasFunc(biasData_stroke);
+    intModel.motrNoise = 1e-1; % prediction noise (arbitrary)
+>>>>>>> 0241a58134e15cac1ba0026e62f60ff6c2fecf99
 end
 
 % define movement
@@ -47,7 +56,7 @@ T = 1;                               % total time to simulate [sec]
 t = 0:arm.Ts:T;                      % time vector [sec]
 n = length(t);                       % number of time steps
 d = 0.35;                            % reach distance [m]
-th = 30;                             % reach angle [deg]
+th = 10;                             % reach angle [deg]
 p_i = [-0.15;0.3;0];                 % initial position [m]
 v_i = [0;0;0];                       % initial velocity [m/s]
 y_i = [p_i;v_i];                     % initial state, in Cartesian coordinates [m,m/s]
@@ -67,6 +76,10 @@ switch space
         ref = repmat(y_f,1,n); % task space by default
 end
 
+movt.space = space;
+movt.ref = ref;
+movt.t = t;
+
 % update model state variables to match initial conditions for movement
 % NOTE: internal model's state estimates are grounded by vision (i.e.,
 % ----  assuming perfect vision, they match the arm's actual state)
@@ -82,74 +95,8 @@ intModel.y.val = y_i;
 nDelay = ceil(intModel.Td/intModel.Ts);
 intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
 
-% declare variables to save
-u = zeros(nInputs,n);       % [Nm]
-qAct = zeros(nJoints,n);    % [deg]
-qEst = zeros(nJoints,n);    % [deg]
-xAct = zeros(nStatesJnt,n); % [deg,deg/s]
-xEst = zeros(nStatesJnt,n); % [deg,deg/s]
-yAct = zeros(nStatesTsk,n); % [m,m/s]
-yEst = zeros(nStatesTsk,n); % [m,m/s]
-
 % simulate reach
-progBar = waitbar(0,'Simulating reach ... t = ');
-for i = 1:n
-    
-    % display progress of simulation
-    waitbar(i/n, progBar, ['Simulating reach ... t = ',num2str(t(i))]);
-    if debug
-        draw(arm);
-        disp(' ');
-        disp('x = ');
-        disp(arm.x.val);
-        disp(' ');
-        disp('x_est = ');
-        disp(intModel.x.val);
-    end
-    
-    % save current data
-    u(:,i) = arm.u.val; % = intModel.u.val (they receive same input)
-    qAct(:,i) = arm.q.val*toDeg;
-    qEst(:,i) = intModel.q.val*toDeg;
-    xAct(:,i) = arm.x.val*toDeg;
-    xEst(:,i) = intModel.x.val*toDeg;
-    yAct(:,i) = arm.y.val;
-    yEst(:,i) = intModel.y.val;
-    
-    % compute optimal control (only if enough time has passed)
-    if mod(t(i),arm.Tr) == 0
-        [u_optTraj, flag] = control(intModel, ref(:,i), space);
-        if flag
-            warning('Linearization failed.')
-            return
-        end
-    end
-    u_opt = u_optTraj(:,1);
-    arm.u.val = u_opt;
-    intModel.u.val = u_opt;
-    
-    % actuate arm with optimal control & sense feedback
-    zNext = plant(arm, u_opt);
-    x_sens = sense(arm, zNext);
-    
-    % estimate current state
-    x_est = estimate(intModel, u_opt, x_sens);
-
-    % discard most recently applied control
-    u_optTraj = u_optTraj(:,2:end);
-
-end
-close(progBar)
-
-% save data in a struct
-data.t = t;
-data.u = u;
-data.qAct = qAct;
-data.qEst = qEst;
-data.xAct = xAct;
-data.xEst = xEst;
-data.yAct = yAct;
-data.yEst = yEst;
+data = simulate(movt, arm, intModel);
 
 % display results of simulation
 plotResults(arm, data, planar)

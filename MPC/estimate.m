@@ -34,7 +34,7 @@
 function x_est = estimate(armModel, u, x_sens)
 
 % perform unscented Kalman filtering
-[z_est, P] = ukf(armModel, x_sens, u, @plant, @sense);
+[z_est, P] = ukf(armModel, x_sens, u, @actuate, @sense);
 
 % extract estimate of current state from augmented state estimate
 nStates = length(armModel.x.val);

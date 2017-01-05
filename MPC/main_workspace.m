@@ -75,7 +75,7 @@ for th = ( 0:5:360 )*pi/180
         end
 
         % Implement the optimal torques on the arm.
-        zNext = plant(arm, u_opt);
+        zNext = actuate(arm, u_opt);
 
         % Sense the resulting sensory outputs and estimate the next state.
         x_sens = sense(arm, zNext);
