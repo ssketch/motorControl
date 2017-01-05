@@ -111,7 +111,7 @@ classdef arm_2DOF < handle
                 % workspace
                 arm.shld = [0;0;0];
                 arm.q.val = mean([arm.q.min, arm.q.max], 2);
-                arm.u.val = [0;0;0;0];
+                arm.u.val = [0;0;0];
                 arm.x.val = [arm.q.val; 0; 0];
                 [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
                 nDelay = ceil(arm.Td/arm.Ts);
