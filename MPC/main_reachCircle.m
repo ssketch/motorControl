@@ -9,8 +9,8 @@ addpath(genpath([pwd '/include']));
 subj.hand = 'right'; % hand being tested
 subj.M = 70;         % mass [kg]
 subj.H = 1.80;       % height [meters]
-estErr = 1;          % 1 = stroke caused estimation error
-synerg = 0;          % 1 = stroke coupled muscle synergies
+estErr = 0;          % 1 = stroke caused estimation error
+synerg = 1;          % 1 = stroke coupled muscle synergies
 
 % define subject's physical arm & internal arm model (mental)
 arm = arm_2DOF(subj);
@@ -37,7 +37,7 @@ y_i = [p_i;v_i];                    % initial state, in Cartesian coordinates [m
 movt.space = 'task';                % space in which to track reference ('joint' or 'task')
 
 % loop over stroke
-for stroke = 0:1
+for stroke = 1
     
     % if stroke, update model parameters
     if stroke
@@ -51,7 +51,11 @@ for stroke = 0:1
             intModel.motrNoise = 1; % prediction noise (arbitrary, 1 = largest possible (OOM) without crashing the optimization)
         end
         if synerg
-            arm.coupling = [1 0.5;0.5 1]; %[1 0.75;0.85 1]; % adapted from (Dewald, 1995)
+            arm.coupling = arm.coupling * [ 1, 0, 0, 0; 0, 0.5682, 0.0739, 0.3580;
+                     0, 0, 1, 0; 0.4301, 0.0323, 0, 0.5376 ]; % representing muscle synergies
+            intModel.coupling = intModel.coupling * [ 1, 0, 0, 0; 0, 0.5682, 0.0739, 0.3580;
+                     0, 0, 1, 0; 0.4301, 0.0323, 0, 0.5376 ]; % representing muscle synergies
+
             for n = 1:size(arm.coupling,1)
                 arm.coupling(n,:) = arm.coupling(n,:) / sum(arm.coupling(n,:)); % normalization
             end
