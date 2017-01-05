@@ -5,16 +5,12 @@ clc
 % add folders to path
 addpath(genpath([pwd '/include']));
 
-% define parameters
-toRad = pi/180;
-planar = 1;
-
 % define subject
 subj.hand = 'right'; % hand being tested
 subj.M = 70;         % mass [kg]
 subj.H = 1.80;       % height [meters]
-estErr = 1;          % if stroked, displays estimation error
-synerg = 1;          % if stroked, displays coupled muscle synergies
+estErr = 1;          % 1 = stroke caused estimation error
+synerg = 0;          % 1 = stroke coupled muscle synergies
 
 % define subject's physical arm & internal arm model (mental)
 arm = arm_2DOF(subj);
@@ -26,11 +22,14 @@ nJoints = length(arm.q.val);
 nStatesTsk = length(arm.y.val);
 
 % define movement parameters
-nReach = 8;                         % total number of (evenly spaced) center-out reaches
+nReach = 16;                        % total number of (evenly spaced) center-out reaches
 T = 1;                              % total time to simulate, for each reach [sec]
 movt.t = 0:arm.Ts:T;                % time vector [sec]
-d = 0.35;                           % reach distance [m]
-th = 0:360/nReach:360-(360/nReach); % reach angles [deg]
+d = 0.15;                           % reach distance [m]
+thStep = 360/nReach;                % step from one reach angle to next [deg]
+th = 0:thStep:360-thStep;           % reach angles [deg]
+%thStep = 45;                        % step from one reach angle to next [deg]
+%th = 0:thStep:180;                  % reach angles [deg]
 p_i = [-0.15;0.3;0];                % initial position [m]
 v_i = [0;0;0];                      % initial velocity [m/s]
 y_i = [p_i;v_i];                    % initial state, in Cartesian coordinates [m,m/s]
@@ -38,11 +37,12 @@ y_i = [p_i;v_i];                    % initial state, in Cartesian coordinates [m
 movt.space = 'task';                % space in which to track reference ('joint' or 'task')
 
 % loop over stroke
-for stroke = 1 %0:1
+for stroke = 0:1
     
     % if stroke, update model parameters
     if stroke
         if estErr
+            toRad = pi/180;
             posNoise = 10; % (Yousif, 2015)
             arm.sensNoise(1:nJoints) = posNoise*ones(nJoints,1)*toRad;
             biasData_stroke(:,:,1) = [25 -8;35 -2;50 6]*toRad; % (Yousif, 2015)
@@ -51,12 +51,15 @@ for stroke = 1 %0:1
             intModel.motrNoise = 1; % prediction noise (arbitrary, 1 = largest possible (OOM) without crashing the optimization)
         end
         if synerg
-            arm.coupling = [1 0.75;0.85 1]; % adapted from (Dewald, 1995)
+            arm.coupling = [1 0.5;0.5 1]; %[1 0.75;0.85 1]; % adapted from (Dewald, 1995)
+            for n = 1:size(arm.coupling,1)
+                arm.coupling(n,:) = arm.coupling(n,:) / sum(arm.coupling(n,:)); % normalization
+            end
         end
     end
     
     % loop over circle of reaches
-    for i = 1:nReach
+    for i = 1:length(th)
         
         % define movement reference trajectory
         p_f = p_i + d*[cosd(th(i));sind(th(i));0]; % desired end position [m]
@@ -92,7 +95,7 @@ for stroke = 1 %0:1
         data = simulate(movt, arm, intModel);
         
         % save (downsampled) task-space position trajectory for plotting
-        f_down = 2;
+        f_down = 1;
         pAct(:,:,i) = downsample(data.yAct(1:nStatesTsk/2,:)',f_down)';
         
     end
@@ -103,15 +106,19 @@ for stroke = 1 %0:1
     else
         filename = './results/circle_ctrl.mat';
     end
-    save(filename, 'pAct');
+    save(filename,'pAct');
+    
+    % define plotting parameters
+    green = [68 170 76]*(1/255);
+    red = [214 42 49]*(1/255);
     
     % plot trajectories
-    for i = 1:nReach
+    for i = 1:length(th)
         p = pAct(:,:,i);
         if stroke
-            plot3(p(1,:),p(2,:),p(3,:),'r:','LineWidth',1.5); % stroke
+            plot3(p(1,:),p(2,:),p(3,:),'r--','LineWidth',4,'LineSmoothing','on'); % stroke
         else
-            plot3(p(1,:),p(2,:),p(3,:),'b','LineWidth',1.5);  % control
+            plot3(p(1,:),p(2,:),p(3,:),'b','LineWidth',4,'LineSmoothing','on');   % control
         end
         hold on
     end
@@ -119,11 +126,9 @@ for stroke = 1 %0:1
 end
 
 % annotate and save plot
-hold off
 axis equal
-grid on
 view(0,90)
-xlabel('x','FontSize',20);
-ylabel('y','FontSize',20);
-zlabel('z','FontSize',20);
-export_fig './results/posTraj_circle' -eps
+xlabel('x','FontSize',28);
+ylabel('y','FontSize',28);
+zlabel('z','FontSize',28);
+export_fig './results/posTraj_circle' -transparent -eps
