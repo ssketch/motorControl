@@ -78,7 +78,7 @@ classdef arm_2DOF < handle
                 arm.Tr = 0.04;         % (Wagner & Smith, 2008)
                 %arm.Tr = 0.1;          % (Wagner & Smith, 2008)
                 arm.Td = 0.06;         % (Crevecoeur, 2013)
-                arm.coupling = eye(2);
+                arm.coupling = [ -1, 1, 0, 0; 0, 0, -1, 1 ];
                 arm.motrNoise = 10e-6; % (Crevecoeur, 2013)
                 posNoise = 3;          % (Yousif, 2015)
                 velNoise = 0.1;
@@ -97,18 +97,22 @@ classdef arm_2DOF < handle
                 arm.x.min = [arm.q.min; -inf; -inf]; % no explicit velocity limits
                 arm.x.max = [arm.q.max;  inf;  inf];
                 
-                torq1Min = -85; % min shoulder torque [Nm] (Chadwick, 2014)
-                torq1Max = 100; % max shoulder torque [Nm]
-                torq2Min = -60; % min elbow torque [Nm]
-                torq2Max = 75;  % max elbow torque [Nm]
-                arm.u.min = [torq1Min; torq2Min];
-                arm.u.max = [torq1Max; torq2Max];
+                torq1Max = 85; % max shoulder ext. rot. torque [Nm] (Chadwick, 2014)
+                torq1Min = 0;
+                torq2Max = 100; % max shoulder int. rot. torque [Nm]
+                torq2Min = 0;
+                torq3Max = 60; % max elbow ext. torque [Nm]
+                torq3Min = 0;
+                torq4Max = 75;  % max elbow flex. torque [Nm]
+                torq4Min = 0;
+                arm.u.min = [torq1Min; torq2Min; torq3Min; torq4Min];
+                arm.u.max = [torq1Max; torq2Max; torq3Max; torq4Max];
 
                 % initialize state vectors for arm in middle of defined
                 % workspace
                 arm.shld = [0;0;0];
                 arm.q.val = mean([arm.q.min, arm.q.max], 2);
-                arm.u.val = [0;0];
+                arm.u.val = [0;0;0;0];
                 arm.x.val = [arm.q.val; 0; 0];
                 [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
                 nDelay = ceil(arm.Td/arm.Ts);

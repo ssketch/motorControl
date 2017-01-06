@@ -65,7 +65,10 @@ for stroke = 0:1
             intModel.motrNoise = 1; % prediction noise (arbitrary, 1 = largest possible (OOM) without crashing the optimization)
         end
         if synerg
-            arm.coupling = [1 0.75;0.85 1]; %[1 0.25;0.35 1]; % adapted from (Dewald, 1995)
+            arm.coupling = arm.coupling * [ 1, 0, 0, 0; 0, 0.5682, 0.0739, 0.3580;
+                     0, 0, 1, 0; 0.4301, 0.0323, 0, 0.5376 ]; % representing muscle synergies
+            intModel.coupling = intModel.coupling * [ 1, 0, 0, 0; 0, 0.5682, 0.0739, 0.3580;
+                     0, 0, 1, 0; 0.4301, 0.0323, 0, 0.5376 ]; % representing muscle synergies
             for n = 1:size(arm.coupling,1)
                 arm.coupling(n,:) = arm.coupling(n,:) / sum(arm.coupling(n,:)); % normalization
             end
