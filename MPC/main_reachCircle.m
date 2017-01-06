@@ -9,12 +9,18 @@ addpath(genpath([pwd '/include']));
 subj.hand = 'right'; % hand being tested
 subj.M = 70;         % mass [kg]
 subj.H = 1.80;       % height [meters]
-estErr = 1;          % 1 = stroke caused estimation error
-synerg = 0;          % 1 = stroke coupled muscle synergies
+estErr = 0;          % 1 = stroke caused estimation error
+synerg = 1;          % 1 = stroke coupled muscle synergies
 
 % define subject's physical arm & internal arm model (mental)
 arm = arm_2DOF(subj);
 intModel = arm_2DOF(subj);
+
+% reduce reaction time for feasibility with linear optimization & nonlinear
+% model
+Tr_red = 0.04;
+arm.Tr = Tr_red;
+intModel.Tr = Tr_red;
 
 % extract arm parameters
 nInputs = length(arm.u.val);
@@ -22,7 +28,7 @@ nJoints = length(arm.q.val);
 nStatesTsk = length(arm.y.val);
 
 % define movement parameters
-nReach = 16;                 % total number of (evenly spaced) center-out reaches
+nReach = 2;                 % total number of (evenly spaced) center-out reaches
 T = 1;                       % total time to simulate, for each reach [sec]
 movt.t = 0:arm.Ts:T;         % time vector [sec]
 d = 0.15;                    % reach distance [m]
@@ -34,16 +40,16 @@ y_i = [p_i;v_i];             % initial state, in Cartesian coordinates [m,m/s]
 [x_i,~,~] = arm.invKin(y_i); % initial state, in joint coordinates [rad,rad/s]
 movt.space = 'task';         % space in which to track reference ('joint' or 'task')
 
-% define plotting parameters
+% define plotting parameters (to match (Beer, 2000) figure)
 orgShift = -p_i;
 m2mm = 1000;
 xMin = -220; % [mm]
 xMax =  220; % [mm]
 yMin = -220; % [mm]
 yMax =  220; % [mm]
-GREEN = [68 170 76]*(1/255); % to match (Beer, 2000) figure
-RED = [214 42 49]*(1/255);   % to match (Beer, 2000) figure
-GRAY = [78 78 77]*(1/255);   % to match (Beer, 2000) figure
+GREEN = [68 170 76]*(1/255);
+RED = [214 42 49]*(1/255);
+GRAY = [78 78 77]*(1/255);
 lineThickness = 5;
 markerSize = 20;
 fontSize = 14;
@@ -68,7 +74,7 @@ for stroke = 0:1
             arm.coupling = arm.coupling * [1, 0, 0, 0; 0, 0.5682, 0.0739, 0.3580;
                                            0, 0, 1, 0; 0.4301, 0.0323, 0, 0.5376]; % representing muscle synergies
             for n = 1:size(arm.coupling,1)
-                arm.coupling(n,:) = arm.coupling(n,:) / sum(arm.coupling(n,:)); % normalization
+                arm.coupling(n,:) = arm.coupling(n,:) / sum(arm.coupling(n,:));    % normalization
             end
         end
     end
@@ -133,15 +139,15 @@ for stroke = 0:1
     
     % save all trajectories into MAT file
     if stroke
-        filename = './results/circle_stroke_estErr.mat';
+        filename = './results/circle_stroke_synerg.mat';
     else
-        filename = './results/circle_ctrl_estErr.mat';
+        filename = './results/circle_ctrl_synerg.mat';
     end
     save(filename,'Y');
     
 end
 
-% send all targets to bottom
+% send all targets to bottom layer of plot
 targs = findobj(gca, 'MarkerFaceColor', GRAY);
 uistack(targs, 'bottom');
 
@@ -154,4 +160,4 @@ ylim([yMin yMax])
 xlabel('x (mm)','FontSize',fontSize);
 ylabel('y (mm)','FontSize',fontSize);
 zlabel('z (mm)','FontSize',fontSize);
-export_fig './results/posTraj_circle_estErr' -transparent -eps
+export_fig './results/posTraj_circle_synerg' -transparent -eps

@@ -32,11 +32,11 @@ function [u, flag] = control(armModel, ref, space, params)
 
 % if necessary, set default parameter values
 if nargin < 5
-    params.H = armModel.Tr/armModel.Ts + 1; % MPC prediction horizon (until can next reoptimize)
-    params.wP = 1;                          % position cost
-    params.wV = 1e-2;                       % velocity cost
-    params.wU = 1;                          % control cost
-    params.alpha = 1e10;                    % weighting between state (pos/vel) and control costs
+    params.H = floor(armModel.Tr/armModel.Ts); % MPC prediction horizon (until can next reoptimize)
+    params.wP = 1;                             % position cost
+    params.wV = 1e-2;                          % velocity cost
+    params.wU = 1;                             % control cost
+    params.alpha = 1e10;                       % weighting between state (pos/vel) and control costs
 end
 
 % linearize arm model (and check linearization)
@@ -73,8 +73,7 @@ ctrl = MPCController(model, params.H);
 
 % simulate closed-loop system to find optimal control
 loop = ClosedLoop(ctrl, model);
-Nsim = armModel.Tr/armModel.Ts;
-data = loop.simulate(armModel.x.val, Nsim, 'y.reference', ref);
+data = loop.simulate(armModel.x.val, params.H, 'y.reference', ref);
 u = data.U;
 flag = 0;
 

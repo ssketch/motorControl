@@ -96,7 +96,12 @@ grid on
 title('Joint Torques','FontSize',22);
 xlabel('t [sec]','FontSize',20);
 ylabel('T [Nm]','FontSize',20);
-legend(arm.DOFs,'Location','NorthEast');
+uLegend = {};
+for i = 1:nJoints
+    currJnt = strcat(repmat(arm.DOFs(i),2,1),{' -';' +'});
+    uLegend = [uLegend ; currJnt];
+end
+legend(uLegend,'Location','NorthEast');
 export_fig './results/commTraj' -eps
 
 end
