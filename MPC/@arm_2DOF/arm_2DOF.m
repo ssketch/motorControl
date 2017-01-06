@@ -75,7 +75,8 @@ classdef arm_2DOF < handle
                 
                 % initialize mutable properties to default values
                 arm.Ts = 0.02;
-                arm.Tr = 0.1;          % (Wagner & Smith, 2008)
+                arm.Tr = 0.04;         % (Wagner & Smith, 2008)
+                %arm.Tr = 0.1;          % (Wagner & Smith, 2008)
                 arm.Td = 0.06;         % (Crevecoeur, 2013)
                 arm.coupling = eye(2);
                 arm.motrNoise = 10e-6; % (Crevecoeur, 2013)
