@@ -23,12 +23,11 @@ arm.Tr = Tr_red;
 intModel.Tr = Tr_red;
 
 % extract arm parameters
-nInputs = length(arm.u.val);
 nJoints = length(arm.q.val);
 nStatesTsk = length(arm.y.val);
 
 % define movement parameters
-nReach = 2;                 % total number of (evenly spaced) center-out reaches
+nReach = 16;                  % total number of (evenly spaced) center-out reaches
 T = 1;                       % total time to simulate, for each reach [sec]
 movt.t = 0:arm.Ts:T;         % time vector [sec]
 d = 0.15;                    % reach distance [m]
@@ -40,7 +39,7 @@ y_i = [p_i;v_i];             % initial state, in Cartesian coordinates [m,m/s]
 [x_i,~,~] = arm.invKin(y_i); % initial state, in joint coordinates [rad,rad/s]
 movt.space = 'task';         % space in which to track reference ('joint' or 'task')
 
-% define plotting parameters (to match (Beer, 2000) figure)
+% define plotting parameters, to match (Beer, 2000) figure
 orgShift = -p_i;
 m2mm = 1000;
 xMin = -220; % [mm]
@@ -71,11 +70,12 @@ for stroke = 0:1
             intModel.motrNoise = 1; % prediction noise (arbitrary, 1 = largest possible (OOM) without crashing the optimization)
         end
         if synerg
-            arm.coupling = arm.coupling * [1, 0, 0, 0; 0, 0.5682, 0.0739, 0.3580;
-                                           0, 0, 1, 0; 0.4301, 0.0323, 0, 0.5376]; % representing muscle synergies
-            for n = 1:size(arm.coupling,1)
-                arm.coupling(n,:) = arm.coupling(n,:) / sum(arm.coupling(n,:));    % normalization
+            Msynerg = [1, 0, 0, 0; 0, 1, 0.13, 0.63;
+                       0, 0, 1, 0; 0.8, 0.06, 0, 1]; % representing muscle synergies (Dewald, 1995)
+            for i = 1:size(Msynerg,1)
+                Msynerg(i,:) = Msynerg(i,:) / sum(Msynerg(i,:)); % normalization
             end
+            arm.coupling = arm.coupling * Msynerg;
         end
     end
     
