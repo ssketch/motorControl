@@ -9,7 +9,7 @@ addpath(genpath([pwd '/include']));
 subj.hand = 'right'; % hand being tested
 subj.M = 70;         % mass [kg]
 subj.H = 1.80;       % height [meters]
-estErr = 0;          % 1 = stroke caused estimation error
+estErr = 1;          % 1 = stroke caused estimation error
 synerg = 1;          % 1 = stroke coupled muscle synergies
 
 % define subject's physical arm & internal arm model (mental)
@@ -27,7 +27,7 @@ nJoints = length(arm.q.val);
 nStatesTsk = length(arm.y.val);
 
 % define movement parameters
-nReach = 16;                  % total number of (evenly spaced) center-out reaches
+nReach = 16;                 % total number of (evenly spaced) center-out reaches
 T = 1;                       % total time to simulate, for each reach [sec]
 movt.t = 0:arm.Ts:T;         % time vector [sec]
 d = 0.15;                    % reach distance [m]
@@ -139,9 +139,9 @@ for stroke = 0:1
     
     % save all trajectories into MAT file
     if stroke
-        filename = './results/circle_stroke_synerg.mat';
+        filename = './results/circle_stroke_synergANDestErr.mat';
     else
-        filename = './results/circle_ctrl_synerg.mat';
+        filename = './results/circle_ctrl_synergANDestErr.mat';
     end
     save(filename,'Y');
     
@@ -160,4 +160,4 @@ ylim([yMin yMax])
 xlabel('x (mm)','FontSize',fontSize);
 ylabel('y (mm)','FontSize',fontSize);
 zlabel('z (mm)','FontSize',fontSize);
-export_fig './results/posTraj_circle_synerg' -transparent -eps
+export_fig './results/posTraj_circle_synergANDestErr' -transparent -eps
