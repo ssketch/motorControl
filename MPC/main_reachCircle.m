@@ -9,35 +9,54 @@ addpath(genpath([pwd '/include']));
 subj.hand = 'right'; % hand being tested
 subj.M = 70;         % mass [kg]
 subj.H = 1.80;       % height [meters]
-estErr = 0;          % 1 = stroke caused estimation error
+estErr = 1;          % 1 = stroke caused estimation error
 synerg = 1;          % 1 = stroke coupled muscle synergies
 
 % define subject's physical arm & internal arm model (mental)
 arm = arm_2DOF(subj);
 intModel = arm_2DOF(subj);
 
+% reduce reaction time for feasibility with linear optimization & nonlinear
+% model
+Tr_red = 0.04;
+arm.Tr = Tr_red;
+intModel.Tr = Tr_red;
+
 % extract arm parameters
-nInputs = length(arm.u.val);
 nJoints = length(arm.q.val);
 nStatesTsk = length(arm.y.val);
 
 % define movement parameters
-nReach = 16;                        % total number of (evenly spaced) center-out reaches
-T = 1;                              % total time to simulate, for each reach [sec]
-movt.t = 0:arm.Ts:T;                % time vector [sec]
-d = 0.15;                           % reach distance [m]
-thStep = 360/nReach;                % step from one reach angle to next [deg]
-th = 0:thStep:360-thStep;           % reach angles [deg]
-%thStep = 45;                        % step from one reach angle to next [deg]
-%th = 0:thStep:180;                  % reach angles [deg]
-p_i = [-0.15;0.3;0];                % initial position [m]
-v_i = [0;0;0];                      % initial velocity [m/s]
-y_i = [p_i;v_i];                    % initial state, in Cartesian coordinates [m,m/s]
-[x_i,~,~] = arm.invKin(y_i);        % initial state, in joint coordinates [rad,rad/s]
-movt.space = 'task';                % space in which to track reference ('joint' or 'task')
+nReach = 16;                 % total number of (evenly spaced) center-out reaches
+T = 1;                       % total time to simulate, for each reach [sec]
+movt.t = 0:arm.Ts:T;         % time vector [sec]
+d = 0.15;                    % reach distance [m]
+thStep = 360/nReach;         % step from one reach angle to next [deg]
+th = 0:thStep:360-thStep;    % reach angles [deg]
+p_i = [-0.15;0.3;0];         % initial position [m]
+v_i = [0;0;0];               % initial velocity [m/s]
+y_i = [p_i;v_i];             % initial state, in Cartesian coordinates [m,m/s]
+[x_i,~,~] = arm.invKin(y_i); % initial state, in joint coordinates [rad,rad/s]
+movt.space = 'task';         % space in which to track reference ('joint' or 'task')
+
+% define plotting parameters, to match (Beer, 2000) figure
+orgShift = -p_i;
+m2mm = 1000;
+xMin = -220; % [mm]
+xMax =  220; % [mm]
+yMin = -220; % [mm]
+yMax =  220; % [mm]
+GREEN = [68 170 76]*(1/255);
+RED = [214 42 49]*(1/255);
+GRAY = [78 78 77]*(1/255);
+lineThickness = 5;
+markerSize = 20;
+fontSize = 14;
 
 % loop over stroke
-for stroke = 1
+figure()
+hold on
+for stroke = 0:1
     
     % if stroke, update model parameters
     if stroke
@@ -51,14 +70,12 @@ for stroke = 1
             intModel.motrNoise = 1; % prediction noise (arbitrary, 1 = largest possible (OOM) without crashing the optimization)
         end
         if synerg
-            arm.coupling = arm.coupling * [ 1, 0, 0, 0; 0, 0.5682, 0.0739, 0.3580;
-                     0, 0, 1, 0; 0.4301, 0.0323, 0, 0.5376 ]; % representing muscle synergies
-            intModel.coupling = intModel.coupling * [ 1, 0, 0, 0; 0, 0.5682, 0.0739, 0.3580;
-                     0, 0, 1, 0; 0.4301, 0.0323, 0, 0.5376 ]; % representing muscle synergies
-
-            for n = 1:size(arm.coupling,1)
-                arm.coupling(n,:) = arm.coupling(n,:) / sum(arm.coupling(n,:)); % normalization
+            Msynerg = [1, 0, 0, 0; 0, 1, 0.13, 0.63;
+                       0, 0, 1, 0; 0.8, 0.06, 0, 1]; % representing muscle synergies (Dewald, 1995)
+            for i = 1:size(Msynerg,1)
+                Msynerg(i,:) = Msynerg(i,:) / sum(Msynerg(i,:)); % normalization
             end
+            arm.coupling = arm.coupling * Msynerg;
         end
     end
     
@@ -98,41 +115,49 @@ for stroke = 1
         % simulate reach
         data = simulate(movt, arm, intModel);
         
-        % save (downsampled) task-space position trajectory for plotting
-        f_down = 1;
-        pAct(:,:,i) = downsample(data.yAct(1:nStatesTsk/2,:)',f_down)';
+        % shift and scale position data for plotting
+        pAct = data.yAct(1:nStatesTsk/2,:);
+        pShift = pAct + repmat(orgShift,1,size(pAct,2));
+        p = pShift*m2mm;
+        targ = (p_f + orgShift)*m2mm;
+        
+        % plot trajectory (and target, if necessary)
+        if stroke
+            plot3(p(1,:),p(2,:),p(3,:),...
+                'Color',RED,'LineWidth',lineThickness,'LineSmoothing','on');   % stroke
+        else
+            plot3(p(1,:),p(2,:),p(3,:),...
+                'Color',GREEN,'LineWidth',lineThickness,'LineSmoothing','on'); % control
+            plot3(targ(1),targ(2),targ(3),'o',...
+                'MarkerEdgeColor',GRAY,'MarkerFaceColor',GRAY,'MarkerSize',markerSize); % target
+        end
+        
+        % save task-space state trajectory
+        Y(:,:,i) = data.yAct;
         
     end
     
-    % save all task-space position trajectories into MAT file
+    % save all trajectories into MAT file
     if stroke
-        filename = './results/circle_stroke.mat';
+        filename = './results/circle_stroke_synergANDestErr.mat';
     else
-        filename = './results/circle_ctrl.mat';
+        filename = './results/circle_ctrl_synergANDestErr.mat';
     end
-    save(filename,'pAct');
-    
-    % define plotting parameters
-    green = [68 170 76]*(1/255);
-    red = [214 42 49]*(1/255);
-    
-    % plot trajectories
-    for i = 1:length(th)
-        p = pAct(:,:,i);
-        if stroke
-            plot3(p(1,:),p(2,:),p(3,:),'r--','LineWidth',4,'LineSmoothing','on'); % stroke
-        else
-            plot3(p(1,:),p(2,:),p(3,:),'b','LineWidth',4,'LineSmoothing','on');   % control
-        end
-        hold on
-    end
+    save(filename,'Y');
     
 end
 
+% send all targets to bottom layer of plot
+targs = findobj(gca, 'MarkerFaceColor', GRAY);
+uistack(targs, 'bottom');
+
 % annotate and save plot
-axis equal
 view(0,90)
-xlabel('x','FontSize',28);
-ylabel('y','FontSize',28);
-zlabel('z','FontSize',28);
-export_fig './results/posTraj_circle' -transparent -eps
+axis equal
+box on
+xlim([xMin xMax])
+ylim([yMin yMax])
+xlabel('x (mm)','FontSize',fontSize);
+ylabel('y (mm)','FontSize',fontSize);
+zlabel('z (mm)','FontSize',fontSize);
+export_fig './results/posTraj_circle_synergANDestErr' -transparent -eps

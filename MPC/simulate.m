@@ -76,8 +76,7 @@ for i = 1:n
 
     % discard most recently applied control
     u_optTraj = u_optTraj(:,2:end);
-
-    arm.draw
+    
 end
 close(progBar)
 

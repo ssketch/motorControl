@@ -37,7 +37,7 @@ classdef arm_2DOF < handle
         sensBias;  % slope & intercept vectors defining sensory bias [rad]
         
         q;    % joint angles [rad]
-        u;    % joint torques [Nm]
+        u;    % joint torques, separate flexion and extension [Nm]
         x;    % state, in joint coordinates [rad,rad/s]
         y;    % state, in Cartesian coordinates [m,m/s]
         z;    % state, in joint coordinates, augmented for time delay [rad,rad/s]
@@ -75,9 +75,9 @@ classdef arm_2DOF < handle
                 
                 % initialize mutable properties to default values
                 arm.Ts = 0.02;
-                arm.Tr = 0.1;          % (Wagner & Smith, 2008)
-                arm.Td = 0.06;         % (Crevecoeur, 2013)
-                arm.coupling = [ -1, 1, 0, 0; 0, 0, -1, 1 ];
+                arm.Tr = 0.1;  % (Wagner & Smith, 2008)
+                arm.Td = 0.06; % (Crevecoeur, 2013)
+                arm.coupling = [-1, 1, 0, 0; 0, 0, -1, 1];
                 arm.motrNoise = 10e-6; % (Crevecoeur, 2013)
                 posNoise = 3;          % (Yousif, 2015)
                 velNoise = 0.1;
@@ -96,13 +96,13 @@ classdef arm_2DOF < handle
                 arm.x.min = [arm.q.min; -inf; -inf]; % no explicit velocity limits
                 arm.x.max = [arm.q.max;  inf;  inf];
                 
-                torq1Max = 85; % max shoulder ext. rot. torque [Nm] (Chadwick, 2014)
-                torq1Min = 0;
-                torq2Max = 100; % max shoulder int. rot. torque [Nm]
+                torq1Max = 85;  % max shoulder external rotation torque [Nm] (Chadwick, 2014)
+                torq1Min = 0;   % muscles on pull
+                torq2Max = 100; % max shoulder internal rotation torque [Nm]
                 torq2Min = 0;
-                torq3Max = 60; % max elbow ext. torque [Nm]
+                torq3Max = 60;  % max elbow extension torque [Nm]
                 torq3Min = 0;
-                torq4Max = 75;  % max elbow flex. torque [Nm]
+                torq4Max = 75;  % max elbow flexion torque [Nm]
                 torq4Min = 0;
                 arm.u.min = [torq1Min; torq2Min; torq3Min; torq4Min];
                 arm.u.max = [torq1Max; torq2Max; torq3Max; torq4Max];

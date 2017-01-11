@@ -9,16 +9,16 @@
 % MPC's finite horizon. For example, the linearization of the dynamics
 % proceeds as follows:
 %
-%  f(x,u) = f(x_k,u_k) + df/dx*(x - x_k) + df/du*(u - u_k) + H.O.T.
-%  f(x,u) ~ (df/dx)*x + (df/du)*u + [f(x_k,u_k) - (df/dx)*x_k - (df/du)*u)k]
-%  f(x,u) ~ Ax + Bu + c
+%   f(x,u) = f(x_k,u_k) + df/dx*(x - x_k) + df/du*(u - u_k) + H.O.T.
+%   f(x,u) ~ (df/dx)*x + (df/du)*u + [f(x_k,u_k) - (df/dx)*x_k - (df/du)*u)k]
+%   f(x,u) ~ Ax + Bu + c
 %
 % As noted above, A = df/dx and B = df/du in this final equation. Assuming
 % small perturbations (dx and du), derivatives are approximated via
 % Euler's method:
 %
-%     df/dx @ x_k ~ [f(x_k+dx)-f(x_k)]/dx
-%     df/du @ u_k ~ [f(u_k+du)-f(u_k)]/du
+%   df/dx @ x_k ~ [f(x_k+dx)-f(x_k)]/dx
+%   df/du @ u_k ~ [f(u_k+du)-f(u_k)]/du
 %
 % The math is similar for the linearization of the output equation.
 function [A, B, c, C, D, e] = linearize(arm, ref, space)
