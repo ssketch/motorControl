@@ -73,11 +73,11 @@ classdef arm_2DOF < handle
                 arm.r2 = 0.827*arm.l2;
                 arm.I1 = arm.m1*arm.r1^2;
                 arm.I2 = arm.m2*arm.r2^2;
-                arm.tau = 0.06; % (Crevecoeur, 2013)
+                arm.tau = 0.04; % (Izawa, 2008)
                 arm.B = [0.05 0.025;0.025 0.05]; % (Crevecoeur, 2013)
                 
                 % initialize mutable properties to default values
-                arm.Ts = 0.01;
+                arm.Ts = 0.01; % standard
                 arm.Tr = 0.1;  % (Wagner & Smith, 2008)
                 arm.Td = 0.06; % (Crevecoeur, 2013)
                 arm.strength = 1;

@@ -16,7 +16,7 @@ if nargin < 3
     end
 end
 
-% couple joint torques
+% couple and weaken joint torques
 uCouple = arm.coupling*u;
 
 % compute "inertia" parameters

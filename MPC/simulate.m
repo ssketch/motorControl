@@ -26,6 +26,7 @@ nStatesTsk = length(arm.y.val);
 n = length(movt.t);
 
 % declare variables to save
+u_optTraj = [];             % empty to start
 u    = zeros(nInputs,n);    % [Nm]
 qAct = zeros(nJoints,n);    % [deg]
 qEst = zeros(nJoints,n);    % [deg]
@@ -51,7 +52,7 @@ for i = 1:n
     yEst(:,i) = intModel.y.val;
     
     % compute optimal control trajectory (only if enough time has passed)
-    if mod(movt.t(i),arm.Tr) == 0
+    if movt.t(i) ~= 0 && mod(movt.t(i),arm.Tr) == 0
         [u_optTraj, flag] = control(intModel, movt.ref(:,i), movt.space);
         if flag
             warning('Linearization failed.')
