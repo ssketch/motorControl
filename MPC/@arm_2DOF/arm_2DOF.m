@@ -20,7 +20,7 @@ classdef arm_2DOF < handle
         r2;   % forearm radius of gyration (proximal) [m]
         I1;   % upperarm moment of inertia about shoulder [kg-m^2]
         I2;   % forearm moment of inertia about elbow [kg-m^2]
-        tau;  % time constant for low-pass filter between control signal and joint torques [sec]
+        tau;  % time constant for low-pass filter between commanded and actual joint torques [sec]
         B;    % damping matrix [Nms/rad]
         
     end
@@ -39,10 +39,10 @@ classdef arm_2DOF < handle
         sensBias;  % slope & intercept vectors defining sensory bias [rad]
         
         q;    % joint angles [rad]
-        u;    % joint torques, separate flexion and extension [Nm]
-        x;    % state, in joint coordinates [rad,rad/s]
-        y;    % state, in Cartesian coordinates [m,m/s]
-        z;    % state, in joint coordinates, augmented for time delay [rad,rad/s]
+        u;    % commanded joint torques, separate flexion and extension [Nm]
+        x;    % state, in joint coordinates [rad,rad/s,Nm]
+        y;    % state, in Cartesian coordinates [m,m/s,N]
+        z;    % state, in joint coordinates, augmented for time delay [rad,rad/s,Nm]
         P;    % covariance matrix representing uncertainty in augmented state, z
         shld; % position of shoulder, in Cartesian coordinates [m]
         elbw; % position of elbow, in Cartesian coordinates [m]
@@ -73,17 +73,17 @@ classdef arm_2DOF < handle
                 arm.r2 = 0.827*arm.l2;
                 arm.I1 = arm.m1*arm.r1^2;
                 arm.I2 = arm.m2*arm.r2^2;
-                arm.tau = 0.06; % (Crevecoeur, 2013)
+                arm.tau = 0.04; % (Izawa, 2008)
                 arm.B = [0.05 0.025;0.025 0.05]; % (Crevecoeur, 2013)
                 
                 % initialize mutable properties to default values
-                arm.Ts = 0.01;
-                arm.Tr = 0.1;  % (Wagner & Smith, 2008)
+                arm.Ts = 0.01; % arbitrary but used by (Izawa, 2008) & (Crevecoeur, 2013)
+                arm.Tr = 0.1;  % (Wagner & Smith, 2008) & (Izawa, 2008) [roughly]
                 arm.Td = 0.06; % (Crevecoeur, 2013)
                 arm.strength = 1;
                 arm.coupling = [-1, 1, 0, 0; 0, 0, -1, 1];
-                arm.motrNoise = 10e-6; % (Crevecoeur, 2013)
-                posNoise = 3;          % (Yousif, 2015)
+                arm.motrNoise = 0.02; % (Izawa, 2008)
+                posNoise = 3;         % (Yousif, 2015)
                 velNoise = 0.1;
                 arm.sensNoise = [posNoise; posNoise; velNoise; velNoise]*toRad;
                 biasData(:,:,1) = [25 -4;40 -2;55 0]*toRad; % (Yousif, 2015)
@@ -91,18 +91,9 @@ classdef arm_2DOF < handle
                 arm.sensBias = defineBiasFunc(biasData);
                 
                 % set joint limits to default values
-                th1Min = -70; % shoulder angle min [deg]
-                th1Max = 120; % shoulder angle max [deg]
-                th2Min = 0;   % elbow angle min [deg]
-                th2Max = 170; % elbow angle max [deg]
-                arm.q.min = [th1Min; th2Min]*toRad;
-                arm.q.max = [th1Max; th2Max]*toRad;
-                arm.x.min = [arm.q.min; -inf; -inf]; % no explicit velocity limits
-                arm.x.max = [arm.q.max;  inf;  inf];
-                
-                torq1Max = 85;  % max shoulder external rotation torque [Nm] (Chadwick, 2014)
-                torq1Min = 0;   % muscles on pull
-                torq2Max = 100; % max shoulder internal rotation torque [Nm]
+                torq1Max = 85;  % max shoulder extension torque [Nm] (Chadwick, 2014)
+                torq1Min = 0;   % muscles only pull
+                torq2Max = 100; % max shoulder flexion torque [Nm]
                 torq2Min = 0;
                 torq3Max = 60;  % max elbow extension torque [Nm]
                 torq3Min = 0;
@@ -110,13 +101,22 @@ classdef arm_2DOF < handle
                 torq4Min = 0;
                 arm.u.min = [torq1Min; torq2Min; torq3Min; torq4Min];
                 arm.u.max = [torq1Max; torq2Max; torq3Max; torq4Max];
+                
+                th1Min = -70; % shoulder angle min [deg]
+                th1Max = 120; % shoulder angle max [deg]
+                th2Min = 0;   % elbow angle min [deg]
+                th2Max = 170; % elbow angle max [deg]
+                arm.q.min = [th1Min; th2Min]*toRad;
+                arm.q.max = [th1Max; th2Max]*toRad;
+                arm.x.min = [arm.q.min; -inf; -inf; arm.u.min]; % no explicit velocity limits
+                arm.x.max = [arm.q.max;  inf;  inf; arm.u.max];
 
                 % initialize state vectors for arm in middle of defined
                 % workspace
                 arm.shld = [0;0;0];
                 arm.q.val = mean([arm.q.min, arm.q.max], 2);
                 arm.u.val = [0;0;0;0];
-                arm.x.val = [arm.q.val; 0; 0];
+                arm.x.val = [arm.q.val; 0; 0; zeros(size(arm.u.val))];
                 [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
                 nDelay = ceil(arm.Td/arm.Ts);
                 arm.z.val = repmat(arm.x.val, nDelay+1, 1); % (nDelay + 1) includes current state

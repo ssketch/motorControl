@@ -37,4 +37,12 @@ end
 J = jacobian(arm, x);
 y(4:6,:) = J * x(3:4);
 
+% translate torque to force
+J_aug = [-J(1,1) J(1,1) -J(1,2) J(1,2);
+         -J(1,1) J(1,1) -J(1,2) J(1,2);
+         -J(2,1) J(2,1) -J(2,2) J(2,2);
+         -J(2,1) J(2,1) -J(2,2) J(2,2)];
+y(7:12,:) = zeros(6,1);
+y(7:10,:) = J_aug' \ x(5:8);
+
 end

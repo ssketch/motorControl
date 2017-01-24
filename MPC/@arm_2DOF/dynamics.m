@@ -16,9 +16,6 @@ if nargin < 3
     end
 end
 
-% couple and weaken joint torques
-uCouple = arm.coupling*u;
-
 % compute "inertia" parameters
 a1 = arm.I1 + arm.I2 + arm.m2*arm.l1^2;
 a2 = arm.m2 * arm.l1 * arm.s2;
@@ -40,6 +37,12 @@ V = [V1;V2] * a2*sin(x(2));
 G = [0;0];
 Damp = arm.B*x(3:4);
 
-f = [x(3:4) ; M\(uCouple-V-G-Damp)];
+% couple current joint torques
+uCouple = arm.coupling*x(5:8);
+
+% low-pass filter commanded joint torques
+uLoPass = (u - x(5:8))/arm.tau;
+
+f = [x(3:4) ; M\(uCouple-V-G-Damp) ; uLoPass];
 
 end

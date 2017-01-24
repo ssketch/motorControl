@@ -40,6 +40,13 @@ end
 J = jacobian(arm, x);
 x(3:4,:) = J(1:2,1:2) \ y(4:5);
 
+% translate force to torque
+J_aug = [-J(1,1) J(1,1) -J(1,2) J(1,2);
+         -J(1,1) J(1,1) -J(1,2) J(1,2);
+         -J(2,1) J(2,1) -J(2,2) J(2,2);
+         -J(2,1) J(2,1) -J(2,2) J(2,2)];
+x(5:8,:) = J_aug' * y(7:10);
+
 % check that resulting state is within joint limits
 reachable = withinLimits(arm, x);
 if ~reachable
