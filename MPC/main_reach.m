@@ -11,7 +11,7 @@ subj.M = 70;         % mass [kg]
 subj.H = 1.80;       % height [meters]
 predErr = 0;         % 1 = stroke caused prediction error
 synerg = 0;          % 1 = stroke coupled muscle synergies
-weak = 0;            % 1 = stroke caused muscular weakness
+weak = 1;            % 1 = stroke caused muscular weakness
 
 % define subject's physical arm & internal arm model (mental)
 arm = arm_2DOF(subj);
@@ -38,7 +38,7 @@ if predErr
     arm.sensBias = defineBiasFunc(biasData_stroke);
     
      % prediction noise (arbitrary, 1 = largest possible (OOM) without crashing the optimization)
-    intModel.motrNoise = 1;
+    intModel.motrNoise = 1.8;
 end
 if synerg
     % from (Dewald, 1995), representing muscle synergies induced by stroke
@@ -52,7 +52,7 @@ end
 if weak
     % arbitrary scalar for control limits in MPC
     % (NOTE: imposed on internal model because it is used for control)
-    intModel.strength = 0.1;
+    intModel.strength = 0.3;
 end
     
 % define movement parameters
