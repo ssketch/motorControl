@@ -12,12 +12,13 @@ if nargin < 2
     z = arm.z.val;
 end
 
-% extract most delayed state from augmented state vector
+% extract positions/velocities of most delayed state from augmented state
+% vector
+nJoints = length(arm.q.val);
 nStates = length(arm.x.val);
-x_sens = z(end-(nStates-1):end);
+x_sens = z(end-(nStates-1):end-(nStates-1)+2*nJoints);
 
 % add bias & noise
-nJoints = length(arm.q.val);
 sensBias = [computeBias(arm) ; zeros(nJoints,1)];
 x_sens = x_sens + sensBias + arm.sensNoise;
 

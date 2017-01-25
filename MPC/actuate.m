@@ -45,8 +45,9 @@ xNext = xTraj(end,:)';
 %       terms are just the result of integrating these velocities. Any
 %       noise on the position terms arrives there indirectly.
 nJoints = length(arm.q.val);
+nInputs = length(arm.u.val);
 xNext = xNext + ...
-    arm.Ts * (arm.motrNoise*[zeros(nJoints,1);ones(nJoints,1)]) .* rand(nStates,1);
+    arm.Ts * (arm.motrNoise*[zeros(2*nJoints,1);ones(nInputs,1)]) .* rand(nStates,1);
 
 % update current state within augmented state vector
 zNext = zCurr;
@@ -61,7 +62,7 @@ zNext = zNext + Mshift*zNext;
 arm.u.val = u;
 arm.x.val = xNext;
 arm.q.val = xNext(1:nJoints);
-[arm.y.val, arm.elbw, arm.inWS] = fwdKin(arm);
+[arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
 arm.z.val = zNext;
 
 end

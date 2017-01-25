@@ -19,7 +19,7 @@ intModel = arm_2DOF(subj);
 
 % reduce reaction time for feasibility with linear optimization & nonlinear
 % model
-Tr_red = 0.04;
+Tr_red = 0.05;
 arm.Tr = Tr_red;
 intModel.Tr = Tr_red;
 
@@ -27,7 +27,7 @@ intModel.Tr = Tr_red;
 nInputs = length(arm.u.val);
 nJoints = length(arm.q.val);
 
-% if stroke, update model parameters for given deficits
+% update model parameters for stroke-induced deficits
 if predErr
     % from (Yousif, 2015), for deafferented patient
     toRad = pi/180;
@@ -38,7 +38,7 @@ if predErr
     arm.sensBias = defineBiasFunc(biasData_stroke);
     
      % prediction noise (arbitrary, 1 = largest possible (OOM) without crashing the optimization)
-    intModel.motrNoise = 0.05;
+    intModel.motrNoise = 1;
 end
 if synerg
     % from (Dewald, 1995), representing muscle synergies induced by stroke
@@ -57,7 +57,7 @@ end
     
 % define movement parameters
 nTrials = 1;                 % number of times to repeat reach
-T = 1.5;                     % total time to simulate [sec]
+T = 0.75;                    % total time to simulate [sec]
 movt.t = 0:arm.Ts:T;         % time vector [sec]
 r = 0.15;                    % reach distance [m]
 th = [45;90];                % reach angles [deg]
@@ -98,15 +98,15 @@ for n = 1:nTrials
         % update model state variables to match initial conditions for movement
         % NOTE: internal model's state estimates are grounded by vision (i.e.,
         % ----  assuming perfect vision, they match the arm's actual state)
-        arm.x.val = x_i;
+        arm.x.val = [x_i;zeros(nInputs,1)];
         arm.q.val = x_i(1:nJoints);
-        arm.y.val = y_i;
+        arm.y.val = arm.fwdKin;
         nDelay = ceil(arm.Td/arm.Ts);
         arm.z.val = repmat(arm.x.val, nDelay+1, 1);
         
-        intModel.x.val = x_i;
+        intModel.x.val = [x_i;zeros(nInputs,1)];
         intModel.q.val = x_i(1:nJoints);
-        intModel.y.val = y_i;
+        intModel.y.val = intModel.fwdKin;
         nDelay = ceil(intModel.Td/intModel.Ts);
         intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
         
@@ -115,16 +115,16 @@ for n = 1:nTrials
         
         % save data
         if synerg
-            filename = ['./results/pub/reach',num2str(th(i)),...
+            filename = ['./results/playground/reach',num2str(th(i)),...
                 '_stroke_synerg_',num2str(n),'.mat'];
         elseif predErr
-            filename = ['./results/pub/reach',num2str(th(i)),...
+            filename = ['./results/playground/reach',num2str(th(i)),...
                 '_stroke_predErr_n',num2str(intModel.motrNoise),'_',num2str(n),'.mat'];
         elseif weak
-            filename = ['./results/pub/reach',num2str(th(i)),...
+            filename = ['./results/playground/reach',num2str(th(i)),...
                 '_stroke_weak_c',num2str(intModel.strength),'_',num2str(n),'.mat'];
         else
-            filename = ['./results/pub/reach',num2str(th(i)),'_ctrl_slow.mat'];
+            filename = ['./results/playground/reach',num2str(th(i)),'_ctrl.mat'];
         end
         u = data.u;
         x = data.xAct;

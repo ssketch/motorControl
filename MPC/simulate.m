@@ -6,13 +6,13 @@
 % time vector). The output data contains the following:
 %
 %   t:    time vector [sec]
-%   u:    joint torques [Nm]
+%   uCmd: commanded joint torques [Nm]
 %   qAct: joint angles [deg]
-%   xAct: arm state, in joint coordinates [deg,deg/s]
-%   yAct: arm state, in task coordinates [m,m/s]
+%   xAct: arm state, in joint coordinates [deg,deg/s,Nm]
+%   yAct: arm state, in task coordinates [m,m/s,N]
 %   qEst: estimated joint angles [deg]
-%   xEst: estimated arm state, in joint coordinates [deg,deg/s]
-%   yEst: estimated arm state, in task coordinates [m,m/s]
+%   xEst: estimated arm state, in joint coordinates [deg,deg/s,Nm]
+%   yEst: estimated arm state, in task coordinates [m,m/s,N]
 
 function data = simulate(movt, arm, intModel)
 
@@ -27,7 +27,7 @@ n = length(movt.t);
 
 % declare variables to save
 u_optTraj = [];             % empty to start
-u    = zeros(nInputs,n);    % [Nm]
+uCmd = zeros(nInputs,n);    % [Nm]
 qAct = zeros(nJoints,n);    % [deg]
 qEst = zeros(nJoints,n);    % [deg]
 xAct = zeros(nStatesJnt,n); % [deg,deg/s]
@@ -43,7 +43,7 @@ for i = 1:n
     waitbar(i/n, progBar, ['Simulating reach ... t = ',num2str(movt.t(i))]);
     
     % save current data
-    u(:,i)    = arm.u.val; % = intModel.u.val (they receive same input)
+    uCmd(:,i) = arm.u.val; % = intModel.u.val (they receive same input)
     qAct(:,i) = arm.q.val;
     qEst(:,i) = intModel.q.val;
     xAct(:,i) = arm.x.val;
@@ -81,14 +81,20 @@ for i = 1:n
 end
 close(progBar)
 
-% save data in a struct
+% convert angles to degrees
 toDeg = 180/pi;
+qAct = qAct*toDeg;
+qEst = qEst*toDeg;
+xAct(1:2*nJoints,:) = xAct(1:2*nJoints,:)*toDeg;
+xEst(1:2*nJoints,:) = xEst(1:2*nJoints,:)*toDeg;
+
+% save data in a struct
 data.t = movt.t;
-data.u = u;
-data.qAct = qAct*toDeg;
-data.qEst = qEst*toDeg;
-data.xAct = xAct*toDeg;
-data.xEst = xEst*toDeg;
+data.u = uCmd;
+data.qAct = qAct;
+data.qEst = qEst;
+data.xAct = xAct;
+data.xEst = xEst;
 data.yAct = yAct;
 data.yEst = yEst;
 

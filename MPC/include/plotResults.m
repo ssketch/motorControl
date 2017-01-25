@@ -11,7 +11,6 @@ clc
 toRad = pi/180;
 n = length(data.t);
 nJoints = length(arm.q.val);
-nStatesTsk = length(arm.y.val);
 
 % create & save movie of arm movement
 figure()
@@ -28,19 +27,20 @@ for i = 1:length(fields)
 end
 
 % parse out variables to plot
-data.qdotAct = data.xAct(nJoints+1:end,:);
-data.qdotEst = data.xEst(nJoints+1:end,:);
-data.pAct = data.yAct(1:nStatesTsk/2,:);
-data.pEst = data.yEst(1:nStatesTsk/2,:);
-data.vAct = data.yAct(nStatesTsk/2+1:end,:);
-data.vEst = data.yEst(nStatesTsk/2+1:end,:);
+data.qdotAct = data.xAct(nJoints+1:2*nJoints,:);
+data.qdotEst = data.xEst(nJoints+1:2*nJoints,:);
+data.pAct = data.yAct(1:3,:);
+data.pEst = data.yEst(1:3,:);
+data.vAct = data.yAct(4:6,:);
+data.vEst = data.yEst(4:6,:);
+data.uAct = data.xAct(2*nJoints+1:end,:);
 
 % plot position and velocity over time
 figure()
 subplot(2,1,1)
 plot(data.t,data.qAct,data.t,data.qEst,'LineWidth',3); 
 grid on
-ylabel('Position [deg]','FontSize',14);
+ylabel('Position (deg)','FontSize',14);
 actNames = cell(nJoints,1); actNames(:) = {', act'};
 estNames = cell(nJoints,1); estNames(:) = {', est'};
 legendNames = strcat([arm.DOFs;arm.DOFs], [actNames;estNames]);
@@ -48,8 +48,8 @@ legend(legendNames,'Location','NorthEast');
 subplot(2,1,2)
 plot(data.t,data.qdotAct,data.t,data.qdotEst,'LineWidth',3);
 grid on
-xlabel('t [sec]','FontSize',16);
-ylabel('Velocity [^d^e^g/_s_e_c]','FontSize',12);
+xlabel('t (sec)','FontSize',16);
+ylabel('Velocity (^d^e^g/_s_e_c)','FontSize',12);
 export_fig './results/timePlots' -eps
 
 % plot position and velocity in space
@@ -91,11 +91,11 @@ hold off
 
 % plot joint torques over time
 figure()
-plot(data.t,data.u,'LineWidth',3);
+plot(data.t,data.uAct,'LineWidth',3);
 grid on
 title('Joint Torques','FontSize',22);
-xlabel('t [sec]','FontSize',20);
-ylabel('T [Nm]','FontSize',20);
+xlabel('t (sec)','FontSize',20);
+ylabel('T (N-m)','FontSize',20);
 uLegend = {};
 for i = 1:nJoints
     currJnt = strcat(repmat(arm.DOFs(i),2,1),{' -';' +'});
