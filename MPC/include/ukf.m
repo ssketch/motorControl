@@ -20,7 +20,7 @@ c = N + lambda;              % scaling factor
 nJoints = length(armModel.q.val);
 nInputs = length(armModel.u.val);
 Q = zeros(N);
-Q(nJoints:n,nJoints:n) = armModel.Ts * diag(armModel.motrNoise*ones(nInputs,1));
+Q(2*nJoints+1:n,2*nJoints+1:n) = armModel.Ts * diag(armModel.motrNoise*ones(nInputs,1));
 R = armModel.Ts * diag(armModel.sensNoise);
 
 % compute weights for means & covariance

@@ -16,7 +16,7 @@ end
 % vector
 nJoints = length(arm.q.val);
 nStates = length(arm.x.val);
-x_sens = z(end-(nStates-1):end-(nStates-1)+2*nJoints);
+x_sens = z(end-(nStates-1):end-nStates+2*nJoints);
 
 % add bias & noise
 sensBias = [computeBias(arm) ; zeros(nJoints,1)];

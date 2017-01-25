@@ -57,10 +57,10 @@ end
     
 % define movement parameters
 nTrials = 1;                 % number of times to repeat reach
-T = 0.75;                    % total time to simulate [sec]
+T = 0.5;                     % total time to simulate [sec]
 movt.t = 0:arm.Ts:T;         % time vector [sec]
 r = 0.15;                    % reach distance [m]
-th = [45;90];                % reach angles [deg]
+th = 45;                     % reach angles [deg]
 p_i = [-0.15;0.3;0];         % initial position [m]
 v_i = [0;0;0];               % initial velocity [m/s]
 y_i = [p_i;v_i];             % initial state, in Cartesian coordinates [m,m/s]
@@ -68,7 +68,7 @@ y_i = [p_i;v_i];             % initial state, in Cartesian coordinates [m,m/s]
 movt.space = 'task';         % space in which to track reference ('joint' or 'task')
 
 % define plotting parameters
-plotOn = 0;
+plotOn = 1;
 
 for n = 1:nTrials
 
@@ -126,7 +126,7 @@ for n = 1:nTrials
         else
             filename = ['./results/playground/reach',num2str(th(i)),'_ctrl.mat'];
         end
-        u = data.u;
+        u = data.uCmd;
         x = data.xAct;
         y = data.yAct;
         save(filename,'u','x','y');

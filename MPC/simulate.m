@@ -53,7 +53,7 @@ for i = 1:n
     yEst(:,i) = intModel.y.val;
     
     % compute optimal control trajectory (only if enough time has passed)
-    if movt.t(i) ~= 0 && mod(movt.t(i),arm.Tr) == 0
+    if mod(movt.t(i),arm.Tr) == 0
         [u_optTraj, flag] = control(intModel, movt.ref(:,i), movt.space);
         if flag
             warning('Linearization failed.')
