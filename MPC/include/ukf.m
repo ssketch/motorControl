@@ -17,8 +17,10 @@ lambda = alpha^2*(N+ki) - N; % scaling factor
 c = N + lambda;              % scaling factor
 
 % create process and sensing noise matrices, Q and R
+nJoints = length(armModel.q.val);
+nInputs = length(armModel.u.val);
 Q = zeros(N);
-Q(1:n,1:n) = armModel.Ts * diag(armModel.motrNoise*ones(n,1));
+Q(nJoints:n,nJoints:n) = armModel.Ts * diag(armModel.motrNoise*ones(nInputs,1));
 R = armModel.Ts * diag(armModel.sensNoise);
 
 % compute weights for means & covariance

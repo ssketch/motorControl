@@ -8,10 +8,10 @@
 %   t:    time vector [sec]
 %   uCmd: commanded joint torques [Nm]
 %   qAct: joint angles [deg]
-%   xAct: arm state, in joint coordinates [deg,deg/s,Nm]
-%   yAct: arm state, in task coordinates [m,m/s,N]
 %   qEst: estimated joint angles [deg]
+%   xAct: arm state, in joint coordinates [deg,deg/s,Nm]
 %   xEst: estimated arm state, in joint coordinates [deg,deg/s,Nm]
+%   yAct: arm state, in task coordinates [m,m/s,N]
 %   yEst: estimated arm state, in task coordinates [m,m/s,N]
 
 function data = simulate(movt, arm, intModel)
@@ -26,6 +26,7 @@ nStatesTsk = length(arm.y.val);
 n = length(movt.t);
 
 % declare variables to save
+toDeg = 180/pi;
 u_optTraj = [];             % empty to start
 uCmd = zeros(nInputs,n);    % [Nm]
 qAct = zeros(nJoints,n);    % [deg]
@@ -44,8 +45,8 @@ for i = 1:n
     
     % save current data
     uCmd(:,i) = arm.u.val; % = intModel.u.val (they receive same input)
-    qAct(:,i) = arm.q.val;
-    qEst(:,i) = intModel.q.val;
+    qAct(:,i) = arm.q.val*toDeg;
+    qEst(:,i) = intModel.q.val*toDeg;
     xAct(:,i) = arm.x.val;
     xEst(:,i) = intModel.x.val;
     yAct(:,i) = arm.y.val;
@@ -81,16 +82,13 @@ for i = 1:n
 end
 close(progBar)
 
-% convert angles to degrees
-toDeg = 180/pi;
-qAct = qAct*toDeg;
-qEst = qEst*toDeg;
+% convert angles in state to degrees
 xAct(1:2*nJoints,:) = xAct(1:2*nJoints,:)*toDeg;
 xEst(1:2*nJoints,:) = xEst(1:2*nJoints,:)*toDeg;
 
 % save data in a struct
 data.t = movt.t;
-data.u = uCmd;
+data.uCmd = uCmd;
 data.qAct = qAct;
 data.qEst = qEst;
 data.xAct = xAct;

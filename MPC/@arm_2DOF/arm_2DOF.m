@@ -78,7 +78,7 @@ classdef arm_2DOF < handle
                 
                 % initialize mutable properties to default values
                 arm.Ts = 0.01; % arbitrary but used by (Izawa, 2008) & (Crevecoeur, 2013)
-                arm.Tr = 0.1;  % (Wagner & Smith, 2008) & (Izawa, 2008) [roughly]
+                arm.Tr = 0.1;  % (Wagner & Smith, 2008) & (Izawa, 2008) [roughly], but anything 0-100ms is acceptable
                 arm.Td = 0.06; % (Crevecoeur, 2013)
                 arm.strength = 1;
                 arm.coupling = [-1, 1, 0, 0; 0, 0, -1, 1];
