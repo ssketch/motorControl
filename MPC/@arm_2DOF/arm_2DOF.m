@@ -119,8 +119,8 @@ classdef arm_2DOF < handle
                 arm.x.val = [arm.q.val; 0; 0; zeros(size(arm.u.val))];
                 [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
                 nDelay = ceil(arm.Td/arm.Ts);
-                arm.z.val = repmat(arm.x.val, nDelay+1, 1); % (nDelay + 1) includes current state
-                arm.P = diag(1e-6*ones(length(arm.z.val))); % very little uncertainty in state information
+                arm.z.val = repmat(arm.x.val, nDelay+1, 1);   % (nDelay + 1) includes current state
+                arm.P = diag(1e-6*ones(length(arm.z.val),1)); % very little uncertainty in state information
                 
             else
                 warning('Must specify subject parameters.')

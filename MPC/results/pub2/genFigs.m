@@ -11,11 +11,11 @@ addpath(genpath([pwd '/../../include']));
 
 % movement parameters
 nDeficit = 3;      % number of deficits being tested (synergy, sensing, weakness)
-nTrials = 5;       % number of trials per condition
+nTrials = 2;       % number of trials per condition
 p_i = [-0.15;0.3]; % initial position [m]
 r = 0.15;          % reach distance [m]
-T = 1.5;           % total time to simulate, for each reach [sec]
-dt = 0.02;         % time step [sec]
+T = 0.75;          % total time to simulate, for each reach [sec]
+dt = 0.01;         % time step [sec]
 t = 0:dt:T;        % time vector [sec]
 
 % plotting parameters
@@ -178,7 +178,7 @@ th = [45;90];
 plotU = 0; % plot joint torques?
 
 % modify time vector to avoid excessive(ly noisy) plotting
-t_f = 0.8;
+t_f = 0.7;
 n_f = length(0:dt:t_f);
 
 % loop over angles
@@ -233,7 +233,7 @@ for i = 1:length(th)
     th_stroke = zeros(size(th_ctrl));
     u_stroke = zeros(size(u_ctrl));
     for n = 1:nTrials
-        data = load(['reach',num2str(th(i)),'_stroke_predErr_',num2str(n),'.mat']);
+        data = load(['reach',num2str(th(i)),'_stroke_predErr_n10_',num2str(n),'.mat']);
         x = data.x(:,1:n_f);
         y = data.y(:,1:n_f);
         p_stroke = p_stroke + (y(1:2,:) + repmat(orgShift,1,n_f))*m2mm;
@@ -320,11 +320,11 @@ end
 
 %% create sensitivity plots for sensing error
 
-err = [0.85;0.1;0.05];
+err = [10;2;0.2];
 c_sensitiv_err = autumn(length(err));
 
 % modify time vector to avoid excessive(ly noisy) plotting
-t_f = 0.8;
+t_f = 0.7;
 n_f = length(0:dt:t_f);
 
 % compute desired end position
@@ -402,7 +402,7 @@ strength = [0.1;0.4;0.8];
 c_sensitiv_strength = autumn(length(strength));
 
 % modify time vector to avoid excessive(ly noisy) plotting
-t_f = 0.8;
+t_f = 0.7;
 n_f = length(0:dt:t_f);
 
 % compute desired end position
