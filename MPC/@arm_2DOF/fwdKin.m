@@ -39,12 +39,22 @@ y(4:6,:) = J * x(3:4);
 
 % if necessary, translate torque to force
 if length(x) > 4
-    J_aug = [-J(1,1) J(1,1) -J(1,2) J(1,2);
-             -J(1,1) J(1,1) -J(1,2) J(1,2);
-             -J(2,1) J(2,1) -J(2,2) J(2,2);
-             -J(2,1) J(2,1) -J(2,2) J(2,2)];
-    y(7:12,:) = zeros(6,1);
-    y(7:10,:) = J_aug' \ x(5:8);
+    
+    J_red = J(1:2,1:2);
+    
+    % extension (-) torques
+    Text = x([5,7]);
+    Fext = J_red' \ (-1*Text);
+    
+    % flexion (+) torques
+    Tflex = x([6,8]);
+    Fflex = J_red' \ Tflex;
+    
+    % compile forces into Cartesian-space states vector
+    y(7) = Fext(1);  y(8) = Fflex(1);  % y(7) + y(8) = Fx
+    y(9) = Fext(2);  y(10) = Fflex(2); % y(9) + y(10) = Fy
+    y(11) = 0;       y(12) = 0;        % y(11) + y(12) = Fz = 0
+    
 end
 
 end

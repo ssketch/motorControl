@@ -34,9 +34,9 @@ function [u, flag] = control(armModel, ref, space, params)
 if nargin < 4
     params.H = floor(armModel.Tr/armModel.Ts) + 1; % MPC horizon (until can next reoptimize)
     params.wP = 1;                                 % position cost
-    params.wV = 1e-3;                              % velocity cost
+    params.wV = 1e-2;                              % velocity cost
     params.wU = 1;                                 % control cost
-    params.alpha = 1e6;                            % weighting on state (pos/vel) over control
+    params.alpha = 1e9;                            % weighting on state (pos/vel) over control
 end
 
 % linearize arm model (and check linearization)

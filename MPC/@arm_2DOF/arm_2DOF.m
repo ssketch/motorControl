@@ -73,7 +73,7 @@ classdef arm_2DOF < handle
                 arm.r2 = 0.827*arm.l2;
                 arm.I1 = arm.m1*arm.r1^2;
                 arm.I2 = arm.m2*arm.r2^2;
-                arm.tau = 0.04; % (Izawa, 2008)
+                arm.tau = 0.06; % (Crevecoeur, 2013)
                 arm.B = [0.05 0.025;0.025 0.05]; % (Crevecoeur, 2013)
                 
                 % initialize mutable properties to default values
@@ -99,7 +99,7 @@ classdef arm_2DOF < handle
                 torq3Min = 0;
                 torq4Max = 75;  % max elbow flexion torque [Nm]
                 torq4Min = 0;
-                arm.u.min = [torq1Min; torq2Min; torq3Min; torq4Min];
+                arm.u.min = [torq1Min; torq2Min; torq3Min; torq4Min]; % limits on commanded joint torques
                 arm.u.max = [torq1Max; torq2Max; torq3Max; torq4Max];
                 
                 th1Min = -70; % shoulder angle min [deg]
@@ -108,8 +108,8 @@ classdef arm_2DOF < handle
                 th2Max = 170; % elbow angle max [deg]
                 arm.q.min = [th1Min; th2Min]*toRad;
                 arm.q.max = [th1Max; th2Max]*toRad;
-                arm.x.min = [arm.q.min; -inf; -inf; arm.u.min]; % no explicit velocity limits
-                arm.x.max = [arm.q.max;  inf;  inf; arm.u.max];
+                arm.x.min = [arm.q.min; -inf; -inf; -inf; -inf; -inf; -inf]; % no explicit velocity or actual joint torque limits
+                arm.x.max = [arm.q.max;  inf;  inf;  inf;  inf;  inf;  inf];
 
                 % initialize state vectors for arm in middle of defined
                 % workspace
@@ -120,7 +120,7 @@ classdef arm_2DOF < handle
                 [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
                 nDelay = ceil(arm.Td/arm.Ts);
                 arm.z.val = repmat(arm.x.val, nDelay+1, 1); % (nDelay + 1) includes current state
-                arm.P = zeros(length(arm.z.val));           % 0 = no uncertainty in state information
+                arm.P = diag(1e-6*ones(length(arm.z.val))); % very little uncertainty in state information
                 
             else
                 warning('Must specify subject parameters.')

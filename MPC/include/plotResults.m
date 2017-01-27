@@ -44,13 +44,13 @@ ylabel('Position (deg)','FontSize',14);
 actNames = cell(nJoints,1); actNames(:) = {', act'};
 estNames = cell(nJoints,1); estNames(:) = {', est'};
 legendNames = strcat([arm.DOFs;arm.DOFs], [actNames;estNames]);
-legend(legendNames,'Location','NorthEast');
+legend(legendNames,'Location','Best');
 subplot(2,1,2)
 plot(data.t,data.qdotAct,data.t,data.qdotEst,'LineWidth',3);
 grid on
 xlabel('t (sec)','FontSize',16);
 ylabel('Velocity (^d^e^g/_s_e_c)','FontSize',12);
-export_fig './results/timePlots' -eps
+export_fig './results/timePlots' -transparent -eps
 
 % plot position and velocity in space
 figure()
@@ -66,8 +66,8 @@ title('Position','FontSize',22);
 xlabel('x','FontSize',20);
 ylabel('y','FontSize',20);
 zlabel('z','FontSize',20);
-legend('actual','estimated','Location','NorthEast');
-export_fig './results/posTraj' -eps
+legend('actual','estimated','Location','Best');
+export_fig './results/posTraj' -transparent -eps
 hold off
 
 figure()
@@ -85,8 +85,8 @@ title('Velocity','FontSize',22);
 xlabel('x','FontSize',20);
 ylabel('y','FontSize',20);
 zlabel('z','FontSize',20);
-legend('actual','estimated','Location','NorthEast');
-export_fig './results/velTraj' -eps
+legend('actual','estimated','Location','Best');
+export_fig './results/velTraj' -transparent -eps
 hold off
 
 % plot joint torques over time
@@ -101,7 +101,7 @@ for i = 1:nJoints
     currJnt = strcat(repmat(arm.DOFs(i),2,1),{' -';' +'});
     uLegend = [uLegend ; currJnt];
 end
-legend(uLegend,'Location','NorthEast');
-export_fig './results/commTraj' -eps
+legend(uLegend,'Location','Best');
+export_fig './results/commTraj' -transparent -eps
 
 end

@@ -11,6 +11,7 @@ subj.M = 70;         % mass [kg]
 subj.H = 1.80;       % height [meters]
 predErr = 0;         % 1 = stroke caused prediction error
 synerg = 1;          % 1 = stroke coupled muscle synergies
+weak = 0;            % 1 = stroke caused muscular weakness
 
 % define subject's physical arm & internal arm model (mental)
 arm = arm_2DOF(subj);
@@ -18,26 +19,27 @@ intModel = arm_2DOF(subj);
 
 % reduce reaction time for feasibility with linear optimization & nonlinear
 % model
-Tr_red = 0.08;
+Tr_red = 0.04;
 arm.Tr = Tr_red;
 intModel.Tr = Tr_red;
 
 % extract arm parameters
+nInputs = length(arm.u.val);
 nJoints = length(arm.q.val);
-nStatesTsk = length(arm.y.val);
 
 % define movement parameters
 nReach = 8;                  % total number of (evenly spaced) center-out reaches
 nTrials = 1;                 % number of times to repeat 'nReach' trials
-T = 0.8;                     % total time to simulate, for each reach [sec]
+T = 0.6;                     % total time to simulate, for each reach [sec]
 movt.t = 0:arm.Ts:T;         % time vector [sec]
 r = 0.15;                    % reach distance [m]
 thStep = 360/nReach;         % step from one reach angle to next [deg]
-th = 0:thStep:360-thStep;    % reach angles [deg]
+%th = 0:thStep:360-thStep;    % reach angles [deg]
+th = 45;
 origin1 = [-0.15;0.3;0];     % origin 1 (arbitrary) [m]
 origin2 = [-0.18;0.56;0];    % origin 2, to match (Beer, 2000) [m]
 origin3 = [-0.15;0.6;0];     % origin 3,(less arbitrary) [m]
-p_i = origin1;               % initial position [m]
+p_i = origin2;               % initial position [m]
 v_i = [0;0;0];               % initial velocity [m/s]
 y_i = [p_i;v_i];             % initial state, in Cartesian coordinates [m,m/s]
 [x_i,~,~] = arm.invKin(y_i); % initial state, in joint coordinates [rad,rad/s]
@@ -62,31 +64,43 @@ fontSize = 14;
 for n = 1:nTrials
     
     if plotOn
-        % create new figure for current trial
         figure()
         hold on
     end
     
     for stroke = 0:1
         
+        % reseed random number generator for consistency between stroke and
+        % control reaches
+        rng(10*n)
+        
         % if stroke, update model parameters
         if stroke
             if predErr
+                % from (Yousif, 2015), for deafferented patient
                 toRad = pi/180;
-                posNoise = 10; % (Yousif, 2015)
+                posNoise = 10;
                 arm.sensNoise(1:nJoints) = posNoise*ones(nJoints,1)*toRad;
-                biasData_stroke(:,:,1) = [25 -8;35 -2;50 6]*toRad; % (Yousif, 2015)
+                biasData_stroke(:,:,1) = [25 -8;35 -2;50 6]*toRad;
                 biasData_stroke(:,:,2) = [80 -8;90 0;100 6]*toRad;
                 arm.sensBias = defineBiasFunc(biasData_stroke);
-                intModel.motrNoise = 1; % prediction noise (arbitrary, 1 = largest possible (OOM) without crashing the optimization)
+                
+                % prediction noise
+                intModel.motrNoise = 1.8;
             end
             if synerg
+                % from (Dewald, 1995), representing muscle synergies induced by stroke
                 Msynerg = [1, 0, 0, 0; 0, 1, 0.13, 0.63;
                            0, 0, 1, 0; 0.8, 0.06, 0, 1]; % representing muscle synergies (Dewald, 1995)
                 for i = 1:size(Msynerg,1)
                     Msynerg(i,:) = Msynerg(i,:) / sum(Msynerg(i,:)); % normalization
                 end
                 arm.coupling = arm.coupling * Msynerg;
+            end
+            if weak
+                % arbitrary scalar for control limits in MPC
+                % (NOTE: imposed on internal model because it is used for control)
+                intModel.strength = 0.3;
             end
         end
         
@@ -111,17 +125,19 @@ for n = 1:nTrials
             % update model state variables to match initial conditions for movement
             % NOTE: internal model's state estimates are grounded by vision (i.e.,
             % ----  assuming perfect vision, they match the arm's actual state)
-            arm.x.val = x_i;
+            arm.x.val = [x_i;zeros(nInputs,1)];
             arm.q.val = x_i(1:nJoints);
-            arm.y.val = y_i;
+            arm.y.val = arm.fwdKin;
             nDelay = ceil(arm.Td/arm.Ts);
             arm.z.val = repmat(arm.x.val, nDelay+1, 1);
+            arm.P = diag(1e-6*ones(length(arm.z.val)));
             
-            intModel.x.val = x_i;
+            intModel.x.val = [x_i;zeros(nInputs,1)];
             intModel.q.val = x_i(1:nJoints);
-            intModel.y.val = y_i;
+            intModel.y.val = intModel.fwdKin;
             nDelay = ceil(intModel.Td/intModel.Ts);
             intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
+            intModel.P = diag(1e-6*ones(length(intModel.z.val)));
             
             % simulate reach
             data = simulate(movt, arm, intModel);
@@ -129,7 +145,7 @@ for n = 1:nTrials
             if plotOn
                 
                 % shift and scale position data for plotting
-                pAct = data.yAct(1:nStatesTsk/2,:);
+                pAct = data.yAct(1:3,:);
                 pShift = pAct + repmat(orgShift,1,size(pAct,2));
                 p = pShift*m2mm;
                 targ = (p_f + orgShift)*m2mm;
@@ -137,10 +153,10 @@ for n = 1:nTrials
                 % plot trajectory (and target, if necessary)
                 if stroke
                     plot3(p(1,:),p(2,:),p(3,:),...
-                        'Color',col_stroke,'LineWidth',lineThickness,'LineSmoothing','on');  % stroke
+                        'Color',col_stroke,'LineWidth',lineThickness,'LineSmoothing','on');   % stroke
                 else
                     plot3(p(1,:),p(2,:),p(3,:),...
-                        'Color',col_ctrl,'LineWidth',lineThickness,'LineSmoothing','on');  % control
+                        'Color',col_ctrl,'LineWidth',lineThickness,'LineSmoothing','on');     % control
                     plot3(targ(1),targ(2),targ(3),'o',...
                         'MarkerEdgeColor','k','MarkerFaceColor','k','MarkerSize',markerSize); % target
                 end
@@ -153,7 +169,7 @@ for n = 1:nTrials
             end
             
             % save state trajectories
-            U(:,:,i) = data.u;
+            U(:,:,i) = data.uCmd;
             X(:,:,i) = data.xAct;
             Y(:,:,i) = data.yAct;
             
@@ -161,20 +177,20 @@ for n = 1:nTrials
         
         % save all trajectories into MAT file
         if stroke
-            filename = ['./results/playground/circle_stroke_synerg_',num2str(n),'.mat'];
+            filename = ['./results/pub2/circle_stroke_synerg_',num2str(n),'.mat'];
         else
-            filename = ['./results/playground/circle_ctrl_synerg_',num2str(n),'.mat'];
+            filename = ['./results/pub2/circle_ctrl_',num2str(n),'.mat'];
         end
         save(filename,'U','X','Y');
         
-%         % save specific trajectories into MAT files (NOTE: assumes 8
-%         % reaches equally spaced around circle)
+        % save specific trajectories into MAT files (NOTE: assumes 8
+        % reaches equally spaced around circle)
 %         if stroke
-%             filename45 = ['./results/playground/reach45_stroke_synerg_',num2str(n),'.mat'];
-%             filename90 = ['./results/playground/reach90_stroke_synerg_',num2str(n),'.mat'];
+%             filename45 = ['./results/pub2/reach45_stroke_synerg_',num2str(n),'.mat'];
+%             filename90 = ['./results/pub2/reach90_stroke_synerg_',num2str(n),'.mat'];
 %         else
-%             filename45 = ['./results/playground/reach45_ctrl_synerg_',num2str(n),'.mat'];
-%             filename90 = ['./results/playground/reach90_ctrl_synerg_',num2str(n),'.mat'];
+%             filename45 = ['./results/pub2/reach45_ctrl',num2str(n),'.mat'];
+%             filename90 = ['./results/pub2/reach90_ctrl',num2str(n),'.mat'];
 %         end
 %         u = U(:,:,2);
 %         x = X(:,:,2);
@@ -208,16 +224,4 @@ if plotOn
     xlabel('x (mm)','FontSize',fontSize);
     ylabel('y (mm)','FontSize',fontSize);
     zlabel('z (mm)','FontSize',fontSize);
-    export_fig './results/playground/circle_ctrlVSsynerg' -transparent -eps
-    
-    % plot (one case of) x-velocity vs. time
-%     figure()
-%     plot(movt.t*s2ms,Y(4,:,1)*m2mm,'Color',col_ctrl,'LineWidth',lineThickness,'LineSmoothing','on');
-%     grid on
-%     box on
-%     xlim([0 600])
-%     ylim([-500 2000])
-%     xlabel('t (ms)','FontSize',fontSize);
-%     ylabel('v_x (^m/_s)','FontSize',fontSize);
-%     export_fig './results/playground/velVStime_ctrl' -transparent -eps
 end

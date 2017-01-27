@@ -11,11 +11,11 @@ addpath(genpath([pwd '/../../include']));
 
 % movement parameters
 nDeficit = 3;      % number of deficits being tested (synergy, sensing, weakness)
-nTrials = 5;       % number of trials per condition
+nTrials = 3;       % number of trials per condition
 p_i = [-0.15;0.3]; % initial position [m]
 r = 0.15;          % reach distance [m]
-T = 1.5;           % total time to simulate, for each reach [sec]
-dt = 0.02;         % time step [sec]
+T = 1;             % total time to simulate, for each reach [sec]
+dt = 0.01;         % time step [sec]
 t = 0:dt:T;        % time vector [sec]
 
 % plotting parameters
@@ -105,7 +105,7 @@ for i = 1:length(th)
     targ = (p_f + orgShift)*m2mm;
     
     % extract/compute control data
-    data = load(['reach',num2str(th(i)),'_ctrl_slow.mat']);
+    data = load(['reach',num2str(th(i)),'_ctrl.mat']);
     y = data.y;
     p_ctrl = (y(1:2,:) + repmat(orgShift,1,length(t)))*m2mm;
     vX = y(4,:)*m2mm;
@@ -193,7 +193,7 @@ for i = 1:length(th)
     targ = (p_f + orgShift)*m2mm;
     
     % extract/compute control data
-    data = load(['reach',num2str(th(i)),'_ctrl_fast.mat']);
+    data = load(['reach',num2str(th(i)),'_ctrl.mat']);
     x = data.x(:,1:n_f);
     y = data.y(:,1:n_f);
     p_ctrl = (y(1:2,:) + repmat(orgShift,1,n_f))*m2mm;
@@ -333,7 +333,7 @@ p_f = p_i + r*[cosd(th);sind(th)];
 targ = (p_f + orgShift)*m2mm;
 
 % extract/compute & plot control data
-data = load(['reach',num2str(th),'_ctrl_fast.mat']);
+data = load(['reach',num2str(th),'_ctrl.mat']);
 x = data.x(:,1:n_f);
 y = data.y(:,1:n_f);
 p_ctrl = (y(1:2,:) + repmat(orgShift,1,n_f))*m2mm;
@@ -411,7 +411,7 @@ p_f = p_i + r*[cosd(th);sind(th)];
 targ = (p_f + orgShift)*m2mm;
 
 % extract/compute & plot control data
-data = load(['reach',num2str(th),'_ctrl_fast.mat']);
+data = load(['reach',num2str(th),'_ctrl.mat']);
 x = data.x(:,1:n_f);
 y = data.y(:,1:n_f);
 p_ctrl = (y(1:2,:) + repmat(orgShift,1,n_f))*m2mm;
