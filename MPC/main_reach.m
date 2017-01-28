@@ -43,7 +43,7 @@ end
 if synerg
     % from (Dewald, 1995), representing muscle synergies induced by stroke
     Msynerg = [1, 0, 0, 0; 0, 1, 0.13, 0.63;
-               0, 0, 1, 0; 0.8, 0.06, 0, 1];
+        0, 0, 1, 0; 0.8, 0.06, 0, 1];
     for i = 1:size(Msynerg,1)
         Msynerg(i,:) = Msynerg(i,:) / sum(Msynerg(i,:));
     end
@@ -54,7 +54,7 @@ if weak
     % (NOTE: imposed on internal model because it is used for control)
     intModel.strength = 0.8;
 end
-    
+
 % define movement parameters
 nTrials = 5;                 % number of times to repeat reach
 T = 0.75;                    % total time to simulate [sec]
@@ -73,82 +73,71 @@ movt.space = 'task';         % space in which to track reference ('joint' or 'ta
 % define plotting parameters
 plotOn = 0;
 
-rng(1)
-c_weak = [0.8;0.4;0.1];
-n_predErr = [0.2;2;10;20];
-
 for n = 1:nTrials
     
-    for p = 1:length(n_predErr)
+    for i = 1:length(th)
         
-        intModel.motrNoise = n_predErr(p);
+        % define movement reference trajectory
+        p_f = p_i + r*[cosd(th(i));sind(th(i));0]; % desired end position [m]
+        v_f = [0;0;0];                             % desired end velocity [m/s]
+        y_f = [p_f;v_f];                           % desired end state, in Cartesian coordinates [m,m/s]
+        [x_f,~,~] = arm.invKin(y_f);               % desired end state, in joint coordinates [rad,rad/s]
+        switch movt.space
+            case 'joint'
+                movt.ref = repmat(x_f,1,length(movt.t)); % joint-space reference to track [rad,rad/s]
+            case 'task'
+                movt.ref = repmat(y_f,1,length(movt.t)); % task-space reference to track [m,m/s]
+            otherwise
+                movt.space = 'task';
+                movt.ref = repmat(y_f,1,length(movt.t)); % task space by default
+        end
         
-        for i = 1:length(th)
-            
-            % define movement reference trajectory
-            p_f = p_i + r*[cosd(th(i));sind(th(i));0]; % desired end position [m]
-            v_f = [0;0;0];                             % desired end velocity [m/s]
-            y_f = [p_f;v_f];                           % desired end state, in Cartesian coordinates [m,m/s]
-            [x_f,~,~] = arm.invKin(y_f);               % desired end state, in joint coordinates [rad,rad/s]
-            switch movt.space
-                case 'joint'
-                    movt.ref = repmat(x_f,1,length(movt.t)); % joint-space reference to track [rad,rad/s]
-                case 'task'
-                    movt.ref = repmat(y_f,1,length(movt.t)); % task-space reference to track [m,m/s]
-                otherwise
-                    movt.space = 'task';
-                    movt.ref = repmat(y_f,1,length(movt.t)); % task space by default
-            end
-            
-            % reset model state variables to match initial conditions for movement
-            % NOTE: internal model's state estimates are grounded by vision (i.e.,
-            % ----  assuming perfect vision, they match the arm's actual state)
-            arm.u.val = zeros(nInputs,1);
-            arm.x.val = [x_i;zeros(nInputs,1)];
-            arm.q.val = x_i(1:nJoints);
-            arm.y.val = arm.fwdKin;
-            nDelay = ceil(arm.Td/arm.Ts);
-            arm.z.val = repmat(arm.x.val, nDelay+1, 1);
-            arm.P = diag(1e-6*ones(length(arm.z.val),1));
-            
-            intModel.u.val = zeros(nInputs,1);
-            intModel.x.val = [x_i;zeros(nInputs,1)];
-            intModel.q.val = x_i(1:nJoints);
-            intModel.y.val = intModel.fwdKin;
-            nDelay = ceil(intModel.Td/intModel.Ts);
-            intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
-            intModel.P = diag(1e-6*ones(length(intModel.z.val),1));
-            
-            % simulate reach
-            data = simulate(movt, arm, intModel);
-            
-            % save data
-            if synerg
-                filename = ['./results/pub2/reach',num2str(th(i)),...
-                    '_stroke_synerg_',num2str(n),'.mat'];
-            elseif predErr
-                filename = ['./results/pub2/reach',num2str(th(i)),...
-                    '_stroke_predErr_n',num2str(intModel.motrNoise),...
-                    '_',num2str(n),'.mat'];
-            elseif weak
-                filename = ['./results/pub2/reach',num2str(th(i)),...
-                    '_stroke_weak_c',num2str(intModel.strength),...
-                    '_',num2str(n),'.mat'];
-            else
-                filename = ['./results/pub2/reach',num2str(th(i)),'_ctrl.mat'];
-            end
-            u = data.uCmd;
-            x = data.xAct;
-            y = data.yAct;
-            save(filename,'u','x','y');
-            
-            % display results of simulation
-            if plotOn
-                plotResults(arm, data, 1)
-            end
-            
+        % reset model state variables to match initial conditions for movement
+        % NOTE: internal model's state estimates are grounded by vision (i.e.,
+        % ----  assuming perfect vision, they match the arm's actual state)
+        arm.u.val = zeros(nInputs,1);
+        arm.x.val = [x_i;zeros(nInputs,1)];
+        arm.q.val = x_i(1:nJoints);
+        arm.y.val = arm.fwdKin;
+        nDelay = ceil(arm.Td/arm.Ts);
+        arm.z.val = repmat(arm.x.val, nDelay+1, 1);
+        arm.P = diag(1e-6*ones(length(arm.z.val),1));
+        
+        intModel.u.val = zeros(nInputs,1);
+        intModel.x.val = [x_i;zeros(nInputs,1)];
+        intModel.q.val = x_i(1:nJoints);
+        intModel.y.val = intModel.fwdKin;
+        nDelay = ceil(intModel.Td/intModel.Ts);
+        intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
+        intModel.P = diag(1e-6*ones(length(intModel.z.val),1));
+        
+        % simulate reach
+        data = simulate(movt, arm, intModel);
+        
+        % save data
+        if synerg
+            filename = ['./results/pub2/reach',num2str(th(i)),...
+                '_stroke_synerg_',num2str(n),'.mat'];
+        elseif predErr
+            filename = ['./results/pub2/reach',num2str(th(i)),...
+                '_stroke_predErr_n',num2str(intModel.motrNoise),...
+                '_',num2str(n),'.mat'];
+        elseif weak
+            filename = ['./results/pub2/reach',num2str(th(i)),...
+                '_stroke_weak_c',num2str(intModel.strength),...
+                '_',num2str(n),'.mat'];
+        else
+            filename = ['./results/pub2/reach',num2str(th(i)),'_ctrl.mat'];
+        end
+        u = data.uCmd;
+        x = data.xAct;
+        y = data.yAct;
+        save(filename,'u','x','y');
+        
+        % display results of simulation
+        if plotOn
+            plotResults(arm, data, 1)
         end
         
     end
-    
 end
