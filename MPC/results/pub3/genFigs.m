@@ -190,7 +190,7 @@ t_f = 0.8;
 n_f = length(0:dt:t_f);
 
 % compute desired end position
-th = 45;
+th = 135; %45;
 p_f = p_i + r*[cosd(th);sind(th)];
 targ = (p_f + orgShift)*m2mm;
 
@@ -249,14 +249,16 @@ end
 subplot(1,2,1)
 axis equal
 box on
-axis([-10 160 -10 140])
+%axis([-10 160 -10 140])
+axis([-130 10 -10 145])
 xlabel('x (mm)','FontSize',fontSize);
 ylabel('y (mm)','FontSize',fontSize);
 subplot(1,2,2)
 xlim([0 t_f*s2ms])
 xlabel('t (ms)','FontSize',fontSize);
 ylabel('\theta (deg)','FontSize',fontSize);
-export_fig 'sens_reach45_sensitivity' -transparent -eps
+%export_fig 'sens_reach45_sensitivity' -transparent -eps
+export_fig 'sens_reach135_sensitivity' -transparent -eps
 
 %% create sensitivity plots for muscular weakness
 
@@ -268,7 +270,7 @@ t_f = 0.8;
 n_f = length(0:dt:t_f);
 
 % compute desired end position
-th = 45;
+th = 135; %45;
 p_f = p_i + r*[cosd(th);sind(th)];
 targ = (p_f + orgShift)*m2mm;
 
@@ -327,11 +329,13 @@ end
 subplot(1,2,1)
 axis equal
 box on
-axis([-10 160 -10 140])
+%axis([-10 160 -10 140])
+axis([-130 10 -10 130])
 xlabel('x (mm)','FontSize',fontSize);
 ylabel('y (mm)','FontSize',fontSize);
 subplot(1,2,2)
 xlim([0 t_f*s2ms])
 xlabel('t (ms)','FontSize',fontSize);
 ylabel('\theta (deg)','FontSize',fontSize);
-export_fig 'weak_reach45_sensitivity' -transparent -eps
+%export_fig 'weak_reach45_sensitivity' -transparent -eps
+export_fig 'weak_reach135_sensitivity' -transparent -eps
