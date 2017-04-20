@@ -43,7 +43,7 @@ end
 if synerg
     % from (Dewald, 1995), representing muscle synergies induced by stroke
     Msynerg = [1, 0, 0, 0; 0, 1, 0.13, 0.63;
-        0, 0, 1, 0; 0.8, 0.06, 0, 1];
+               0, 0, 1, 0; 0.8, 0.06, 0, 1];
     for i = 1:size(Msynerg,1)
         Msynerg(i,:) = Msynerg(i,:) / sum(Msynerg(i,:));
     end

@@ -2,23 +2,26 @@ clear all
 close all
 clc
 
-% NOTE: The following data is for the elbow
+%% Enter Numerical Data
 
-%% Enter Numerical Data [Powers,1988]
+thresh = [1  0.26;
+          1  0.61;
+          1  1;
+          1	1;
+          1.5	0.45
+2	0.42
+2	0.24
+2	0.39
+2	0.47
+2	0.46
+2	0.21
+3	0.08
+3	0.05
+4	0.34
 
-% enter threshold
-thresh = [1   0.26; 1   0.61; 1   1.00; 1   1.00; 1.5 0.45; 2   0.42;
-          2   0.24; 2   0.39; 2   0.47; 2   0.46; 2   0.21; 3   0.08;
-          3   0.05; 4   0.34];
-
-%% Convert Graphical Data [McCrea,2003]
+%% Convert Graphical Data
 
 filenames = {'stiffness.png','damping.png'};
-
-% initialize
-n = 17;
-stiff = zeros(n,2);
-damp = zeros(n,2);
 
 for i = 1:length{filenames}
     
@@ -28,7 +31,7 @@ for i = 1:length{filenames}
 end
 xMin = 0; % MAS score, where 1.5 = 1+
 xMax = 4;
-if ~isempty(strfind(file,'stiff'))
+if ~isempty(strfind(filename{i},'stiff'))
     yMin = 0;
     yMax = 15;
 else
@@ -41,8 +44,9 @@ imagesc([xMin xMax], [yMin yMax], flipud(img));
 
 %% Convert from Graph to Numbers
 
-
-
+n = 17; % number of data points
+disp(' ');
+points = zeros(n,2);
 for i = 1:n
     point = ginput(1);
     MAS = round(point(1),1);

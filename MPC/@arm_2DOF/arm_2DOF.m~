@@ -40,7 +40,7 @@ classdef arm_2DOF < handle
         gamma;     % static reflex threshold [rad]
         mu;        % slope of line defining dynamic reflex threshold [sec]
         kTone;     % reflex stiffness [Nm/rad]
-        bTone;     % reflex damping [Nms/rad]
+        bTone;
         
         q;    % joint angles [rad]
         u;    % commanded joint torques, separate flexion and extension [Nm]
