@@ -34,15 +34,17 @@ classdef arm_2DOF < handle
         Td;        % delay between control and sensing [sec]
         strength;  % coefficient between 0 and 1 dictating arm strength
         coupling;  % coupling matrix for joint torques
+        gamma;     % static reflex threshold, for each DOF +/-  [rad]
+        mu;        % slope of line defining dynamic reflex threshold, for each DOF +/- [sec]
+        k;         % reflex stiffness, for each DOF +/- [Nm/rad]
+        b;         % reflex damping, for each DOF +/- [Nms/rad]
+        q0;        % joint angle zeros for "spring force" calculation [rad]
         motrNoise; % standard deviation of motor noise [Nm]
         sensNoise; % standard deviation of sensory noise [rad]
         sensBias;  % slope & intercept vectors defining sensory bias [rad]
-        gamma;     % static reflex threshold [rad]
-        mu;        % slope of line defining dynamic reflex threshold [sec]
-        kTone;     % reflex stiffness [Nm/rad]
-        bTone;
         
         q;    % joint angles [rad]
+        q0;   % joint angle zeros for reflex force calculation [rad]
         u;    % commanded joint torques, separate flexion and extension [Nm]
         x;    % state, in joint coordinates [rad,rad/s,Nm]
         y;    % state, in Cartesian coordinates [m,m/s,N]
@@ -86,6 +88,10 @@ classdef arm_2DOF < handle
                 arm.Td = 0.06; % (Crevecoeur, 2013)
                 arm.strength = 1;
                 arm.coupling = [-1, 1, 0, 0; 0, 0, -1, 1];
+                arm.gamma = ;
+                arm.mu = ;
+                arm.k = ;
+                arm.b = ;
                 arm.motrNoise = 0.02; % (Izawa, 2008)
                 posNoise = 3;         % (Yousif, 2015)
                 velNoise = 0.1;
@@ -119,6 +125,7 @@ classdef arm_2DOF < handle
                 % workspace
                 arm.shld = [0;0;0];
                 arm.q.val = mean([arm.q.min, arm.q.max], 2);
+                arm.q0 = arm.q.val;
                 arm.u.val = [0;0;0;0];
                 arm.x.val = [arm.q.val; 0; 0; zeros(size(arm.u.val))];
                 [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;

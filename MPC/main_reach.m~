@@ -55,12 +55,10 @@ if weak
     intModel.strength = 0.8;
 end
 if spastic
-    MAS = 1;
-    
+    MAS = 0
     arm.gamma = 
     arm.mu = 
-    arm.kTone = 
-    arm.bTone = 
+    
 end
 
 % define movement parameters
