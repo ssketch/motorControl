@@ -38,7 +38,6 @@ classdef arm_2DOF < handle
         mu;        % slope of line defining dynamic reflex threshold, for each DOF +/- [sec]
         k;         % reflex stiffness, for each DOF +/- [Nm/rad]
         b;         % reflex damping, for each DOF +/- [Nms/rad]
-        q0;        % joint angle zeros for "spring force" calculation [rad]
         motrNoise; % standard deviation of motor noise [Nm]
         sensNoise; % standard deviation of sensory noise [rad]
         sensBias;  % slope & intercept vectors defining sensory bias [rad]
@@ -88,10 +87,10 @@ classdef arm_2DOF < handle
                 arm.Td = 0.06; % (Crevecoeur, 2013)
                 arm.strength = 1;
                 arm.coupling = [-1, 1, 0, 0; 0, 0, -1, 1];
-                arm.gamma = ;
-                arm.mu = ;
-                arm.k = ;
-                arm.b = ;
+                arm.gamma = [inf; inf; inf; inf];
+                arm.mu = [inf; inf; inf; inf];
+                arm.k = [0; 0; 0; 0];
+                arm.b = [0; 0; 0; 0];
                 arm.motrNoise = 0.02; % (Izawa, 2008)
                 posNoise = 3;         % (Yousif, 2015)
                 velNoise = 0.1;
@@ -134,7 +133,7 @@ classdef arm_2DOF < handle
                 arm.P = diag(1e-6*ones(length(arm.z.val),1)); % very little uncertainty in state information
                 
             else
-                warning('Must specify subject parameters.')
+                error('Must specify subject parameters.')
             end
         end
  

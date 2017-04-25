@@ -5,13 +5,14 @@ clc
 % add folders to path
 addpath(genpath([pwd '/include']));
 
-% define subject
+% define subject (including deficit data)
 subj.hand = 'right'; % hand being tested
 subj.M = 70;         % mass [kg]
 subj.H = 1.80;       % height [meters]
-predErr = 1;         % 1 = stroke caused prediction error
+predErr = 0;         % 1 = stroke caused prediction error
 synerg = 0;          % 1 = stroke coupled muscle synergies
 weak = 0;            % 1 = stroke caused muscular weakness
+spastic = 1;         % 1 = stroke caused spasticity/increased tone
 
 % define subject's physical arm & internal arm model (mental)
 arm = arm_2DOF(subj);
@@ -55,16 +56,27 @@ if weak
     intModel.strength = 0.8;
 end
 if spastic
-    MAS = 1;
+    % from (Levin & Feldman, 2003), (McCrea, 2003), & (Given, 1995)
+    % NOTE: this is just for the shoulder and elbow, assuming the following
+    % ----  - (1) flexion/extension are equivalent, (2) mu does not depend
+    %       on MAS, (3) shoulder is equivalent to elbow with a 10x increase
+    %       in reflex stiffness)
+    toRad = pi/180;
+    spaticData = zeros(4,2,2);
+    spasticData(:,:,2) = [[-5.70    73.37]*toRad;               % gamma [rad]
+                          [0        0.25];                      % mu [sec]
+                          [2.22e-4  1.62e-4]*(1/toRad)*subj.M;  % k [Nm/rad]
+                          [7.12e-5  2.47e-5]*(1/toRad)*subj.M]; % b [Nms/rad]
+    spasticData(:,:,1) = spasticData(:,:,2);
+    spasticData(3,:,1) = spasticData(3,:,1)*10; % shoulder = 10x stiffer (Given, 1995)
     
-    arm.gamma = 
-    arm.mu = 
-    arm.kTone = 
-    arm.bTone = 
+    MAS = 0; % score on Modified Ashworth scale [0,1,1.5(1+),2,3,4]
+    defineSpasticity(arm, MAS, spasticData);    % physical arm
+    defineSpasticity(intModel, 0, spasticData); % internal model
 end
 
 % define movement parameters
-nTrials = 5;                 % number of times to repeat reach
+nTrials = 1;                 % number of times to repeat reach
 T = 0.75;                    % total time to simulate [sec]
 movt.t = 0:arm.Ts:T;         % time vector [sec]
 r = 0.15;                    % reach distance [m]
@@ -79,7 +91,7 @@ y_i = [p_i;v_i];             % initial state, in Cartesian coordinates [m,m/s]
 movt.space = 'task';         % space in which to track reference ('joint' or 'task')
 
 % define plotting parameters
-plotOn = 0;
+plotOn = 1;
 
 for n = 1:nTrials
     
@@ -106,6 +118,7 @@ for n = 1:nTrials
         arm.u.val = zeros(nInputs,1);
         arm.x.val = [x_i;zeros(nInputs,1)];
         arm.q.val = x_i(1:nJoints);
+        arm.q0 = arm.q.val;
         arm.y.val = arm.fwdKin;
         nDelay = ceil(arm.Td/arm.Ts);
         arm.z.val = repmat(arm.x.val, nDelay+1, 1);
@@ -114,6 +127,7 @@ for n = 1:nTrials
         intModel.u.val = zeros(nInputs,1);
         intModel.x.val = [x_i;zeros(nInputs,1)];
         intModel.q.val = x_i(1:nJoints);
+        intModel.q0 = intModel.q.val;
         intModel.y.val = intModel.fwdKin;
         nDelay = ceil(intModel.Td/intModel.Ts);
         intModel.z.val = repmat(intModel.x.val, nDelay+1, 1);
@@ -133,6 +147,10 @@ for n = 1:nTrials
         elseif weak
             filename = ['./results/pub2/reach',num2str(th(i)),...
                 '_stroke_weak_c',num2str(intModel.strength),...
+                '_',num2str(n),'.mat'];
+        elseif spastic
+            filename = ['./results/pub2/reach',num2str(th(i)),...
+                '_stroke_spastic_MAS',num2str(MAS),...
                 '_',num2str(n),'.mat'];
         else
             filename = ['./results/pub2/reach',num2str(th(i)),'_ctrl.mat'];

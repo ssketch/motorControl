@@ -65,7 +65,7 @@ model.u.min = armModel.u.min;   model.u.max = armModel.strength*armModel.u.max;
 nInputs = length(armModel.u.val);
 nOutputs = length(ref);
 model.u.penalty = QuadFunction( diag(params.wU*ones(nInputs,1)) );
-model.y.penalty = QuadFunction(  params.alpha * ...
+model.y.penalty = QuadFunction( params.alpha * ...
     diag([params.wP*ones(nOutputs/2,1) ; params.wV*ones(nOutputs/2,1)]) );
 
 % create MPC controller
@@ -73,7 +73,7 @@ ctrl = MPCController(model, params.H);
 
 % simulate closed-loop system to find optimal control
 loop = ClosedLoop(ctrl, model);
-Nsim = params.H - 1; % one step more than optimization horizon
+Nsim = params.H - 1; % one step fewer than optimization horizon
 data = loop.simulate(armModel.x.val, Nsim, 'y.reference', ref);
 u = data.U;
 flag = 0;

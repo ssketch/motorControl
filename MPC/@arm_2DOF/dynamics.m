@@ -43,6 +43,9 @@ uCouple = arm.coupling*x(5:8);
 % low-pass filter commanded joint torques
 uLoPass = (u - x(5:8))/arm.tau;
 
+% account for reflex activity
+
+
 f = [x(3:4) ; M\(uCouple-V-G-Damp) ; uLoPass];
 
 end

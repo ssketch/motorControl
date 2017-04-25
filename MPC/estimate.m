@@ -40,11 +40,17 @@ function x_est = estimate(armModel, u, x_sens)
 nStates = length(armModel.x.val);
 x_est = z_est(1:nStates);
 
-% update state variables for internal model object
+% check for direction changes at each joint
 nJoints = length(armModel.q.val);
+v_estCurr = armModel.x.val(nJoints+1:2*nJoints);
+v_estNext = x_est(nJoints+1:2*nJoints);
+changedDir = (sign(v_estCurr) ~= sign(v_estNext));
+
+% update state variables for internal model object
 armModel.u.val = u;
 armModel.x.val = x_est;
 armModel.q.val = x_est(1:nJoints);
+armModel.q0 = armModel.q0 .* (~changedDir) + armModel.q.val .* changedDir;
 [armModel.y.val, armModel.elbw, armModel.inWS] = armModel.fwdKin;
 armModel.z.val = z_est;
 armModel.P = P;

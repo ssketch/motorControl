@@ -49,6 +49,11 @@ nInputs = length(arm.u.val);
 xNext = xNext + ...
     arm.Ts * (arm.motrNoise*[zeros(2*nJoints,1);ones(nInputs,1)]) .* rand(nStates,1);
 
+% check for direction changes at each joint
+vCurr = arm.x.val(nJoints+1:2*nJoints);
+vNext = xNext(nJoints+1:2*nJoints);
+changedDir = (sign(vCurr) ~= sign(vNext));
+
 % update current state within augmented state vector
 zNext = zCurr;
 zNext(1:nStates) = xNext;
@@ -62,6 +67,7 @@ zNext = zNext + Mshift*zNext;
 arm.u.val = u;
 arm.x.val = xNext;
 arm.q.val = xNext(1:nJoints);
+arm.q0 = arm.q0 .* (~changedDir) + arm.q.val .* changedDir;
 [arm.y.val, arm.elbw, arm.inWS] = arm.fwdKin;
 arm.z.val = zNext;
 
