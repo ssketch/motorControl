@@ -62,7 +62,7 @@ if spastic
     %       on MAS, (3) shoulder is equivalent to elbow with a 10x increase
     %       in reflex stiffness)
     toRad = pi/180;
-    spaticData = zeros(4,2,2);
+    spasticData = zeros(4,2,2);
     spasticData(:,:,2) = [[-5.70    73.37]*toRad;               % gamma [rad]
                           [0        0.25];                      % mu [sec]
                           [2.22e-4  1.62e-4]*(1/toRad)*subj.M;  % k [Nm/rad]

@@ -40,12 +40,22 @@ Damp = arm.B*x(3:4);
 % couple current joint torques
 uCouple = arm.coupling*x(5:8);
 
+% account for reflex activity (NOTE: because of how joint zeros are set,
+% arm segment is always moving "away" from its zero point)
+if (x(3) > 0)
+    if (x(4) > 0) R = [0, 1, 0, 0; 0, 0, 0, 1]; % S flex, E flex
+    else          R = [0, 1, 0, 0; 0, 0, 1, 0]; % S flex, E ext
+    end
+else
+    if (x(4) > 0) R = [1, 0, 0, 0; 0, 0, 0, 1]; % S ext, E flex
+    else          R = [1, 0, 0, 0; 0, 0, 1, 0]; % S ext, E ext
+    end
+end
+uReflex = computeReflex(arm, R, x);
+
 % low-pass filter commanded joint torques
 uLoPass = (u - x(5:8))/arm.tau;
 
-% account for reflex activity
-
-
-f = [x(3:4) ; M\(uCouple-V-G-Damp) ; uLoPass];
+f = [x(3:4) ; M\(uCouple+uReflex-V-G-Damp) ; uLoPass];
 
 end
