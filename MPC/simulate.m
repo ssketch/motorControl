@@ -7,12 +7,14 @@
 %
 %   t:    time vector [sec]
 %   uCmd: commanded joint torques [Nm]
+%   uRfx: reflexive joint torques [Nm]
 %   qAct: joint angles [deg]
 %   qEst: estimated joint angles [deg]
 %   xAct: arm state, in joint coordinates [deg,deg/s,Nm]
 %   xEst: estimated arm state, in joint coordinates [deg,deg/s,Nm]
 %   yAct: arm state, in task coordinates [m,m/s,N]
 %   yEst: estimated arm state, in task coordinates [m,m/s,N]
+%   JAct: Jacobian, for translating between joint and task space [rad > m]
 
 function data = simulate(movt, arm, intModel)
 
@@ -29,12 +31,14 @@ n = length(movt.t);
 toDeg = 180/pi;
 u_optTraj = [];             % empty to start
 uCmd = zeros(nInputs,n);    % [Nm]
+uRfx = zeros(nJoints,n);    % [Nm]
 qAct = zeros(nJoints,n);    % [deg]
 qEst = zeros(nJoints,n);    % [deg]
-xAct = zeros(nStatesJnt,n); % [deg,deg/s]
-xEst = zeros(nStatesJnt,n); % [deg,deg/s]
-yAct = zeros(nStatesTsk,n); % [m,m/s]
-yEst = zeros(nStatesTsk,n); % [m,m/s]
+xAct = zeros(nStatesJnt,n); % [deg,deg/s,Nm]
+xEst = zeros(nStatesJnt,n); % [deg,deg/s,Nm]
+yAct = zeros(nStatesTsk,n); % [m,m/s,N]
+yEst = zeros(nStatesTsk,n); % [m,m/s,N]
+JAct = zeros(3,nJoints,n);
 
 % simulate reach
 progBar = waitbar(0,'Simulating reach ... t = ');
@@ -45,12 +49,14 @@ for i = 1:n
     
     % save current data
     uCmd(:,i) = arm.u.val; % = intModel.u.val (they receive same input)
+    uRfx(:,i) = arm.uReflex;
     qAct(:,i) = arm.q.val*toDeg;
     qEst(:,i) = intModel.q.val*toDeg;
     xAct(:,i) = arm.x.val;
     xEst(:,i) = intModel.x.val;
     yAct(:,i) = arm.y.val;
     yEst(:,i) = intModel.y.val;
+    JAct(:,:,i) = arm.jacobian;
     
     % compute optimal control trajectory (only if enough time has passed)
     if movt.t(i) ~= 0 && mod(movt.t(i),arm.Tr) == 0
@@ -89,11 +95,13 @@ xEst(1:2*nJoints,:) = xEst(1:2*nJoints,:)*toDeg;
 % save data in a struct
 data.t = movt.t;
 data.uCmd = uCmd;
+data.uRfx = uRfx;
 data.qAct = qAct;
 data.qEst = qEst;
 data.xAct = xAct;
 data.xEst = xEst;
 data.yAct = yAct;
 data.yEst = yEst;
+data.JAct = JAct;
 
 end

@@ -1,6 +1,7 @@
 % This function returns the (joint-space) equation of motion for the arm in
 % state x, given input u. If no state is specified as input, the function
-% computes the equation for the current state of the 'arm' object.
+% computes the equation for the current state of the 'arm' object. The
+% function also saves the reflexive torques to the input arm object.
 % NOTE: Although the arm's current state is an attribute of the arm object,
 % ----  it must be passed as an input for use with the MATLAB solver
 %       'ode45'.
@@ -56,6 +57,8 @@ uReflex = computeReflex(arm, R, x);
 % low-pass filter commanded joint torques
 uLoPass = (u - x(5:8))/arm.tau;
 
+% save reflex torques & output equation of motion
+arm.uReflex = uReflex;
 f = [x(3:4) ; M\(uCouple+uReflex-V-G-Damp) ; uLoPass];
 
 end

@@ -32,12 +32,14 @@ classdef arm_2DOF < handle
         Ts;        % sampling time [sec]
         Tr;        % "reaction time" for replanning torque trajectory [sec]
         Td;        % delay between control and sensing [sec]
+        
         strength;  % coefficient between 0 and 1 dictating arm strength
         coupling;  % coupling matrix for joint torques
         gamma;     % static reflex threshold, for each DOF +/-  [rad]
         mu;        % slope of line defining dynamic reflex threshold, for each DOF +/- [sec]
         k;         % reflex stiffness, for each DOF +/- [Nm/rad]
         b;         % reflex damping, for each DOF +/- [Nms/rad]
+        uReflex;   % reflex joint torques [Nm]
         motrNoise; % standard deviation of motor noise [Nm]
         sensNoise; % standard deviation of sensory noise [rad]
         sensBias;  % slope & intercept vectors defining sensory bias [rad]
@@ -78,19 +80,26 @@ classdef arm_2DOF < handle
                 arm.r2 = 0.827*arm.l2;
                 arm.I1 = arm.m1*arm.r1^2;
                 arm.I2 = arm.m2*arm.r2^2;
-                arm.tau = 0.06; % (Crevecoeur, 2013)
+                arm.tau = 0.06;                  % (Crevecoeur, 2013)
                 arm.B = [0.05 0.025;0.025 0.05]; % (Crevecoeur, 2013)
                 
                 % initialize mutable properties to default values
                 arm.Ts = 0.01; % arbitrary but used by (Izawa, 2008) & (Crevecoeur, 2013)
                 arm.Tr = 0.03; % 0.1 = (Wagner & Smith, 2008) & (Izawa, 2008) [roughly], but anything 0-100ms is acceptable
                 arm.Td = 0.06; % (Crevecoeur, 2013)
+                
+                % set default deficits
                 arm.strength = 1;
                 arm.coupling = [-1, 1, 0, 0; 0, 0, -1, 1];
-                arm.gamma = [inf; inf; inf; inf];
-                arm.mu = [inf; inf; inf; inf];
-                arm.k = [0; 0; 0; 0];
-                arm.b = [0; 0; 0; 0];
+                spasticData(:,:,2) = [[-5.70    73.37]*toRad;               % (Levin & Feldman, 2003)
+                                      [0        0.25];                      % (Levin & Feldman, 2003)
+                                      [2.22e-4  1.62e-4]*(1/toRad)*subj.M;  % (McCrea, 2003)
+                                      [7.12e-5  2.47e-5]*(1/toRad)*subj.M]; % (McCrea, 2003)
+                spasticData(:,:,1) = spasticData(:,:,2);
+                spasticData(3,:,1) = spasticData(3,:,1)*10; % (Given, 1995)
+                [arm.gamma, arm.mu, arm.k, arm.b] = ...
+                    defineSpasticity(0, spasticData); 
+                arm.uReflex = [0;0];
                 arm.motrNoise = 0.02; % (Izawa, 2008)
                 posNoise = 3;         % (Yousif, 2015)
                 velNoise = 0.1;

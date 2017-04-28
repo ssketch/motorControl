@@ -5,7 +5,7 @@ clc
 % add folders to path
 addpath(genpath([pwd '/include']));
 
-% define subject (including deficit data)
+% define subject
 subj.hand = 'right'; % hand being tested
 subj.M = 70;         % mass [kg]
 subj.H = 1.80;       % height [meters]
@@ -57,30 +57,29 @@ if weak
 end
 if spastic
     % from (Levin & Feldman, 2003), (McCrea, 2003), & (Given, 1995)
-    % NOTE: this is just for the shoulder and elbow, assuming the following
-    % ----  - (1) flexion/extension are equivalent, (2) mu does not depend
+    % NOTE: this is for the shoulder and elbow, assuming the following:
+    % ----  (1) flexion/extension are equivalent, (2) mu does not depend
     %       on MAS, (3) shoulder is equivalent to elbow with a 10x increase
-    %       in reflex stiffness)
+    %       in reflex stiffness
     toRad = pi/180;
-    spasticData = zeros(4,2,2);
     spasticData(:,:,2) = [[-5.70    73.37]*toRad;               % gamma [rad]
                           [0        0.25];                      % mu [sec]
                           [2.22e-4  1.62e-4]*(1/toRad)*subj.M;  % k [Nm/rad]
                           [7.12e-5  2.47e-5]*(1/toRad)*subj.M]; % b [Nms/rad]
     spasticData(:,:,1) = spasticData(:,:,2);
-    spasticData(3,:,1) = spasticData(3,:,1)*10; % shoulder = 10x stiffer (Given, 1995)
+    spasticData(3,:,1) = spasticData(3,:,1)*10; % shoulder = 10x stiffer
     
-    MAS = 0; % score on Modified Ashworth scale [0,1,1.5(1+),2,3,4]
-    defineSpasticity(arm, MAS, spasticData);    % physical arm
-    defineSpasticity(intModel, 0, spasticData); % internal model
+    MAS = 4; % score on Modified Ashworth scale [0,1,1.5(1+),2,3,4]
+    [arm.gamma, arm.mu, arm.k, arm.b] = ...
+        defineSpasticity(MAS, spasticData);
 end
 
 % define movement parameters
 nTrials = 1;                 % number of times to repeat reach
 T = 0.75;                    % total time to simulate [sec]
 movt.t = 0:arm.Ts:T;         % time vector [sec]
-r = 0.15;                    % reach distance [m]
-th = [45;90];                % reach angles [deg]
+r = 0.4;                     % reach distance [m]
+th = 115;                    % reach angles [deg]
 origin1 = [-0.15;0.3;0];     % origin 1 (arbitrary) [m]
 origin2 = [-0.18;0.56;0];    % origin 2, to match (Beer, 2000) [m]
 origin3 = [-0.15;0.6;0];     % origin 3 (less arbitrary) [m]
@@ -92,7 +91,7 @@ movt.space = 'task';         % space in which to track reference ('joint' or 'ta
 
 % define plotting parameters
 plotOn = 1;
-
+    
 for n = 1:nTrials
     
     for i = 1:length(th)
@@ -116,6 +115,7 @@ for n = 1:nTrials
         % NOTE: internal model's state estimates are grounded by vision (i.e.,
         % ----  assuming perfect vision, they match the arm's actual state)
         arm.u.val = zeros(nInputs,1);
+        arm.uReflex = zeros(nJoints,1);
         arm.x.val = [x_i;zeros(nInputs,1)];
         arm.q.val = x_i(1:nJoints);
         arm.q0 = arm.q.val;
@@ -125,6 +125,7 @@ for n = 1:nTrials
         arm.P = diag(1e-6*ones(length(arm.z.val),1));
         
         intModel.u.val = zeros(nInputs,1);
+        intModel.uReflex = zeros(nJoints,1);
         intModel.x.val = [x_i;zeros(nInputs,1)];
         intModel.q.val = x_i(1:nJoints);
         intModel.q0 = intModel.q.val;

@@ -33,6 +33,6 @@ dq_thresh = mu.*qdot + gamma;
 reflexive = (dq > dq_thresh);
 
 % compute reflex torques
-uReflex = (k.*(arm.q0 - q) + b.*qdot).*reflexive;
+uReflex = (k.*(arm.q0 - q) - b.*qdot).*reflexive;
 
 end
