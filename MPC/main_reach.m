@@ -10,7 +10,7 @@ subj.hand = 'right'; % hand being tested
 subj.M = 70;         % mass [kg]
 subj.H = 1.80;       % height [meters]
 predErr = 0;         % 1 = stroke caused prediction error
-synerg = 0;          % 1 = stroke coupled muscle synergies
+synerg = 1;          % 1 = stroke coupled muscle synergies
 weak = 0;            % 1 = stroke caused muscular weakness
 spastic = 1;         % 1 = stroke caused spasticity/increased tone
 
@@ -69,17 +69,17 @@ if spastic
     spasticData(:,:,1) = spasticData(:,:,2);
     spasticData(3,:,1) = spasticData(3,:,1)*10; % shoulder = 10x stiffer
     
-    MAS = 4; % score on Modified Ashworth scale [0,1,1.5(1+),2,3,4]
+    MAS = 3; % score on Modified Ashworth scale [0,1,1.5(1+),2,3,4]
     [arm.gamma, arm.mu, arm.k, arm.b] = ...
         defineSpasticity(MAS, spasticData);
 end
 
 % define movement parameters
 nTrials = 1;                 % number of times to repeat reach
-T = 0.75;                    % total time to simulate [sec]
+T = 1;                       % total time to simulate [sec]
 movt.t = 0:arm.Ts:T;         % time vector [sec]
-r = 0.4;                     % reach distance [m]
-th = 115;                    % reach angles [deg]
+r = 0.35;                    % reach distance [m]
+th = [45;90;135];            % reach angles [deg]
 origin1 = [-0.15;0.3;0];     % origin 1 (arbitrary) [m]
 origin2 = [-0.18;0.56;0];    % origin 2, to match (Beer, 2000) [m]
 origin3 = [-0.15;0.6;0];     % origin 3 (less arbitrary) [m]
@@ -90,7 +90,7 @@ y_i = [p_i;v_i];             % initial state, in Cartesian coordinates [m,m/s]
 movt.space = 'task';         % space in which to track reference ('joint' or 'task')
 
 % define plotting parameters
-plotOn = 1;
+plotOn = 0;
     
 for n = 1:nTrials
     
@@ -136,29 +136,29 @@ for n = 1:nTrials
         
         % simulate reach
         data = simulate(movt, arm, intModel);
-        
-        % save data
-        if synerg
-            filename = ['./results/pub2/reach',num2str(th(i)),...
-                '_stroke_synerg_',num2str(n),'.mat'];
-        elseif predErr
-            filename = ['./results/pub2/reach',num2str(th(i)),...
-                '_stroke_predErr_n',num2str(intModel.motrNoise),...
-                '_',num2str(n),'.mat'];
-        elseif weak
-            filename = ['./results/pub2/reach',num2str(th(i)),...
-                '_stroke_weak_c',num2str(intModel.strength),...
-                '_',num2str(n),'.mat'];
-        elseif spastic
-            filename = ['./results/pub2/reach',num2str(th(i)),...
-                '_stroke_spastic_MAS',num2str(MAS),...
-                '_',num2str(n),'.mat'];
-        else
-            filename = ['./results/pub2/reach',num2str(th(i)),'_ctrl.mat'];
-        end
         u = data.uCmd;
         x = data.xAct;
         y = data.yAct;
+        
+        % save data (labeled with all deficits)
+        root = ['./results/playground/5_01_17/reach',num2str(th(i))];
+        filename = root;
+        if synerg
+            filename = strcat(filename,'_synerg');
+        end
+        if predErr
+            filename = strcat(filename,['_predErr_n',num2str(intModel.motrNoise)]);
+        end
+        if weak
+            filename = strcat(filename,['_weak_c',num2str(intModel.strength)]);
+        end
+        if spastic
+            filename = strcat(filename,['_spastic_MAS',num2str(MAS)]);
+        end
+        if strcmp(filename,root) % no deficits = control
+            filename = strcat(filename,'_ctrl');
+        end
+        filename = strcat(filename,['_',num2str(n),'.mat']); % append trial #
         save(filename,'u','x','y');
         
         % display results of simulation

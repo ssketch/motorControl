@@ -23,7 +23,9 @@ save('./results/reachingMovie','M');
 fields = fieldnames(data);
 f_down = 2;
 for i = 1:length(fields)
-    data.(fields{i}) = downsample(data.(fields{i})',f_down)';
+    if length(size(data.(fields{i}))) <= 2
+        data.(fields{i}) = downsample(data.(fields{i})',f_down)';
+    end
 end
 
 % parse out variables to plot

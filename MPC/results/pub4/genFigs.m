@@ -58,6 +58,10 @@ targ = (p_f + orgShift)*m2mm;
 plot(targ(1),targ(2),'o',...
     'MarkerEdgeColor','k','MarkerFaceColor','k','MarkerSize',large);
 
+% send all targets to bottom layer of plot
+targs = findobj(gca, 'MarkerFaceColor', 'k');
+uistack(targs, 'bottom');
+
 % annotate & save plot
 axis equal
 axis([-220 10 -10 345])
