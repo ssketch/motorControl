@@ -78,8 +78,8 @@ classdef arm_2DOF < handle
                 arm.s2 = 0.682*arm.l2;
                 arm.r1 = 0.542*arm.l1;
                 arm.r2 = 0.827*arm.l2;
-                arm.I1 = arm.m1*arm.r1^2 + arm.m1*arm.s1^2;
-                arm.I2 = arm.m2*arm.r2^2 + arm.m2*arm.s2^2;
+                arm.I1 = arm.m1*arm.r1^2 + arm.m1;
+                arm.I2 = arm.m2*arm.r2^2 + ;
                 arm.tau = 0.06;                  % (Crevecoeur, 2013)
                 arm.B = [0.05 0.025;0.025 0.05]; % (Crevecoeur, 2013)
                 

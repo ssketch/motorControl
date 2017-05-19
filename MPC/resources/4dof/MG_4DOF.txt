@@ -1,0 +1,93 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  MotionGenesis Code to Generate 4DOF EOM %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% define constants (NOTE: add damping separately)
+Constant  g     % acceleration due to gravity [m/s^2]
+Constant  l1    % upperarm length [m]
+Constant  l2    % forearm length [m]
+Constant  m1    % upperarm mass [kg]
+Constant  m2    % forearm mass [kg]
+Constant  I1    % upperarm moment of inertia about shoulder [kg-m^2]
+Constant  I2    % forearm moment of inertia about elbow [kg-m^2]
+Constant  r1    % shoulder to upperarm COM [m]
+Constant  r2    % elbow to forearm COM [m]
+
+% define frames/bodies (with frames attached)
+NewtonianFrame  N   % ground frame
+RigidBody       U   % upperarm
+RigidBody       F   % forearm
+
+% define variables relating frames
+Variable  thS_flx   % shoulder flexion [rad]
+Variable  thS_abd   % shoulder abduction [rad]
+Variable  thS_rot   % shoulder rotation [rad]
+Variable  thE_flx   % elbow flexion [rad]
+
+% define control inputs
+Specified  uS_flx   % shoulder flexion torque [Nm]
+Specified  uS_abd   % shoulder abduction torque [Nm]
+Specified  uS_rot   % shoulder rotation torque [Nm]
+Specified  uE_flx   % elbow flexion torque [Nm]
+
+
+
+------------------
+%%%%%%%%%%%%%%%%%%
+------------------
+
+%--------------------------------------------------------------
+Variable   theta'', phi'', wC'    % Angles and spin rate.
+Constant   g = 9.81 m/s^2         % Earth's local gravity.
+Constant   L %= 0.0  m %0.2  m             % Distance between No and Ccm.
+Constant   ro %= 0.17  m             % Rotor radius.
+Constant   ri %= 0.15  m
+Constant   h %= 0.02  m
+Constant   m %= 0.1 kg
+Constant   Ixx %= 1/12*m*(3*(ro^2 + ri^2)+h^2)
+Constant   Iyy %= 1/12*m*(3*(ro^2 + ri^2)+h^2)
+Constant   Izz %= 1/2*m*(ro^2 + ri^2)
+Specified  T_phi
+Specified  T_theta
+C.SetMass( m )
+C.SetInertia( Ccm,  ( Ixx*Bx>*Bx> + Iyy*By>*By> + Izz*Bz>*Bz> ) )
+%--------------------------------------------------------------------
+%       Rotational and translational kinematics.
+A.RotateNegativeZ( N, theta )
+B.RotateNegativeX( A, phi )
+%Express( w_B_N>, B )
+C.SetAngularVelocityAcceleration( B, wC*Bz> )
+CCm.Translate( No, L*Bz> )
+%--------------------------------------------------------------------
+%       Add relevant forces (gravity).
+CCm.AddForce( -m*g*Nz> )
+C.AddTorque( N, -T_theta*Nz> )
+C.AddTorque( N, -T_phi*Nx> )
+%--------------------------------------------------------------------
+%       Form equations of motion (angular momentum principle).
+Dynamics[1] = Dot( Nx>,  System.GetDynamics(No) )
+Dynamics[2] = Dot( Ny>,  System.GetDynamics(No) )
+Dynamics[3] = Dot( Nz>,  System.GetDynamics(No) )
+FactorQuadratic( Dynamics,  theta', phi', wC )
+Solve( Dynamics = 0,  theta'', phi'', wC' )
+%--------------------------------------------------------------------
+%       System's linear/angular momentum and kinetic/potential energy.
+%L> = System.GetLinearMomentum()
+%H> = System.GetAngularMomentum( No )
+%KE = System.GetKineticEnergy()
+%PE = System.GetForceGravityPotentialEnergy( -g*Nz>, No )
+%KePe = KE + PE             % Total mechanical energy
+%--------------------------------------------------------------------
+%Hnz = Dot( Nz>,  H> )      % Nz> measure of angular momentum (conserved).
+%Hbz = Dot( Bz>,  H> )      % Bz> measure of angular momentum (conserved).
+%--------------------------------------------------------------------
+%       Integration parameters and initial values.
+%Input  tFinal = 4 sec,  tStep = 0.05 sec,  absError = 1.0E-07
+%Input  theta  = 0 deg,      phi  = 20 deg,      wc = 300 rpm
+%Input  theta' = 0 deg/sec,  phi' = 0  deg/sec
+%--------------------------------------------------------------------
+%       List output quantities and solve ODEs.
+%Output  t sec,  theta deg,  phi deg,  KePe Joules,  Hnz kg*m^2/sec,  Hbz kg*m^2/sec
+%ODE()  Fopt
+%--------------------------------------------------------------------
+%SaveOverwrite Fopt.html
