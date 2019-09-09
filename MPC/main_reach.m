@@ -10,9 +10,9 @@ subj.hand = 'right'; % hand being tested
 subj.M = 70;         % mass [kg]
 subj.H = 1.80;       % height [meters]
 predErr = 0;         % 1 = stroke caused prediction error
-synerg = 1;          % 1 = stroke coupled muscle synergies
+synerg = 0;          % 1 = stroke coupled muscle synergies
 weak = 0;            % 1 = stroke caused muscular weakness
-spastic = 1;         % 1 = stroke caused spasticity/increased tone
+spastic = 0;         % 1 = stroke caused spasticity/increased tone
 
 % define subject's physical arm & internal arm model (mental)
 arm = arm_2DOF(subj);
@@ -79,7 +79,7 @@ nTrials = 1;                 % number of times to repeat reach
 T = 1;                       % total time to simulate [sec]
 movt.t = 0:arm.Ts:T;         % time vector [sec]
 r = 0.35;                    % reach distance [m]
-th = [45;90;135];            % reach angles [deg]
+th = [0];            % reach angles [deg]
 origin1 = [-0.15;0.3;0];     % origin 1 (arbitrary) [m]
 origin2 = [-0.18;0.56;0];    % origin 2, to match (Beer, 2000) [m]
 origin3 = [-0.15;0.6;0];     % origin 3 (less arbitrary) [m]
@@ -90,7 +90,7 @@ y_i = [p_i;v_i];             % initial state, in Cartesian coordinates [m,m/s]
 movt.space = 'task';         % space in which to track reference ('joint' or 'task')
 
 % define plotting parameters
-plotOn = 0;
+plotOn = 1;
     
 for n = 1:nTrials
     

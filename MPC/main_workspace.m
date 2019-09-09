@@ -117,10 +117,10 @@ subplot(3,1,2)
     plot( time, histories.x(1,:)*180/pi, 'b', ...
           time, histories.x(2,:)*180/pi, 'r' )
    hold on
-  plot( time, ones(size(time))*arm.x.min(1,1)*180/pi, 'b:', ...
-        time, ones(size(time))*arm.thLim(1,2)*180/pi, 'b:', ...
-        time, ones(size(time))*arm.thLim(2,1)*180/pi, 'r:', ...
-        time, ones(size(time))*arm.thLim(2,2)*180/pi, 'r:')
+% %   plot( time, ones(size(time))*arm.x.min(1,1)*180/pi, 'b:', ...
+%         time, ones(size(time))*arm.thLim(1,2)*180/pi, 'b:', ...
+%         time, ones(size(time))*arm.thLim(2,1)*180/pi, 'r:', ...
+%         time, ones(size(time))*arm.thLim(2,2)*180/pi, 'r:')
     ylabel 'Joint angle trajecotires, degrees'
     box off
 subplot(3,1,3)
@@ -131,8 +131,8 @@ subplot(3,1,3)
     box off
     
 figure
-P = Polyhedron( histories.y(1:2,:)' );
-plot(P)
+% P = Polyhedron( histories.y(1:2,:)' );
+% plot(P)
     box off
     axis equal
     title 'Hand workspace'
